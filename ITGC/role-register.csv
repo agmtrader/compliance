@@ -1,0 +1,17 @@
+control_id,control_name,control_owner,executive_sponsor,backup_owner,review_frequency,last_review_date,next_review_date,status,notes
+B320-26,IT Strategy and Governance,Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,Initial remediation document created
+B320-32,IT Roles and Responsibilities,Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,Initial remediation document created
+B320-36,Formal IT Security Policy,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-38,Security Policy Appropriate to Business Size/Complexity,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-41,IT Documentation Policy,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-47,IT Training and Skills Update Procedure,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-50,Documented Transaction Processing Procedures,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-55,Exception Report Generation and Resolution,Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,
+B320-66,Regulatory Data Retention Compliance,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-68,Data Retention Policy Review and Documentation,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-78,Critical Business Process Continuity Plan,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-80,Business Continuity Policy Review and Documentation,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-88,BCP/DR Documentation Update and Testing,Andres Aguilar,Hernan Castro,,Annual,, ,Open,
+B320-148,Change Documentation (Hardware/Software/DB/OS),Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,
+B320-173,Audit Trail Logs for Programs and Transactions,Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,
+B320-180,Electronic Segregation of Duties,Andres Aguilar,Hernan Castro,,Quarterly (Calendar),, ,Open,
