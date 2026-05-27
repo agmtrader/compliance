@@ -1,0 +1,2 @@
+flow_id,application_or_system,transaction_name,business_purpose,trigger_input,validation_checks,processing_steps,output_result,error_exception_handling,reconciliation_verification_control,owner,backup_owner,review_frequency,last_review_date,next_review_date,status,evidence_link,notes
+FLOW-001,,,,,,,,,,,Andres Aguilar,,Annual,,,Open,,Populate with first critical transaction flow

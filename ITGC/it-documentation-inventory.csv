@@ -1,0 +1,6 @@
+doc_id,doc_name,system_or_process,owner,backup_owner,criticality,review_frequency,last_review_date,next_review_date,status,gap_description,target_remediation_date,evidence_link,notes
+DOC-001,IT Strategy and Governance Procedure,IT Governance,Andres Aguilar,,High,Annual,,,Current,,,/Compliance/ITGC/01-it-strategy-and-governance.md,
+DOC-002,IT Roles and Responsibilities Procedure,IT Governance,Andres Aguilar,,High,Annual,,,Current,,,/Compliance/ITGC/02-it-roles-and-responsibilities.md,
+DOC-003,Information Security Policy,Security Governance,Andres Aguilar,,High,Annual,,,Current,,,/Compliance/ITGC/03-information-security-policy.md,
+DOC-004,Security Policy Adequacy Review Procedure,Security Governance,Andres Aguilar,,Medium,Annual,,,Current,,,/Compliance/ITGC/04-security-policy-adequacy-review.md,
+DOC-005,IT Documentation Standard,Documentation Governance,Andres Aguilar,,High,Annual,,,Current,,,/Compliance/ITGC/05-it-documentation-standard.md,
