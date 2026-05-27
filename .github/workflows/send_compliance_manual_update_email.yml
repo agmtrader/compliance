@@ -12,9 +12,11 @@ jobs:
   notify-compliance-update:
     runs-on: ubuntu-latest
     steps:
-      - name: Build payload and call compliance email endpoint
+      - name: Call compliance email endpoint
         shell: bash
         run: |
+          set -uo pipefail
+
           response=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Content-Type: application/json" \
             -d '{"token":"all"}' \
@@ -24,45 +26,31 @@ jobs:
           body=$(echo "$response" | sed '$d')
 
           if [ "$http_status" != "200" ]; then
-            echo "Token request failed with status $http_status" >&2
-            exit 1
+            echo "::warning::Token request failed with status $http_status. Skipping compliance email notification."
+            echo "$body"
+            exit 0
           fi
 
           access_token=$(echo "$body" | jq -r '.access_token')
           if [ "$access_token" = "null" ] || [ -z "$access_token" ]; then
-            echo "access_token not found in response" >&2
-            exit 1
+            echo "::warning::access_token not found in response. Skipping compliance email notification."
+            echo "$body"
+            exit 0
           fi
-
-          payload=$(jq -n \
-            --arg repository "${GITHUB_REPOSITORY}" \
-            --arg branch "${GITHUB_REF_NAME}" \
-            --arg commit_sha "${GITHUB_SHA}" \
-            --arg commit_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}" \
-            --arg author "${GITHUB_ACTOR}" \
-            --arg changed_files "See commit diff at commit URL" \
-            '{
-              repository: $repository,
-              branch: $branch,
-              commit_sha: $commit_sha,
-              commit_url: $commit_url,
-              author: $author,
-              changed_files: $changed_files
-            }')
 
           response=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $access_token" \
             -H "Content-Type: application/json" \
-            -d "$payload" \
+            -d '{}' \
             https://api.agmtechnology.com/actions/send_compliance_manual_update_email)
 
           http_status=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
 
           if [ "$http_status" != "200" ]; then
-            echo "Compliance update email endpoint failed with status $http_status" >&2
+            echo "::warning::Compliance update email endpoint failed with status $http_status. Notification was not sent."
             echo "$body"
-            exit 1
+            exit 0
           fi
 
           echo "$body"
