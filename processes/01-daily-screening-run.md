@@ -39,6 +39,25 @@ Run the recurring sanctions-screening control for account-linked contacts after 
 10. When execution proceeds, the API calls `create_contact_screening_from_contact_id` for each planned contact and records success or error counts.
 11. GitHub Actions sends a success or failure email summarizing the run.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Scheduled or manual workflow"] --> B["Request API token"]
+    B --> C["Call /actions/run_screening_process"]
+    C --> D["Compare sanctions files versus prior business day"]
+    D --> E{"All source files available?"}
+    E -- "No" --> F["Fail run"]
+    E -- "Yes" --> G{"Any sanctions delta?"}
+    G -- "No" --> H["Skip run"]
+    G -- "Yes" --> I["Load accounts, IBKR details, contacts, links, existing screenings"]
+    I --> J["Exclude trusted contacts and already screened-today contacts"]
+    J --> K{"Targets remain?"}
+    K -- "No" --> L["Skip run"]
+    K -- "Yes" --> M["Create contact screening records"]
+    M --> N["Return summary counts"]
+    N --> O["Send workflow success or failure email"]
+```
+
 ## Outputs / Records Created
 - New `contact_screening` records for in-scope contacts when execution occurs
 - A compact API response summarizing targeted contacts, executed screenings, and screening errors

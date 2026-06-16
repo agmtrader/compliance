@@ -40,6 +40,21 @@ Provide an operational and compliance review surface for recently opened account
 9. Reviewers can upload a missing document, including metadata such as category, type, issue date, and expiration date.
 10. Reviewers can send a missing-documents email using the page-level email dialog.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Open Documents Review page"] --> B["Load accounts, contacts, links, IBKR details, documents, assignees, users"]
+    B --> C["Filter to recent opened accounts"]
+    C --> D["Resolve account-contact rows"]
+    D --> E["Exclude trusted contacts"]
+    E --> F["Check required documents by holder type"]
+    F --> G["Build review rows with missing-document state"]
+    G --> H{"Reviewer action"}
+    H -- "Assign owner or comment" --> I["Upsert document review responsible record"]
+    H -- "Upload missing document" --> J["Create contact document and metadata"]
+    H -- "Send reminder" --> K["Send missing-documents email"]
+```
+
 ## Outputs / Records Created
 - Review rows derived from current source records
 - Upserted `document_review_responsible` records

@@ -33,6 +33,22 @@ Move an internally prepared AGM application into the IBKR onboarding process, th
 6. Additional onboarding remediation can occur through IBKR document submission, fee template application, trading permissions, CLP capability, and other account-management flows.
 7. Once an IBKR account number exists, the record is treated as an account page rather than a pending application page.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Open account or application in Dashboard"] --> B{"Pending application or live account?"}
+    B -- "Pending application" --> C["Load application payload, contacts, documents, screenings"]
+    C --> D["Validate payload and prerequisites"]
+    D --> E{"Ready for submission?"}
+    E -- "No" --> F["Correct payload, documents, or holder data"]
+    E -- "Yes" --> G["Call /accounts/send_to_ibkr"]
+    G --> H["Read IBKR details, registration tasks, and pending tasks"]
+    H --> I{"IBKR account number assigned?"}
+    I -- "No" --> J["Continue remediation and follow-up"]
+    I -- "Yes" --> K["Treat record as live account"]
+    B -- "Live account" --> K
+```
+
 ## Outputs / Records Created
 - IBKR onboarding submission initiated from AGM
 - IBKR detail, registration-task, and pending-task responses used for follow-up

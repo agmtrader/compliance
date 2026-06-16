@@ -37,6 +37,25 @@ Identify proof-of-identity documents that are missing expiration data, already e
 7. Users can filter the table by expiration state.
 8. Users can open the edit dialog and update document metadata such as category, type, issue date, expiration date, and comment.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Open POI Expiration Review page"] --> B["Load contacts, account links, accounts, and documents"]
+    B --> C["Filter to Proof of Identity documents"]
+    C --> D["Resolve account and contact context"]
+    D --> E["Parse expiration date"]
+    E --> F{"Expiration state"}
+    F -- "Missing" --> G["Classify as missing"]
+    F -- "Past date" --> H["Classify as expired"]
+    F -- "Near future" --> I["Classify as expiring soon"]
+    F -- "Valid date" --> J["Classify as valid"]
+    G --> K["User filters and reviews rows"]
+    H --> K
+    I --> K
+    J --> K
+    K --> L["Optional metadata edit via dialog"]
+```
+
 ## Outputs / Records Created
 - Operational review rows for POI documents
 - Updated contact-document metadata when the edit flow is used

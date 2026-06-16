@@ -34,6 +34,20 @@ Maintain two related but distinct banking-instruction workflows: internal AGM ba
 6. Active bank instructions and withdrawable cash are read using the client instruction id and account context.
 7. IBKR instruction status is checked through `/accounts/ibkr/instructions` for an existing client instruction id.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Open banking workflow"] --> B{"Which path?"}
+    B -- "Internal AGM instructions" --> C["Read /accounts/instructions by AGM account id"]
+    B -- "IBKR cash workflow" --> D["Use IBKR account and master account context"]
+    D --> E{"Requested action"}
+    E -- "Deposit or withdrawal" --> F["Submit structured instruction to IBKR"]
+    E -- "Wire instructions" --> G["Read wire instructions by currency"]
+    E -- "Active bank instructions" --> H["Read active bank instructions"]
+    E -- "Withdrawable cash" --> I["Read withdrawable cash"]
+    E -- "Instruction status" --> J["Read /accounts/ibkr/instructions by client instruction id"]
+```
+
 ## Outputs / Records Created
 - Internal AGM banking-instruction reads
 - IBKR deposit or withdrawal instructions

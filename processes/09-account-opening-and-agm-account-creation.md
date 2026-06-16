@@ -36,6 +36,25 @@ Capture client account-opening data through the Hub workflow, create the interna
 8. It can create screening context for the relevant contacts during the onboarding flow.
 9. The created account remains an internal AGM application until it is later submitted to IBKR.
 
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A["Start Hub IBKRApplicationForm"] --> B["Load defaults and reference data"]
+    B --> C["Account type step"]
+    C --> D["Personal information step"]
+    D --> E["Financial information step"]
+    E --> F["Regulatory information step"]
+    F --> G["Documents step"]
+    G --> H["Agreements step"]
+    H --> I["Build internal application payload"]
+    I --> J["Create AGM account record"]
+    J --> K["Create or link contacts"]
+    K --> L["Create account-contact links"]
+    L --> M["Upload supporting documents"]
+    M --> N["Optional screening context creation"]
+    N --> O["Pending internal AGM application ready for dashboard review"]
+```
+
 ## Outputs / Records Created
 - Internal AGM account record with stored application payload
 - Contact records for the account holders

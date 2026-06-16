@@ -13,6 +13,27 @@ This library covers recurring and material workflows executed through:
 
 The unit of documentation is a business process, not an individual endpoint or component.
 
+## Workflow Overview
+The current documented lifecycle is strongest in onboarding, screening, document review, and banking operations. Investigation-case management and regulatory filing workflows are not yet documented as first-class processes.
+
+```mermaid
+flowchart LR
+    A["Hub application starts"] --> B["Internal AGM account and payload created"]
+    B --> C["Dashboard application review"]
+    C --> D{"Ready to submit to IBKR?"}
+    D -- "No" --> E["Operational follow-up: documents, screenings, metadata fixes"]
+    D -- "Yes" --> F["Submit to IBKR"]
+    F --> G["Monitor registration tasks and pending tasks"]
+    G --> H["Ongoing reviews: sanctions, POI expiry, documents review"]
+    H --> I["Cash and banking servicing"]
+
+    E --> E1["Documents Review"]
+    E --> E2["POI Expiration Review"]
+    H --> H1["Daily Screening Run"]
+    I --> I1["Internal instructions"]
+    I --> I2["IBKR instruction status and cash flows"]
+```
+
 ## Naming Convention
 - One Markdown file per process.
 - Use a numeric prefix to preserve a stable reading order.
