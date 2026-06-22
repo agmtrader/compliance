@@ -37,8 +37,9 @@ Provide an operational and compliance review surface for recently opened account
 6. It also checks for `Proof of Address` and `Source of Wealth`.
 7. It builds one review row per account/contact combination showing missing-document status and any assigned responsible user.
 8. Reviewers can assign or update the responsible user and review comment through the `document_review_responsibles` upsert flow.
-9. Reviewers can upload a missing document, including metadata such as category, type, issue date, and expiration date.
-10. Reviewers can send a missing-documents email using the page-level email dialog.
+9. Reviewers can upload a missing document, including metadata such as category, type, declared document language, issue date, and expiration date.
+10. On upload, the API stores the contact-document metadata and attempts first-pass text extraction for the new raw file, persisting the extraction result and status for downstream review workflows.
+11. Reviewers can send a missing-documents email using the page-level email dialog.
 
 ## Workflow Diagram
 ```mermaid
@@ -51,7 +52,7 @@ flowchart TD
     F --> G["Build review rows with missing-document state"]
     G --> H{"Reviewer action"}
     H -- "Assign owner or comment" --> I["Upsert document review responsible record"]
-    H -- "Upload missing document" --> J["Create contact document and metadata"]
+    H -- "Upload missing document" --> J["Create contact document, language metadata, and extraction record"]
     H -- "Send reminder" --> K["Send missing-documents email"]
 ```
 
@@ -59,11 +60,13 @@ flowchart TD
 - Review rows derived from current source records
 - Upserted `document_review_responsible` records
 - Uploaded contact documents and related metadata
+- Persisted document text-extraction status and extracted text records for newly uploaded files
 - Missing-documents emails to clients
 
 ## Exception Paths / Failure Handling
 - Data-load failure: the page shows an error toast and the review grid is not populated.
 - Upload failure: upload dialog remains in the user flow and the user receives a failure toast.
+- Text extraction failure: the document upload still succeeds, but the extraction record is marked failed for later OCR or manual follow-up.
 - Missing-document email failure: email dialog surfaces failure and no success notification is shown.
 - Incorrect or incomplete linkages between contacts and accounts can produce false positives and must be manually reviewed.
 
@@ -76,15 +79,16 @@ flowchart TD
 ## Evidence to Retain
 - `document_review_responsible` records
 - Uploaded document metadata and file records
+- Document language metadata and text-extraction records
 - Missing-documents emails
 - Dashboard exports such as `documents-review.csv`
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/documents-review/page.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentsReviewPage.tsx`
-- Downstream side effects: accounts, contacts, contact documents, document-review-responsibles, `reporting/ibkr_details`, missing-documents email route
+- Downstream side effects: accounts, contacts, contact documents, document processing records, document-review-responsibles, `reporting/ibkr_details`, missing-documents email route
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-06-16
-- Reviewer: Codex initial draft
+- Date: 2026-06-22
+- Reviewer: Codex

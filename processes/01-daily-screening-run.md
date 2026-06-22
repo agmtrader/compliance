@@ -1,7 +1,7 @@
 # Daily Screening Run
 
 ## Business Purpose
-Run the recurring sanctions-screening control for account-linked contacts after checking whether OFAC, UK, and UN sanctions lists changed since the prior business day.
+Run the recurring sanctions-screening control for account-linked contacts after checking whether OFAC, UK, and UN sanctions lists changed since the prior business day, while also stamping each created screening with a FATF listed-jurisdiction result based on a maintained country list.
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions workflow calls `POST /token` and then `GET /actions/run_screening_process`.
@@ -23,6 +23,7 @@ Run the recurring sanctions-screening control for account-linked contacts after 
 - Current account list from the AGM database
 - Latest IBKR details backup
 - Current and previous sanctions-list snapshots for OFAC, UK, and UN
+- Current hardcoded FATF listed-jurisdiction country set used during screening record creation
 - Existing contact-screening history
 - Working API auth token generated through `/token`
 
@@ -36,7 +37,7 @@ Run the recurring sanctions-screening control for account-linked contacts after 
 7. Contacts marked as trusted contacts in IBKR associated-person roles are excluded from targeting.
 8. The process determines which contacts are in scope and whether they already have a screening dated for the current day.
 9. If every targeted contact already has a screening for today, the process exits with a skipped result.
-10. When execution proceeds, the API calls `create_contact_screening_from_contact_id` for each planned contact and records success or error counts.
+10. When execution proceeds, the API calls `create_contact_screening_from_contact_id` for each planned contact, checks OFAC / UK / UN name matches, evaluates the holder residence country against the FATF listed-jurisdiction country set, and records success or error counts.
 11. GitHub Actions sends a success or failure email summarizing the run.
 
 ## Workflow Diagram
@@ -60,6 +61,7 @@ flowchart TD
 
 ## Outputs / Records Created
 - New `contact_screening` records for in-scope contacts when execution occurs
+  Each record can contain FATF status of `Listed` or `null`, plus OFAC / UK / UN screening evidence.
 - A compact API response summarizing targeted contacts, executed screenings, and screening errors
 - GitHub Actions success or failure email notification
 
@@ -73,6 +75,7 @@ flowchart TD
 - Preventive control: screening does not run when sanctions reference files are incomplete.
 - Preventive control: trusted contacts are excluded from targeted screening generation.
 - Detective control: process compares current and prior sanctions lists before deciding whether to screen.
+- Detective control: every created screening record evaluates the resolved holder residence country against the maintained FATF listed-jurisdiction country set.
 - Detective control: same-day duplicate screening runs are avoided when all targeted contacts already have today’s screening date.
 
 ## Evidence to Retain

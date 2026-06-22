@@ -32,9 +32,10 @@ Capture client account-opening data through the Hub workflow, create the interna
 4. The workflow creates the AGM account record through `/accounts/create` and stores the application payload on the account.
 5. It extracts applicant contacts from the application payload and creates or links the contact records needed for the account.
 6. It creates or updates account-contact link records so downstream account and review pages can resolve the account holders.
-7. It uploads supporting documents and preserves document metadata linked to the proper contact or account context.
-8. It can create screening context for the relevant contacts during the onboarding flow.
-9. The created account remains an internal AGM application until it is later submitted to IBKR.
+7. It uploads supporting documents, captures declared document language, and preserves document metadata linked to the proper contact context.
+8. On upload, the API attempts first-pass text extraction for each new raw file and stores the extraction status and extracted text for later compliance and translation workflows.
+9. It can create screening context for the relevant contacts during the onboarding flow.
+10. The created account remains an internal AGM application until it is later submitted to IBKR.
 
 ## Workflow Diagram
 ```mermaid
@@ -50,9 +51,10 @@ flowchart TD
     I --> J["Create AGM account record"]
     J --> K["Create or link contacts"]
     K --> L["Create account-contact links"]
-    L --> M["Upload supporting documents"]
-    M --> N["Optional screening context creation"]
-    N --> O["Pending internal AGM application ready for dashboard review"]
+    L --> M["Upload supporting documents and language metadata"]
+    M --> N["Store extraction result for new files"]
+    N --> O["Optional screening context creation"]
+    O --> P["Pending internal AGM application ready for dashboard review"]
 ```
 
 ## Outputs / Records Created
@@ -60,6 +62,7 @@ flowchart TD
 - Contact records for the account holders
 - Account-contact relationship records
 - Supporting document records and file metadata
+- Document language metadata and initial text-extraction records
 - Screening records where the workflow triggers them
 
 ## Exception Paths / Failure Handling
@@ -73,19 +76,21 @@ flowchart TD
 - Preventive control: defaults enforce a standard starting shape for tax, financial, and regulatory sections.
 - Detective control: internal account record keeps the raw application payload for downstream review.
 - Detective control: linked contacts and documents can be reviewed in Dashboard before IBKR submission.
+- Detective control: extracted text records preserve a server-side content snapshot for later translation and source-of-wealth review work.
 
 ## Evidence to Retain
 - Internal account/application payload stored on the account
 - Linked contact and account-contact records
 - Uploaded document records
+- Document language metadata and extraction records
 - Client-side and server-side logs for onboarding failures
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`
 - Supporting modules: `agm-hub/src/utils/clients/application.ts`, `agm-hub/src/utils/clients/account.ts`
-- Downstream side effects: account, contact, account-contact, screening, and document APIs
+- Downstream side effects: account, contact, account-contact, screening, document, and document-processing APIs
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-06-16
-- Reviewer: Codex initial draft
+- Date: 2026-06-22
+- Reviewer: Codex
