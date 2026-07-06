@@ -1,10 +1,10 @@
 # Documents Review Workflow
 
 ## Business Purpose
-Provide an operational and compliance review surface for recently opened accounts to identify missing holder documents, assign responsible reviewers, upload missing documents, and send missing-document email reminders.
+Provide an operational and compliance review surface for recently opened accounts to identify missing holder documents, assign responsible reviewers, upload missing documents, manually re-link orphaned raw documents, and send missing-document email reminders.
 
 ## Trigger / Frequency
-- Trigger: User opens the Dashboard `Documents Review` page.
+- Trigger: User opens the Dashboard `Documents Review` page or the `Unlinked Documents` page.
 - Frequency: On demand.
 
 ## Systems Involved
@@ -40,6 +40,7 @@ Provide an operational and compliance review surface for recently opened account
 9. Reviewers can upload a missing document, including metadata such as category, type, declared document language, issue date, and expiration date.
 10. On upload, the API stores the contact-document metadata and attempts first-pass text extraction for the new raw file, persisting the extraction result and status for downstream review workflows.
 11. Reviewers can send a missing-documents email using the page-level email dialog.
+12. Reviewers can open the `Unlinked Documents` page, preview raw `document` rows that are not yet present in `contact_document`, search for the correct contact, and create the missing `contact_document` linkage.
 
 ## Workflow Diagram
 ```mermaid
@@ -60,6 +61,7 @@ flowchart TD
 - Review rows derived from current source records
 - Upserted `document_review_responsible` records
 - Uploaded contact documents and related metadata
+- Manually linked `contact_document` records for previously orphaned raw documents
 - Persisted document text-extraction status and extracted text records for newly uploaded files
 - Missing-documents emails to clients
 
@@ -69,6 +71,7 @@ flowchart TD
 - Text extraction failure: the document upload still succeeds, but the extraction record is marked failed for later OCR or manual follow-up.
 - Missing-document email failure: email dialog surfaces failure and no success notification is shown.
 - Incorrect or incomplete linkages between contacts and accounts can produce false positives and must be manually reviewed.
+- Manual relinking can attach a raw document to the wrong contact if the reviewer selects the wrong record, so the document preview and selected contact must be checked before saving.
 
 ## Controls / Verification Points
 - Preventive control: trusted contacts are explicitly excluded from required-document review.
@@ -79,13 +82,15 @@ flowchart TD
 ## Evidence to Retain
 - `document_review_responsible` records
 - Uploaded document metadata and file records
+- `contact_document` linkage records created from the `Unlinked Documents` page
 - Document language metadata and text-extraction records
 - Missing-documents emails
 - Dashboard exports such as `documents-review.csv`
 
 ## Related Code / Pages / Routes
-- Entry surfaces: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/documents-review/page.tsx`
+- Entry surfaces: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/documents-review/page.tsx`, `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/unlinked-documents/page.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentsReviewPage.tsx`
+- Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/UnlinkedDocumentsPage.tsx`
 - Downstream side effects: accounts, contacts, contact documents, document processing records, document-review-responsibles, `reporting/ibkr_details`, missing-documents email route
 
 ## Last Reviewed
