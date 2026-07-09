@@ -1,10 +1,10 @@
 # Documents Review Workflow
 
 ## Business Purpose
-Provide an operational and compliance review surface for recently opened accounts to identify missing holder documents, assign responsible reviewers, upload missing documents, manually re-link orphaned raw documents, send missing-document email reminders, and review IBKR compliance task backlogs.
+Provide an operational and compliance review surface for recently opened accounts to identify missing holder documents, assign responsible reviewers, upload missing documents, manually re-link orphaned raw documents, correct incomplete contact-document metadata, send missing-document email reminders, and review IBKR compliance task backlogs.
 
 ## Trigger / Frequency
-- Trigger: User opens the Dashboard `Documents Review` page, `Unlinked Documents` page, or the `IBKR Compliance Tasks` tab within the same review surface.
+- Trigger: User opens the Dashboard `Documents Review` page or one of its operational tabs such as `Unlinked Documents`, `No Type Documents`, or `IBKR Compliance Tasks`.
 - Frequency: On demand.
 
 ## Systems Involved
@@ -40,10 +40,11 @@ Provide an operational and compliance review surface for recently opened account
 7. It builds one review row per account/contact combination showing missing-document status and any assigned responsible user.
 8. Reviewers can assign or update the responsible user and review comment through the `document_review_responsibles` upsert flow.
 9. Reviewers can upload a missing document, including metadata such as category, type, declared document language, issue date, and expiration date.
-10. On upload, the API stores the contact-document metadata and attempts first-pass text extraction for the new raw file. It uses direct PDF text extraction first and falls back to local OCR for image-based PDFs when direct extraction returns no text, then persists the extraction result and status for downstream review workflows.
+10. On upload, the API stores the contact-document metadata and attempts first-pass text extraction for the new raw file. It uses direct PDF text extraction first and falls back to a local OCR engine for image-based PDFs when direct extraction returns no text, then persists the extraction result and status for downstream review workflows.
 11. Reviewers can send a missing-documents email using the page-level email dialog.
-12. Reviewers can open the `Unlinked Documents` page, preview raw `document` rows that are not yet present in `contact_document`, search for the correct contact, and create the missing `contact_document` linkage.
-13. Reviewers can open the `IBKR Compliance Tasks` tab to inspect the provided task snapshot in a searchable and exportable table showing task status, assignment date, task age, and account restriction state.
+12. Reviewers can open the `Unlinked Documents` page, preview raw `document` rows that are not yet present in `contact_document`, search for the correct contact, create the missing `contact_document` linkage, or delete an orphaned raw document that should not be retained.
+13. Reviewers can open the `No Type Documents` page to review linked documents where `contact_document.category` is present but `contact_document.type` is blank or `0`, then correct the metadata before the document continues downstream.
+14. Reviewers can open the `IBKR Compliance Tasks` tab to inspect the provided task snapshot in a searchable and exportable table showing task status, assignment date, task age, and account restriction state.
 
 ## Workflow Diagram
 ```mermaid
@@ -65,6 +66,8 @@ flowchart TD
 - Upserted `document_review_responsible` records
 - Uploaded contact documents and related metadata
 - Manually linked `contact_document` records for previously orphaned raw documents
+- Deleted orphaned raw `document` records that were intentionally discarded from the queue
+- Corrected `contact_document` metadata for records that were missing category or type
 - Persisted document text-extraction status and extracted text records for newly uploaded files
 - Missing-documents emails to clients
 - Reviewable and exportable IBKR compliance task rows derived from the provided task snapshot
@@ -72,10 +75,12 @@ flowchart TD
 ## Exception Paths / Failure Handling
 - Data-load failure: the page shows an error toast and the review grid is not populated.
 - Upload failure: upload dialog remains in the user flow and the user receives a failure toast.
-- Text extraction failure: the document upload still succeeds, but the extraction record is marked failed for manual follow-up. Failures can come from unreadable files or missing local OCR dependencies on the API runtime.
+- Text extraction failure: the document upload still succeeds, but the extraction record is marked failed for manual follow-up. Failures can come from unreadable files or missing local OCR model dependencies on the API runtime.
 - Missing-document email failure: email dialog surfaces failure and no success notification is shown.
 - Incorrect or incomplete linkages between contacts and accounts can produce false positives and must be manually reviewed.
 - Manual relinking can attach a raw document to the wrong contact if the reviewer selects the wrong record, so the document preview and selected contact must be checked before saving.
+- Manual deletion can remove a raw document that still needs review, so the preview and filename must be checked before confirming deletion.
+- Metadata correction can still leave a document unusable downstream if the reviewer enters the wrong category, type, or language, so the preview and contact context must be checked before saving.
 
 ## Controls / Verification Points
 - Preventive control: trusted contacts are explicitly excluded from required-document review.
@@ -87,6 +92,8 @@ flowchart TD
 - `document_review_responsible` records
 - Uploaded document metadata and file records
 - `contact_document` linkage records created from the `Unlinked Documents` page
+- Audit-visible removal of discarded orphaned raw `document` records from the `Unlinked Documents` queue
+- Updated `contact_document` metadata records from the `No Type Documents` page
 - Document language metadata and text-extraction records
 - Missing-documents emails
 - Dashboard exports such as `documents-review.csv`
@@ -95,11 +102,12 @@ flowchart TD
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/documents-review/page.tsx`, `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/unlinked-documents/page.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentsReviewPage.tsx`
+- Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentMetadataQueuePage.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/UnlinkedDocumentsPage.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/ibkrComplianceTasks.ts`
 - Downstream side effects: accounts, contacts, contact documents, document processing records, document-review-responsibles, `reporting/ibkr_details`, missing-documents email route
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-07
+- Date: 2026-07-08
 - Reviewer: Codex
