@@ -27,7 +27,7 @@ Move an internally prepared AGM application into the IBKR onboarding process, th
 ## Step-by-Step Workflow
 1. The Dashboard `AccountOrApplicationPage` decides whether the selected record is still a pending application or a live IBKR account.
 2. For pending applications, the user works from `ApplicationPage`, which loads the stored internal application payload and supporting records such as contacts, documents, and screenings.
-3. The application payload is validated and prepared for IBKR submission.
+3. The application payload is validated and prepared for IBKR submission. `ApplicationPage` reads the stored files selected for IBKR, blocks submission with a warning that identifies any document larger than 2 MB, and embeds the remaining documents, including their file data and metadata, in `application.documents`. Submission is also blocked if required documents are missing or any prepared document lacks file data or metadata.
 4. The operator triggers `/accounts/send_to_ibkr`, passing the AGM account id, selected master account, and application payload.
 5. After submission, Dashboard can query `/accounts/ibkr/details`, `/accounts/ibkr/registration_tasks`, and `/accounts/ibkr/pending_tasks` to follow the onboarding state.
 6. Additional onboarding remediation can occur through IBKR document submission, fee template application, trading permissions, CLP capability, and other account-management flows.
@@ -61,6 +61,8 @@ flowchart TD
 
 ## Controls / Verification Points
 - Preventive control: pending-vs-live account branching is determined from account state before rendering the page.
+- Preventive control: when the operator sends an application to IBKR, the Dashboard checks the stored documents returned by the API and blocks the request with a warning if any selected document is larger than 2 MB.
+- Preventive control: the Dashboard and its IBKR request helper reject submission unless `application.documents` is populated, and the page checks each prepared document for file data and required metadata.
 - Preventive control: application payload validation checks run before critical submission.
 - Detective control: registration and pending tasks provide a post-submission checklist for follow-up.
 - Detective control: supporting documents and screenings can be reviewed from the application context before submission.
@@ -78,5 +80,5 @@ flowchart TD
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-06-16
+- Date: 2026-07-13
 - Reviewer: Codex initial draft
