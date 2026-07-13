@@ -24,7 +24,7 @@ Provide an operational and compliance review surface for recently opened account
 - Accounts and contacts data
 - Account-contact link records with optional `entity_id`
 - Contact-document metadata
-- IBKR details backup with account open date, applicant type, and associated-person roles
+- IBKR details backup with account open date, applicant type, and associated-person names, emails, and roles
 - IBKR compliance task list with account ids, task metadata, age, and restriction state
 - User list for reviewer assignment
 
@@ -43,7 +43,7 @@ Provide an operational and compliance review surface for recently opened account
 10. Reviewers can upload a missing document, including metadata such as category, type, declared document language, issue date, and expiration date.
 11. Localized upload surfaces normalize document categories to the canonical English storage values used by the API, so translated labels such as `Prueba de Identidad` are persisted as `Proof of Identity`.
 12. On upload, the API stores the raw file and contact-document metadata without running text extraction or OCR in the upload request or in a background thread.
-13. Reviewers can send a missing-documents email using the page-level email dialog. Trusted contacts are excluded from both greeting-name and recipient-email candidates. For organization outreach, eligible personal contacts with an email are prioritized ahead of personal contacts without an email and company contacts. The email content is localized in English or Spanish and includes only the missing document categories for that specific contact together with the accepted document guidance for each requested category.
+13. Reviewers can send a missing-documents email using the page-level email dialog. The greeting-name and recipient-email selectors show separate, source-labeled options from both linked database contacts and IBKR associated persons so reviewers can use the IBKR holder details when the two sources disagree. Options are not merged by email. Trusted contacts from either source are excluded. For organization outreach, eligible personal contacts with an email are prioritized ahead of personal contacts without an email and company contacts. The email content is localized in English or Spanish and includes only the missing document categories for that specific contact together with the accepted document guidance for each requested category.
 14. The missing-documents email can include a direct AGM Hub upload link containing the target `contact_id`, allowing the recipient to upload documents from a public Hub page that writes the files directly into `contact_document`.
 15. Reviewers can open the `Unlinked Documents` page, preview raw `document` rows that are not yet present in `contact_document`, search for the correct contact, create the missing `contact_document` linkage, or delete an orphaned raw document that should not be retained.
 16. Reviewers can open the `No Type Documents` page to review linked documents where `contact_document.category` is present but `contact_document.type` is blank or `0`, then correct the metadata before the document continues downstream.
@@ -72,7 +72,7 @@ flowchart TD
 - Manually linked `contact_document` records for previously orphaned raw documents
 - Deleted orphaned raw `document` records that were intentionally discarded from the queue
 - Corrected `contact_document` metadata for records that were missing category or type
-- Missing-documents emails to clients with localized per-category accepted-document guidance
+- Missing-documents emails to a reviewer-selected database contact or IBKR holder email with localized per-category accepted-document guidance
 - Optional public AGM Hub compliance-upload links embedded in missing-documents emails
 - Reviewable and exportable IBKR compliance task rows derived from the provided task snapshot
 
@@ -87,7 +87,8 @@ flowchart TD
 
 ## Controls / Verification Points
 - Preventive control: trusted contacts are explicitly excluded from required-document review.
-- Preventive control: trusted contacts cannot be used as either the greeting name or recipient email for missing-document outreach; matching uses linked entity id, external id, or contact email when available.
+- Preventive control: trusted contacts from either the database rows or IBKR associated-person details cannot be used as either the greeting name or recipient email for missing-document outreach; matching uses linked entity id, external id, or contact email when available.
+- Detective control: source labels keep database contact values and IBKR holder values visibly separate when their names or emails disagree.
 - Preventive control: only accounts opened within the last five years are reviewed by this page.
 - Detective control: missing-document logic is visible row by row and can be exported or reviewed manually.
 - Detective control: account filters expose IBKR associated persons who cannot be matched to an existing database contact through the account-contact relationship.
