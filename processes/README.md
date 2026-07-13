@@ -13,6 +13,8 @@ This library covers recurring and material workflows executed through:
 
 The unit of documentation is a business process, not an individual endpoint or component.
 
+Confirmed control gaps and remediation acceptance criteria are maintained separately in [Operational Lifecycle Control Gaps](gaps/operational-lifecycle-gaps.md). A gap document describes required future controls and must not be treated as evidence that those controls currently operate.
+
 ## Workflow Overview
 The current documented lifecycle is strongest in onboarding, screening, document review, and banking operations. Investigation-case management and regulatory filing workflows are not yet documented as first-class processes.
 
