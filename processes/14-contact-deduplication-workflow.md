@@ -34,9 +34,14 @@ Identify duplicate contact records conservatively and merge only high-confidence
 8. Run the read-only planner again after commit. Confirm that the contact count changed by the committed deletion count and that no high-confidence automatic merge remains.
 9. If an authorized operator approves a reviewed second pass, use `--reviewed-second-pass`. This mode selects only pairs with the same IBKR holder and name similarity of at least 0.80, or the same account plus phone plus document evidence. It still excludes any connected cluster with conflicting account `entity_id` or `external_id` values.
 10. For the reviewed second pass, retain a holder-specific non-temporary IBKR email when it corroborates a current contact email. Otherwise retain a non-temporary current email ahead of a configured temporary-domain address. Apply and verify the second-pass plan using the same exact-hash, backup, transaction, and post-run controls.
+11. Remaining candidates may be reviewed with `contact_dedup_manual_review.py`. The script displays both contacts' IDs, email, phone, accounts and entity IDs, document counts, screenings, IBKR holder matches, evidence, conflicts, and a preview of the combined account/document result. The operator enters `1` to retain the left contact, `2` to retain the right contact, `s` to skip, or `q` to save and exit.
+12. Manual choices are saved after every answer. Overlapping pair decisions are combined as a directed graph; application is refused when a connected group does not produce exactly one surviving contact. The selected contact is retained exactly, including its email.
+13. Manual review generates a new hashed plan and performs no writes by default. A second invocation with `--apply` and the exact `--confirm-plan-hash` executes one backed-up serializable transaction.
+14. For every manually approved merge, repoint every distinct account link to the selected contact, including different `entity_id` or `external_id` values on the same account, and collapse only exact duplicate account-link identities. Repoint every distinct contact-document link while preserving its account, category, type, language, dates, and comment; collapse only links whose full metadata signatures are identical. Raw document rows are never deleted.
 
 ## Outputs / Records Created
 - Prepared plan JSON and candidate-review CSV
+- Resumable manual-review decisions JSON when the interactive workflow is used
 - Pre-apply JSON backup of every affected row
 - Apply-result JSON containing the plan hash, commit timestamp, and mutation counts
 - Consolidated canonical contacts and repointed dependency records
@@ -54,6 +59,10 @@ Identify duplicate contact records conservatively and merge only high-confidence
 - Preventive control: application requires an exact SHA-256 plan hash and a serializable transaction protected by an advisory lock.
 - Preventive control: populated identity conflicts block automatic merging.
 - Preventive control: reviewed second-pass clusters are evaluated again after transitive grouping; a conflict anywhere in the connected cluster excludes the entire cluster.
+- Preventive control: interactive manual review separates selection from application, saves each choice, requires one survivor per connected group, and requires the exact generated hash before applying.
+- Preventive control: the selected manual-review contact is not silently enriched or overwritten; its populated fields, including email, remain unchanged.
+- Preventive control: the manual plan hash includes the selected contact fields and the exact union of account/entity and document-metadata links reviewed by the operator.
+- Preventive control: the transaction compares account and document manifests before mutation and after consolidation; any missing or changed link rolls back the full transaction.
 - Preventive control: dependency references are repointed or consolidated before contact deletion; raw documents are never deleted.
 - Detective control: the apply script verifies the deleted-contact count and writes a committed result only after transaction completion.
 - Detective control: a post-commit dry run must report zero remaining automatic merge clusters for the evaluated rules.
@@ -61,6 +70,7 @@ Identify duplicate contact records conservatively and merge only high-confidence
 ## Evidence to Retain
 - Prepared plan and its SHA-256 hash
 - Candidate-review CSV
+- Interactive decision file and manual prepared plan, when applicable
 - Pre-apply backup JSON
 - Apply-result JSON
 - Post-apply dry-run JSON/CSV and operator summary
@@ -68,6 +78,7 @@ Identify duplicate contact records conservatively and merge only high-confidence
 ## Related Code / Pages / Routes
 - Planner: `agm-api/dev/contact_dedup_dry_run.py`
 - Transactional apply script: `agm-api/dev/contact_dedup_apply.py`
+- Interactive manual-review script: `agm-api/contact_dedup_manual_review.py`
 - IBKR details source: `agm-api/src/components/tools/public/reporting.py`
 - Database tables: `contact`, `account_contact`, `contact_document`, `contact_screening`, `document_review_responsible`, `user`, and `advisor`
 
