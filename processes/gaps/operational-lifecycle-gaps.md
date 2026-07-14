@@ -418,8 +418,21 @@ The current workflows provide useful application capture, document upload, scree
 - Define retention periods, legal-hold behavior, approved purge, and restoration procedures.
 - Restrict destructive evidence actions and require a reason plus secondary approval where appropriate.
 
+### Minimum Audit Coverage
+- **Applications and accounts:** account/application creation; material changes to identity, address, tax residence, employment, financial profile, Source of Wealth, ownership, control, and regulatory answers; review decisions; status changes; and IBKR submission attempts and results.
+- **Contacts and account relationships:** contact creation, material name/email/type changes, merges, account-contact link or unlink actions, and changes to entity or external identifiers used to resolve a holder for screening.
+- **Documents:** raw upload, account/contact link, relink, metadata change, processing result, reviewer acceptance or rejection, replacement, archive, and deletion attempt or completion.
+- **Review work:** responsible-user assignment or reassignment, comment creation or revision, review decision, exception or waiver, reopening, and closure.
+- **Screening and AML assessment:** screening request, completion, skip, or failure; sanctions candidate creation and disposition; AML score creation or recalculation; and any manual score or risk-level override.
+- **Transaction-monitoring findings:** finding creation, status change, comment revision, disposition, escalation, reopening, and closure.
+- **Client outreach and public uploads:** missing-document email attempt, success, failure, and resend; upload-request issue, expiration, revocation, and fulfillment; and the resulting document upload.
+- **Compliance source refreshes:** OFAC, UK, UN, and FATF refresh success, failure, or skip, including the source date or version used by screening.
+- **External compliance operations:** IBKR application, document, and instruction submission attempts and results, including the external request or response reference when available.
+- Routine page views, navigation, report filtering, document previews, and unsaved form keystrokes are outside the required v1 audit trail.
+
 ### Acceptance Criteria
 - Document upload, link, relink, metadata edit, reviewer assignment/comment change, review decision, waiver, deletion/archive, case transition, application decision, and IBKR submission produce audit events.
+- Every action listed under Minimum Audit Coverage records the affected record, action, actor or system process, timestamp, result, and appropriate prior/new values or external correlation reference.
 - Every missing-document email attempt has a review/account/contact reference, idempotency or correlation key, initiating actor, recipient and source snapshot, requested categories, language/template version, status, timestamps, and Gmail message id when sent; failed and unresolved attempts remain visible for reconciliation.
 - Audit events cannot be modified through normal application APIs.
 - Archived evidence cannot satisfy active document requirements but remains retrievable by authorized users.
