@@ -1,10 +1,10 @@
 # Account Opening and AGM Account Creation
 
 ## Business Purpose
-Capture client account-opening data through the Hub workflow, create the internal AGM account record, create or link related contacts, prepare screening and document context, and store the application payload used for downstream onboarding.
+Present bilingual personal and institutional document requirements, capture client account-opening data through the Hub workflow, create the internal AGM account record, create or link related contacts, prepare screening and document context, and store the application payload used for downstream onboarding.
 
 ## Trigger / Frequency
-- Trigger: Client or operator starts the Hub `IBKRApplicationForm`.
+- Trigger: Client or operator opens the Hub requirements page or starts the Hub `IBKRApplicationForm`.
 - Frequency: On demand.
 
 ## Systems Involved
@@ -24,18 +24,20 @@ Capture client account-opening data through the Hub workflow, create the interna
 - Reference data from `GetFinancialRanges`, `GetBusinessAndOccupation`, and `GetForms`
 - Optional advisor code from the Hub URL
 - Applicant personal, financial, regulatory, and document data
+- Localized accepted-document guidance for personal and institutional applicants
 
 ## Step-by-Step Workflow
-1. The Hub application form loads the application schema defaults and fetches required reference data.
-2. The applicant progresses through account type, personal information, financial information, regulatory information, documents, and agreements steps.
-3. The form builds an internal application payload that includes account, customer, document, and agreement data.
-4. The workflow creates the AGM account record through `/accounts/create` and stores the application payload on the account.
-5. It extracts applicant contacts from the application payload and creates or links the contact records needed for the account.
-6. It creates or updates account-contact link records so downstream account and review pages can resolve the account holders.
-7. It uploads supporting documents, captures declared document language, and preserves document metadata linked to the proper contact context.
-8. Document uploads store the raw file and metadata without running text extraction or OCR in the API upload flow.
-9. It can create screening context for the relevant contacts during the onboarding flow.
-10. The created account remains an internal AGM application until it is later submitted to IBKR.
+1. The Hub requirements page presents localized personal and institutional document guidance before application, including an income certification by a public or private accountant as an accepted Source-of-Wealth document.
+2. The Hub application form loads the application schema defaults and fetches required reference data.
+3. The applicant progresses through account type, personal information, financial information, regulatory information, documents, and agreements steps.
+4. The form builds an internal application payload that includes account, customer, document, and agreement data.
+5. The workflow creates the AGM account record through `/accounts/create` and stores the application payload on the account.
+6. It extracts applicant contacts from the application payload and creates or links the contact records needed for the account.
+7. It creates or updates account-contact link records so downstream account and review pages can resolve the account holders.
+8. It uploads supporting documents, captures declared document language, and preserves document metadata linked to the proper contact context. The contact-document table presents category, type, language, issued date, and expiration date, hides internal ids, displays stored `en`/`es` language codes as `English`/`Spanish`, and formats stored timestamps as localized date-only values.
+9. Document uploads store the raw file and metadata without running text extraction or OCR in the API upload flow.
+10. It can create screening context for the relevant contacts during the onboarding flow.
+11. The created account remains an internal AGM application until it is later submitted to IBKR.
 
 ## Workflow Diagram
 ```mermaid
@@ -73,8 +75,10 @@ flowchart TD
 ## Controls / Verification Points
 - Preventive control: Zod schema validation and step gating reduce malformed application payloads.
 - Preventive control: defaults enforce a standard starting shape for tax, financial, and regulatory sections.
+- Preventive control: English and Spanish requirement catalogs present the same accepted Source-of-Wealth document options for personal and institutional applicants.
 - Detective control: internal account record keeps the raw application payload for downstream review.
 - Detective control: linked contacts and documents can be reviewed in Dashboard before IBKR submission.
+- Detective control: the Hub document table exposes business-relevant document metadata without displaying internal identifiers or raw timestamp values.
 
 ## Evidence to Retain
 - Internal account/application payload stored on the account
@@ -85,10 +89,10 @@ flowchart TD
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`
-- Supporting modules: `agm-hub/src/utils/clients/application.ts`, `agm-hub/src/utils/clients/account.ts`
+- Supporting modules: `agm-hub/src/components/hub/requirements/Requirements.tsx`, `agm-hub/src/components/hub/apply/ContactDocuments.tsx`, `agm-hub/src/app/[lang]/en.json`, `agm-hub/src/app/[lang]/es.json`, `agm-hub/src/utils/clients/application.ts`, `agm-hub/src/utils/clients/account.ts`
 - Downstream side effects: account, contact, account-contact, screening, and document APIs
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-13
+- Date: 2026-07-14
 - Reviewer: Codex

@@ -16,11 +16,17 @@ This first remediation scope covers:
 - Extracted-data reconciliation
 - Contact-level expiration monitoring
 - Review case management
+- Reviewer assignment and comment change history
+- Missing-document outreach history and reconciliation
 - Scheduled audits and alerts
 - Explicit application review decisions
 - Server-side submission preflight
 - Immutable audit history and retention
 - Secure public document-upload requests
+- Correct AML risk-assessment inputs
+- Sanctions candidate matching and review
+- Current FATF jurisdiction reference data
+- Persistent transaction-monitoring findings
 
 The original gap identifiers are retained so implementation work, process updates, and change records can refer to stable IDs.
 
@@ -32,11 +38,16 @@ The current workflows provide useful application capture, document upload, scree
 - Source-of-Wealth evidence is required by Accounts Audit but not by the IBKR submission gate.
 - OCR capability exists but is not automatically triggered by document upload.
 - Spanish document language is recorded, but translation is not part of the processing lifecycle.
-- Review assignments contain an owner and comment but no case status, due date, disposition, or closure history.
+- Review assignments contain one mutable owner and comment per saved account/contact pair. A later save overwrites the prior assignment and comment, and no actor-specific change history is retained.
+- Missing-document emails are sent synchronously through Gmail, but the application does not persist a review-linked attempt, recipient/source snapshot, requested-document set, initiating user, delivery status, failure, resend, or Gmail message id.
 - Review pages are primarily on-demand and do not create persistent alerts automatically.
 - Sending an application to IBKR acts as an implicit approval rather than following a recorded approval decision.
 - Critical edits and document deletion do not have a documented immutable application-level audit trail or retention workflow.
 - Public compliance upload links identify the target contact but do not document a signed, expiring authorization control.
+- AML risk assessment can read a different country field than the Hub stores and can fall back to the wrong joint or organization person.
+- Sanctions screening relies on exact normalized-name matches and does not record a reviewer disposition for possible matches.
+- FATF-listed jurisdictions are maintained in a hardcoded application array rather than refreshed reference data.
+- Transaction-monitoring flags are calculated in Dashboard, while the database retains only freeform comments and can create duplicate rows for the same transaction.
 
 ## Priority Summary
 
@@ -53,8 +64,12 @@ The current workflows provide useful application capture, document upload, scree
 | GAP-009 | Scheduled audits and alerts | P0 | GAP-005, GAP-007, GAP-008 |
 | GAP-010 | Explicit application-review lifecycle | P0 | Application state model and audit events |
 | GAP-011 | Server-side submission preflight | P0 | GAP-002, GAP-005, GAP-008, GAP-010 |
+| GAP-012 | Correct AML risk-assessment inputs | P0 | Existing application and contact identifiers |
+| GAP-013 | Sanctions candidate matching and review | P0 | GAP-012 |
 | GAP-014 | Immutable audit trail and retention | P0 | Retention policy and audit-event model |
 | GAP-015 | Secure public document-upload requests | P0 | Upload-request token model |
+| GAP-016 | Current FATF jurisdiction reference data | P0 | Existing clients ETL pipeline |
+| GAP-017 | Persistent transaction-monitoring findings | P0 | Existing deposits and withdrawals report |
 
 ## GAP-001 - Category-Aware Document Validation
 
@@ -238,12 +253,15 @@ The current workflows provide useful application capture, document upload, scree
 
 ### Current State
 - Document review supports an assigned user and freeform comment for an account/contact pair.
+- The application reads the first matching `document_review_responsible` row and updates that row in place. Changing the assignee or comment replaces the prior values rather than creating a historical record.
+- The record does not identify the actor who changed the assignment or comment, and the generic API token identity cannot provide employee-level attribution.
 - It does not define a case type, severity, lifecycle status, due date, evidence list, disposition, closure reason, or immutable event history.
 
 ### Required Control
 - Create a persistent case model for compliance and operational findings.
 - Support at minimum `open`, `assigned`, `waiting_for_client`, `under_review`, `resolved`, and `closed` states.
 - Record finding type, source, severity, owner, due date, linked account/contact/document, evidence, disposition, closure reason, and timestamps.
+- Record every assignment and comment change as an append-only event with actor, timestamp, previous value, new value, and reason where required.
 - Prevent duplicate active cases for the same finding identity while retaining recurrence history.
 - Require controlled transitions and authorization for resolution and closure.
 
@@ -251,6 +269,7 @@ The current workflows provide useful application capture, document upload, scree
 - Document gaps, OCR/translation failures, expiration findings, data mismatches, screening exceptions, and stale required data can create cases.
 - Every case has one current owner or an explicit unassigned queue.
 - Every transition records actor, timestamp, prior state, new state, and reason.
+- Assignment and comment history remains queryable after later edits and distinguishes the current state from prior events.
 - Closed cases remain searchable and retain their evidence.
 - Reappearing conditions reopen the prior case or create a linked recurrence according to a documented rule.
 
@@ -333,23 +352,75 @@ The current workflows provide useful application capture, document upload, scree
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [Daily Screening Run](../01-daily-screening-run.md)
 
+## GAP-012 - Correct AML Risk-Assessment Inputs
+
+### Current State
+- The Hub stores an applicant's residence country in `residenceAddress.country`, while the AML assessment reads other country paths.
+- Joint-account assessment can fall back to the first holder when the linked contact cannot be resolved by entity id.
+- Organization assessment can fall back to the first associated individual instead of assessing the organization with its own jurisdiction data.
+- IBKR associated-person matching returns the first person when no name or email match is found.
+
+### Required Control
+- Read the country fields that are actually stored by the Hub application.
+- Resolve joint holders and organization-associated people by stable entity id or external id, with email and normalized name used only as controlled fallbacks.
+- Use the organization's own formation and operating jurisdiction when assessing the organization.
+- Stop the assessment for manual correction when one contact cannot be resolved to one application or IBKR subject.
+- Keep the currently approved AML weighting formula unchanged.
+
+### Acceptance Criteria
+- Automated tests cover individual, joint, and organization assessments using the application payload produced by Hub.
+- Each assessment uses the intended contact, holder, or organization and the correct country.
+- An unresolved or ambiguous subject does not receive a completed automatic score.
+- Existing component weights and approved scoring rules are not replaced by this remediation.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+
+## GAP-013 - Sanctions Candidate Matching and Review
+
+### Current State
+- OFAC, UK, and UN screening looks up exact normalized names.
+- UK and UN data include some alias matching, while OFAC matching uses the primary stored name.
+- A possible result has no stored review state, reviewer, review date, or disposition.
+
+### Required Control
+- Keep exact normalized-name matching and add conservative fuzzy matching that produces candidates for review.
+- Include available aliases from each sanctions source in candidate generation.
+- Do not treat a fuzzy candidate as a confirmed match automatically.
+- Allow an authorized reviewer to mark a candidate as `pending`, `false_positive`, or `confirmed_match` and retain a short comment, reviewer, and review timestamp.
+
+### Acceptance Criteria
+- Exact names, supported aliases, and close candidate names are covered by automated tests.
+- Fuzzy candidates remain pending until reviewed.
+- The latest disposition, reviewer, timestamp, and comment are retained for each candidate.
+- Screening results distinguish no candidate, pending candidate, false positive, and confirmed match.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+
 ## GAP-014 - Immutable Audit Trail and Retention
 
 ### Current State
 - Contact-document metadata can be updated in place.
 - Contact documents and orphaned raw documents can be physically deleted.
+- Document-review assignments and comments are updated in place without retaining their prior values or the actor responsible for the change.
+- Missing-document outreach returns a Gmail message id to the request path, but the application does not persist it or create a review-linked record of email attempts, successes, failures, recipients, source selections, requested categories, or resends.
 - The process manuals identify records and exports to retain, but no unified application-level audit-event or retention workflow is documented.
 - ITGC controls for regulatory retention and transaction audit trails remain open in the role register.
 
 ### Required Control
 - Create an append-only audit-event model for critical application and compliance actions.
+- Add a durable review-outreach ledger that records each missing-document email attempt before sending and reconciles its final status and provider message id afterward.
 - Record actor, action, entity, entity id, timestamp, request/correlation id, reason, and appropriate before/after values.
 - Replace routine physical deletion of compliance evidence with controlled archival or soft deletion.
 - Define retention periods, legal-hold behavior, approved purge, and restoration procedures.
 - Restrict destructive evidence actions and require a reason plus secondary approval where appropriate.
 
 ### Acceptance Criteria
-- Document upload, link, relink, metadata edit, review decision, waiver, deletion/archive, case transition, application decision, and IBKR submission produce audit events.
+- Document upload, link, relink, metadata edit, reviewer assignment/comment change, review decision, waiver, deletion/archive, case transition, application decision, and IBKR submission produce audit events.
+- Every missing-document email attempt has a review/account/contact reference, idempotency or correlation key, initiating actor, recipient and source snapshot, requested categories, language/template version, status, timestamps, and Gmail message id when sent; failed and unresolved attempts remain visible for reconciliation.
 - Audit events cannot be modified through normal application APIs.
 - Archived evidence cannot satisfy active document requirements but remains retrievable by authorized users.
 - Retention and purge jobs produce reconciliation reports and approval evidence.
@@ -386,6 +457,52 @@ The current workflows provide useful application capture, document upload, scree
 - [Documents Review Workflow](../06-documents-review-workflow.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 
+## GAP-016 - Current FATF Jurisdiction Reference Data
+
+### Current State
+- FATF-listed country codes and names are hardcoded in the AML assessment module.
+- The clients ETL already refreshes and backs up other compliance reference data, including OFAC, UK, and UN sanctions files.
+
+### Required Control
+- Refresh FATF high-risk and monitored jurisdictions through the existing clients ETL pattern.
+- Store the retrieval date and retain the prior snapshot used by earlier assessments.
+- Use the latest successful snapshot in new AML assessments.
+- Report a failed refresh without silently replacing the last successful snapshot.
+
+### Acceptance Criteria
+- New assessments use the latest successfully retrieved FATF snapshot rather than the hardcoded array.
+- The snapshot records its source and retrieval date.
+- A refresh failure is visible and leaves the last successful snapshot available.
+- Automated tests cover listed, unlisted, and unavailable-refresh scenarios.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+
+## GAP-017 - Persistent Transaction-Monitoring Findings
+
+### Current State
+- Dashboard calculates deposit flags such as amounts over USD 10,000 and amounts above the client's IBKR financial ranges when the report is opened.
+- The calculated rule, observed value, threshold, and review outcome are not stored.
+- `flagged_deposit` stores only account id, transaction id, and comment, and a comment edit creates another row instead of updating one controlled finding.
+
+### Required Control
+- Persist the findings produced by the existing transaction-monitoring rules.
+- Store account id, transaction id, rule code, observed amount, threshold, status, reviewer, review timestamp, disposition, and comment.
+- Use the minimal statuses `new`, `reviewed_explained`, `escalated`, and `closed`.
+- Prevent duplicate findings for the same account, transaction, and rule.
+- Keep IBKR as the transaction system of record; AGM stores only the monitoring finding and its review outcome.
+
+### Acceptance Criteria
+- A detected finding remains available after the report is closed or its filters change.
+- Re-running the report does not create a duplicate for the same account, transaction, and rule.
+- A reviewer can record and later retrieve the finding's status, disposition, comment, and review timestamp.
+- Existing over-USD-10,000 and financial-profile comparison rules remain explainable from the stored values.
+
+### Affected Processes
+- [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+- A dedicated deposits and withdrawals monitoring process must be documented before this gap is closed.
+
 ## Implementation Sequence
 
 1. Define the document policy matrix and retention/audit requirements for GAP-001, GAP-002, and GAP-014.
@@ -394,6 +511,7 @@ The current workflows provide useful application capture, document upload, scree
 4. Integrate expiration findings and scheduled audits through GAP-007 and GAP-009.
 5. Make GAP-011 preflight authoritative before changing the IBKR submission route.
 6. Replace contact-id public uploads with GAP-015 request tokens before expanding public outreach.
+7. Correct AML inputs first, then add sanctions candidate review, FATF refresh, and persistent transaction findings through GAP-012, GAP-013, GAP-016, and GAP-017.
 
 Implementation changes that add or alter database records must include SQL migration scripts under the workspace-level `sql/` directory.
 
@@ -406,5 +524,5 @@ Implementation changes that add or alter database records must include SQL migra
 
 ## Last Reviewed
 - Status: proposed
-- Date: 2026-07-13
+- Date: 2026-07-14
 - Reviewer: Codex gap assessment
