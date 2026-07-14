@@ -44,7 +44,7 @@ Provide an operational and compliance review surface for recently opened account
 10. Reviewers can upload a missing document, including metadata such as category, type, declared document language, issue date, and expiration date.
 11. Localized upload surfaces normalize document categories to the canonical English storage values used by the API, so translated labels such as `Prueba de Identidad` are persisted as `Proof of Identity`.
 12. On upload, the API stores the raw file and contact-document metadata without running text extraction or OCR in the upload request or in a background thread.
-13. Reviewers can send a missing-documents email using the page-level email dialog. The greeting-name and recipient-email selectors show separate, source-labeled options from both linked database contacts and IBKR associated persons so reviewers can use the IBKR holder details when the two sources disagree. Options are not merged by email. Trusted contacts from either source are excluded. For organization outreach, eligible personal contacts with an email are prioritized ahead of personal contacts without an email and company contacts. The email content is localized in English or Spanish and includes only the missing document categories permitted for the selected contact: POI/POA/SOW for a natural person or POE/POA/SOW for a company. Emails sent from Accounts Audit Contact Focus prefix both the message subject and HTML title/heading with `IMPORTANT` in English or `IMPORTANTE` in Spanish. Source-of-Wealth guidance for both contact types includes an income certification by a public or private accountant (`Certificación de ingresos por contador público o privado`). A natural-person email and its compliance-upload link can never request POE, and a company email and link can never request POI. Corporate emails identify the selected company contact by name in the introductory paragraph (`your company {company_name}` / `su sociedad {company_name}`); both Dashboard send paths block the action when the company name is missing, and the API independently rejects a corporate payload without `company_name`. When an upload link is present, the localized secure-upload button appears once below the introduction and again near the bottom of the email. The upload-troubleshooting section presents two fallback delivery channels together: bold `info@agmtechnology.com` and a bold `+1 786 251 1496` linked to the corresponding WhatsApp chat URL. On success, Gmail returns a provider message id and the Dashboard shows a success toast. The application does not persist that message id or a review-linked record of the recipient, source, requested categories, language, initiating user, attempts, failures, or resend history.
+13. Reviewers can send a missing-documents email using the page-level email dialog. The greeting-name and recipient-email selectors show separate, source-labeled options from both linked database contacts and IBKR associated persons so reviewers can use the IBKR holder details when the two sources disagree. Options are not merged by email. Trusted contacts from either source are excluded. For organization outreach, eligible personal contacts with an email are prioritized ahead of personal contacts without an email and company contacts. The email content is localized in English or Spanish and includes only the missing document categories permitted for the selected contact: POI/POA/SOW for a natural person or POE/POA/SOW for a company. Emails sent from Accounts Audit Contact Focus prefix both the message subject and HTML title/heading with `IMPORTANT` in English or `IMPORTANTE` in Spanish. Source-of-Wealth guidance for both contact types includes an income certification by a public or private accountant (`Certificación de ingresos por contador público o privado`). A natural-person email and its compliance-upload link can never request POE, and a company email and link can never request POI. Corporate emails identify the selected company contact by name in the introductory paragraph (`your company {company_name}` / `su sociedad {company_name}`); both Dashboard send paths block the action when the company name is missing, and the API independently rejects a corporate payload without `company_name`. When an upload link is present, the localized secure-upload button appears once below the introduction and again near the bottom of the email. The upload-troubleshooting section presents two fallback delivery channels together: bold `info@agmtechnology.com` and a bold `+1 786 251 1496` linked to the corresponding WhatsApp chat URL. Before Gmail is called, the API creates a `document_review_email` attempt linked to the account and contact with recipient, source, requested document keys, and language. Gmail success updates the attempt to `sent` with its provider message id and send timestamp; a send exception updates it to `failed` with the error. Contact Focus shows the sent count, last sent date and recipient, and full attempt history. The ledger intentionally does not record the initiating user.
 14. The missing-documents email can include a direct AGM Hub upload link containing the target `contact_id`, allowing the recipient to upload documents from a public Hub page that writes the files directly into `contact_document`. The Hub contact-document table shows category, type, language, issued date, and expiration date; it hides internal document ids, displays stored `en`/`es` language codes as `English`/`Spanish`, and formats stored timestamps as localized date-only values.
 15. Reviewers can open the `Unlinked Documents` page, preview raw `document` rows that are not yet present in `contact_document`, search for the correct contact, create the missing `contact_document` linkage, or delete an orphaned raw document that should not be retained.
 16. Reviewers can open the `No Type Documents` page to review linked documents where `contact_document.category` is present but `contact_document.type` is blank or `0`, then correct the metadata before the document continues downstream.
@@ -62,7 +62,9 @@ flowchart TD
     G --> H{"Reviewer action"}
     H -- "Assign owner or comment" --> I["Upsert document review responsible record"]
     H -- "Upload missing document" --> J["Create contact document and language metadata"]
-    H -- "Send reminder" --> K["Send missing-documents email"]
+    H -- "Send reminder" --> K["Create pending document-review email attempt"]
+    K --> L["Send missing-documents email through Gmail"]
+    L --> M["Record sent message id or failed status"]
 ```
 
 ## Outputs / Records Created
@@ -73,16 +75,16 @@ flowchart TD
 - Manually linked `contact_document` records for previously orphaned raw documents
 - Deleted orphaned raw `document` records that were intentionally discarded from the queue
 - Corrected `contact_document` metadata for records that were missing category or type
-- Missing-documents emails to a reviewer-selected database contact or IBKR holder email with localized per-category accepted-document guidance; no structured application database record currently links an email attempt or Gmail message id to the review row
+- Append-only `document_review_email` attempts linked to the account/contact review row, including recipient, recipient source, requested document keys, language, pending/sent/failed status, send timestamp, Gmail message id on success, and error on failure
 - Optional public AGM Hub compliance-upload links embedded in missing-documents emails
 - Reviewable and exportable IBKR compliance task rows derived from the provided task snapshot
 
 ## Exception Paths / Failure Handling
 - Data-load failure: the page shows an error toast and the review grid is not populated.
 - Upload failure: upload dialog remains in the user flow and the user receives a failure toast.
-- Missing-document email failure: email dialog surfaces failure and no success notification is shown.
+- Missing-document email failure: email dialog surfaces failure, no success notification is shown, and the persisted attempt is marked `failed` when the attempt row was created successfully.
 - Assignment or comment correction: saving the correction overwrites the prior values; the application cannot reconstruct the previous value or identify who made either change.
-- Email evidence lookup: sent messages may be available in the configured Gmail mailbox, but the application cannot query a review row's send history or distinguish a never-attempted send from an unrecorded prior send.
+- Email evidence lookup: Contact Focus shows review-linked attempts and distinguishes sent, failed, and never-attempted rows; Gmail remains the provider-side evidence source for the message body and delivery beyond API acceptance.
 - Incorrect or incomplete linkages between contacts and accounts can produce false positives and must be manually reviewed.
 - Manual relinking can attach a raw document to the wrong contact if the reviewer selects the wrong record, so the document preview and selected contact must be checked before saving.
 - Manual deletion can remove a raw document that still needs review, so the preview and filename must be checked before confirming deletion.
@@ -98,7 +100,8 @@ flowchart TD
 - Detective control: missing-document logic is visible row by row and can be exported or reviewed manually.
 - Detective control: account filters expose IBKR associated persons who cannot be matched to an existing database contact through the account-contact relationship.
 - Operational state: the latest reviewer assignment and comment are stored in `document_review_responsible` instead of only in the browser, but saves update the existing row and do not provide assignment or comment history.
-- Control limitation: the Dashboard reports the immediate Gmail send result, but no application control reconciles email attempts, successful provider message ids, failures, or resends to the account/contact review row.
+- Detective control: each Dashboard missing-document send path creates a review-linked attempt before calling Gmail and reconciles the immediate result to `sent` with a provider message id or `failed` with an error.
+- Control limitation: the ledger records API/Gmail send acceptance rather than downstream delivery, opening, or response, and intentionally does not identify the initiating user.
 
 ## Evidence to Retain
 - Current `document_review_responsible` values; these records do not evidence previous assignments or comments
@@ -107,7 +110,7 @@ flowchart TD
 - Audit-visible removal of discarded orphaned raw `document` records from the `Unlinked Documents` queue
 - Updated `contact_document` metadata records from the `No Type Documents` page
 - Document language metadata
-- Missing-documents emails retained in the configured Gmail mailbox where available; the application database does not retain a review-linked email ledger or Gmail message id
+- `document_review_email` ledger rows and their Gmail provider message ids, supplemented by the corresponding messages retained in the configured Gmail mailbox
 - Dashboard exports such as `documents-review.csv`
 - Dashboard exports such as `ibkr-compliance-tasks.csv`
 
@@ -118,7 +121,7 @@ flowchart TD
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/UnlinkedDocumentsPage.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/ibkrComplianceTasks.ts`
 - Supporting modules: `agm-hub/src/components/hub/apply/ContactDocuments.tsx`
-- Downstream side effects: accounts, contacts, contact documents, document-review-responsibles, `reporting/ibkr_details`, missing-documents email route, AGM Hub public compliance-upload page
+- Downstream side effects: accounts, contacts, contact documents, document-review-responsibles, document-review-email attempts, `reporting/ibkr_details`, missing-documents email route, AGM Hub public compliance-upload page
 
 ## Last Reviewed
 - Status: draft

@@ -406,13 +406,13 @@ The current workflows provide useful application capture, document upload, scree
 - Contact-document metadata can be updated in place.
 - Contact documents and orphaned raw documents can be physically deleted.
 - Document-review assignments and comments are updated in place without retaining their prior values or the actor responsible for the change.
-- Missing-document outreach returns a Gmail message id to the request path, but the application does not persist it or create a review-linked record of email attempts, successes, failures, recipients, source selections, requested categories, or resends.
+- Missing-document outreach now creates a review-linked `document_review_email` attempt before sending and records recipient, source selection, requested categories, language, immediate success or failure, send timestamp, and Gmail message id. It does not record the initiating actor, provider-side delivery/open state, or explicit resend relationships.
 - The process manuals identify records and exports to retain, but no unified application-level audit-event or retention workflow is documented.
 - ITGC controls for regulatory retention and transaction audit trails remain open in the role register.
 
 ### Required Control
 - Create an append-only audit-event model for critical application and compliance actions.
-- Add a durable review-outreach ledger that records each missing-document email attempt before sending and reconciles its final status and provider message id afterward.
+- Extend the durable review-outreach ledger with initiating-actor attribution, explicit resend relationships, provider-side delivery reconciliation where available, and retention controls.
 - Record actor, action, entity, entity id, timestamp, request/correlation id, reason, and appropriate before/after values.
 - Replace routine physical deletion of compliance evidence with controlled archival or soft deletion.
 - Define retention periods, legal-hold behavior, approved purge, and restoration procedures.
