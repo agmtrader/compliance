@@ -30,7 +30,6 @@ This first remediation scope covers:
 - Compliance-reference refresh integrity and freshness evidence
 - Daily screening population coverage and cache invalidation
 - Regulatory-file review data integrity and audit evidence
-- Fee-template review disposition and reconciliation
 - Investment-business report reproducibility and approval
 - Compliance-manual change notification and acknowledgment
 
@@ -57,7 +56,7 @@ The current workflows provide useful application capture, document upload, scree
 - Compliance-list ETL failures can be returned as HTTP `200` partial results and still produce a GitHub success email; source date, row count, checksum, and exact version are not recorded as control evidence.
 - The scheduled screening job skips contact coverage when all sanctions files are unchanged, can reuse stale worker-level caches, includes trusted contacts, and can duplicate same-day rows when coverage is partial.
 - The regulatory-file page calls an account-screening route absent from the current API, converts failed sections to empty data, and displays false-positive and true-match dispositions as hardcoded `False`.
-- Fee-template review and investment-business reporting are read-only views without persisted completion, exception disposition, preparer/reviewer approval, or reproducible run snapshots.
+- Investment-business reporting is a read-only view without persisted completion, exception disposition, preparer/reviewer approval, or a reproducible run snapshot.
 - The compliance-manual notification endpoint sends a generic email to one hardcoded recipient without linking it to a document version or recording acknowledgment.
 
 ## Priority Summary
@@ -84,7 +83,6 @@ The current workflows provide useful application capture, document upload, scree
 | GAP-018 | Compliance-reference refresh integrity and freshness evidence | P0 | Existing clients ETL pipeline |
 | GAP-019 | Daily screening population coverage and cache invalidation | P0 | GAP-018 |
 | GAP-020 | Regulatory-file review data integrity and audit evidence | P0 | GAP-013, GAP-014 |
-| GAP-021 | Fee-template review disposition and reconciliation | P1 | Review case or audit-event model |
 | GAP-022 | Investment-business report reproducibility and approval | P1 | Reporting snapshot and approval model |
 | GAP-023 | Compliance-manual change notification and acknowledgment | P1 | Documentation governance workflow |
 
@@ -112,8 +110,7 @@ The current workflows provide useful application capture, document upload, scree
 - Automated tests cover valid, expired, missing, malformed, and non-expiring-exception cases.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
@@ -137,7 +134,7 @@ The current workflows provide useful application capture, document upload, scree
 - Any waiver requires an authorized reviewer, reason, timestamp, and retained evidence.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
@@ -165,7 +162,7 @@ The current workflows provide useful application capture, document upload, scree
 - Reprocessing does not create conflicting active results.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
@@ -191,7 +188,7 @@ The current workflows provide useful application capture, document upload, scree
 - All translation corrections and approvals are auditable.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 
 ## GAP-005 - Validity-Based Document Completeness
@@ -213,8 +210,7 @@ The current workflows provide useful application capture, document upload, scree
 - Manual acceptance records reviewer, timestamp, disposition, and any exception reason.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
 ## GAP-006 - Extracted-Data Reconciliation
@@ -238,15 +234,15 @@ The current workflows provide useful application capture, document upload, scree
 - Low-confidence extraction cannot automatically resolve a requirement.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
 ## GAP-007 - Expiration Monitoring in Contact Focus
 
 ### Current State
-- A standalone POI Expiration Review classifies missing, expired, expiring-soon, and valid dates when a user opens the page.
-- Contact Focus shows document presence but not the contact's current POI validity posture.
+- The current Accounts Audit does not classify missing, expired, expiring-soon, or valid POI expiration dates.
+- Contact Focus shows document-category presence but not the contact's current POI validity posture.
 - Expiration review is not connected to case status, owner, due date, outreach, replacement, or closure.
 
 ### Required Control
@@ -263,8 +259,7 @@ The current workflows provide useful application capture, document upload, scree
 - Scheduled processing detects expiration changes without requiring a user to open the page.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 
 ## GAP-008 - Review Case Lifecycle
 
@@ -292,14 +287,13 @@ The current workflows provide useful application capture, document upload, scree
 
 ### Affected Processes
 - [Daily Screening Run](../01-daily-screening-run.md)
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 
 ## GAP-009 - Scheduled Audits and Alerts
 
 ### Current State
-- Accounts Audit, Documents Review, and POI Expiration Review primarily calculate findings when a user opens the relevant page.
+- Accounts Audit calculates its findings only when a user opens the page.
 - Assignments and comments do not provide a scheduled alert, acknowledgment, escalation, or overdue workflow.
 
 ### Required Control
@@ -317,8 +311,7 @@ The current workflows provide useful application capture, document upload, scree
 - Notification and escalation events are retained as evidence.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
 
 ## GAP-010 - Explicit Application-Review Lifecycle
@@ -457,8 +450,7 @@ The current workflows provide useful application capture, document upload, scree
 - Process manuals and the ITGC transaction register identify the retained audit evidence.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-- [Proof of Identity Expiration Review](../07-proof-of-identity-expiration-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 - [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
 - [Contact Deduplication and Dependency Merge](../14-contact-deduplication-workflow.md)
@@ -484,7 +476,7 @@ The current workflows provide useful application capture, document upload, scree
 - Completing the requested evidence updates the related case and upload request without automatically accepting the document.
 
 ### Affected Processes
-- [Documents Review Workflow](../06-documents-review-workflow.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
 
 ## GAP-016 - Current FATF Jurisdiction Reference Data
@@ -620,31 +612,7 @@ The current workflows provide useful application capture, document upload, scree
 ### Affected Processes
 - [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
 - [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
-- [Documents Review Workflow](../06-documents-review-workflow.md)
-
-## GAP-021 - Fee-Template Review Disposition and Reconciliation
-
-### Current State
-- Fee Template Review is an on-demand, read-only grid with filters and CSV export.
-- The page shows assigned fee-template data but does not compare it with an approved expected template or schedule.
-- No review period, owner, exception, disposition, correction link, or completion record is stored.
-- The `Needs Application` filter currently requires a missing IBKR account number and a present application payload, which may not represent the intended population.
-
-### Required Control
-- Define the expected fee-template rule by account, product, advisor, agreement, or other approved business attributes.
-- Reconcile actual against expected values and create a durable exception for each mismatch.
-- Store review period, population, owner, disposition, correction evidence, reviewer, and completion timestamp.
-- Correct and test each population filter against an approved business definition.
-
-### Acceptance Criteria
-- The review identifies actual-versus-expected mismatches rather than displaying assignments only.
-- Every exception has a unique lifecycle and cannot disappear when filters change.
-- Review coverage and completion can be reproduced for a defined period.
-- Filter tests cover missing applications, pending applications, live accounts, email changes, and missing fee templates.
-
-### Affected Processes
-- [Fee Template Review](../19-fee-template-review.md)
-- [Accounts Metadata Review and Analysis](../08-accounts-metadata-review.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
 
 ## GAP-022 - Investment-Business Report Reproducibility and Approval
 
@@ -695,6 +663,43 @@ The current workflows provide useful application capture, document upload, scree
 - [Compliance Manual Update Notification](../21-compliance-manual-update-notification.md)
 - [IT Documentation Standard](../../itgc/05-it-documentation-standard.md)
 
+## GAP-024 - Accounts Audit Population Reconciliation and Review Evidence
+
+### Current State
+- Account Focus includes only internal accounts with an IBKR account number and matching IBKR details, while Contact Focus considers every internal account but emits rows only for links that resolve to contacts.
+- Initial-load failure shows an error toast and then replaces both populations with empty arrays, so an empty screen is not durable evidence of a successful zero-exception review.
+- Stage 3 means required category names are present; it does not prove validity, acceptance, expiration, readability, or correct evidence content.
+- Contact Focus uses a static bundled IBKR compliance-task snapshot rather than a timestamped live task extract.
+- The review stores current assignment/comment values and individual outreach attempts, but no audit-run id, source manifest, selected filters, reviewer, population reconciliation, disposition, or completion certification.
+- Account Focus has no dedicated CSV export.
+- When no eligible outreach recipient resolves, the current Contact Focus code can fall back to `aa@agmtechnology.com` with recipient source `testing`.
+- The Accounts page `Unassigned` advisor option uses the literal value `unassigned`, while blank advisor codes remain blank/null, so it does not return genuinely unassigned accounts.
+- On the Accounts page, selecting `Requires Email Change` returns from the filter predicate before `Needs Application` is evaluated, so those two visible filters do not combine.
+
+### Required Control
+- Create a durable Accounts Audit run with a source-data manifest, successful-load status, rule version, selected filters, Account Focus and Contact Focus population counts, exclusions, reviewer, start/end times, and completion decision.
+- Reconcile the two focus populations explicitly using their documented inclusion rules and identify accounts or links excluded because source records are missing.
+- Calculate completeness from accepted and current documents under the approved policy matrix rather than category presence alone.
+- Replace the static IBKR task snapshot with a timestamped source and display its as-of time and load status.
+- Provide exportable evidence for both focus views and embed the run id, filters, and source-as-of values.
+- Block client outreach when no approved recipient resolves; a testing recipient must require an explicit test mode that cannot be confused with production outreach.
+- Correct and test Accounts-page population filters against approved definitions, including unassigned advisors, missing applications, and email changes.
+
+### Acceptance Criteria
+- An unsuccessful or partial load cannot produce a review marked complete or appear as a successful zero-row population.
+- Every completed run reconciles included, excluded, and exception populations for both focus views.
+- Every Stage 3 document is accepted, current, correctly linked, and valid under the rule version retained with the run.
+- IBKR task indicators identify the source timestamp and cannot silently use stale bundled data.
+- Account and Contact Focus exports reproduce the reviewed population and filters from the retained run.
+- A production missing-document email cannot be sent to a fallback testing address.
+- Accounts-page filter tests prove that combined filters produce the documented intersection and that unassigned advisors are included correctly.
+
+### Affected Processes
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+- [Accounts Metadata Review and Analysis](../08-accounts-metadata-review.md)
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Advisor Contact Linking](../15-advisor-contact-linking.md)
+
 ## Implementation Sequence
 
 1. Define the document policy matrix and retention/audit requirements for GAP-001, GAP-002, and GAP-014.
@@ -704,7 +709,8 @@ The current workflows provide useful application capture, document upload, scree
 5. Make GAP-011 preflight authoritative before changing the IBKR submission route.
 6. Replace contact-id public uploads with GAP-015 request tokens before expanding public outreach.
 7. Correct AML inputs and compliance-source assurance first, then add sanctions candidate review, FATF refresh, daily coverage, and persistent transaction findings through GAP-012, GAP-013, and GAP-016 through GAP-019.
-8. Repair and govern the regulatory file, fee review, investment-business report, and manual-change lifecycle through GAP-020 through GAP-023.
+8. Repair and govern the regulatory file, investment-business report, and manual-change lifecycle through GAP-020, GAP-022, and GAP-023.
+9. Add reproducible Accounts Audit population reconciliation, safe outreach, live task freshness, and retained review certification through GAP-024.
 
 Implementation changes that add or alter database records must include SQL migration scripts under the workspace-level `sql/` directory.
 

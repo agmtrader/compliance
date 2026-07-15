@@ -52,8 +52,8 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/components/tools/private/etl.py`, `agm-api/src/components/tools/public/reporting.py`
-- Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentsReviewPage.tsx`
-- Downstream side effects: documents review and other account-analysis workflows
+- Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsAuditReport.tsx`
+- Downstream consumers: Accounts Audit and other account-analysis workflows
 
 ## Last Reviewed
 - Status: draft

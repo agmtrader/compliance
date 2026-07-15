@@ -114,21 +114,21 @@ The three Account Focus summary cards are recalculated after filtering: financia
 
 ## Contact Focus Filters
 
-All Contact Focus filters combine with logical AND. The initial and reset contact-role filter is `Account holders only`; all other filters reset to `All`, and search resets blank.
+Different Contact Focus filters combine with logical AND. Within the Status, Missing documents, Responsible, and NAV filters, reviewers may select multiple values and those selected values combine with logical OR. An empty selection means `All`. The initial and reset contact-role filter is `Account holders only`; all other filters reset to `All`, and search resets blank.
 
 | Filter | Exact inclusion rule |
 |---|---|
 | Stage | All, Stage 1, Stage 2, or Stage 3. |
 | Account type | All, individual, joint, or org. |
 | Contact type | All, people only, or companies only using the company-contact rule above. |
-| Status | Dynamic exact normalized IBKR status. Rows without IBKR status appear under the normalized missing value. |
+| Status | Multi-select dynamic normalized IBKR statuses. A row is included when its status matches any selected value. Rows without IBKR status appear under the normalized missing value. |
 | Contact role | All contacts; account holders only excludes trusted contacts; trusted contacts only includes only trusted contacts. |
 | Date closed | All; closed within 1 through 10 years; or without a closed date. It uses the same elapsed-days/365.25 calculation as account age. A future close date is age zero. |
-| IBKR tasks | All or `IBKR flagged only`. A row is flagged from the bundled static task snapshot when the account has a mapped primary-document, address, or Source-of-Wealth task. |
-| Missing documents | All; missing any; missing POI only for person rows; missing POE only for company rows; missing POA; or missing SOW. |
-| Responsible | All; unassigned when no current user id is stored; or exact selected Dashboard user id. The selectable user list is limited to `@agmtechnology.com`. |
+| IBKR tasks | All or `IBKR flagged only`. A static task maps to address when form number is 8002 or its name contains `proof of address`; to the primary document when form number is 8001/8137 or its name contains `proof of identity`, `identity verification`, or `proof of existence`; and to Source of Wealth when form number is 2150/8553 or its name contains `source of wealth` or `proof of sow`. Any mapped task on the account includes the row. Duplicate indicators with the same form number and name are suppressed. |
+| Missing documents | Multi-select missing any; missing POI only for person rows; missing POE only for company rows; missing POA; or missing SOW. A row is included when it matches any selected state. |
+| Responsible | Multi-select unassigned when no current user id is stored and Dashboard user ids. A row is included when it matches any selected responsible value. The selectable user list is limited to `@agmtechnology.com`. |
 | Account age | All; opened within 1 through 10 years; or missing open date. |
-| NAV | Same exact bands as Account Focus. |
+| NAV | Multi-select using the same exact bands as Account Focus. A row is included when its NAV matches any selected band. |
 | Search | Case-insensitive substring across contact name/email, account title/number/status, and joined missing-document names. |
 
 The stage chart and counts are recalculated from the filtered rows. The table uses 25-row pagination and sorting.

@@ -39,6 +39,17 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 10. The reviewer can filter to flagged transactions, select a flag type, search by account identifier, and view summary counts.
 11. Editing a comment calls `POST /flagged_deposits/create`, creating a new row with account id, transaction id, and comment. Clearing a comment also creates a new row.
 
+## Date and Filter Definitions
+
+- The initial queried range starts at 00:00:00 on the first day of the user's current local month and ends at 23:59:59.999 on the current local day.
+- Editing the date inputs does not change the report until the user submits the query. Both dates are required, and start after end is rejected.
+- `Account Search` is a case-insensitive substring match against `AccountAlias`, `ClientAccountID`, `AccountId`, `AccountID`, `account_id`, or `accountId` from the transaction row. It does not search contact name, transaction id, amount, or comment.
+- `Flag View = Flagged only` requires at least one browser-derived flag.
+- `Specific Flag` requires the selected code: `over_10k`, `income_mismatch`, `liquid_mismatch`, or `net_worth_mismatch`. The dropdown contains only flag types present somewhere in the currently loaded report before the other filters are applied.
+- Search, flag view, and specific flag combine with logical AND.
+- Summary totals are recalculated from the filtered population: total transactions, signed amounts above USD 10,000, any financial-range mismatch, any flag, and flagged rows with a nonblank saved comment.
+- The table uses infinite scroll and has no built-in CSV export in the current component.
+
 ## Outputs / Records Created
 - On-screen transaction flags and summary counts calculated in the browser
 - Financial-profile comparison and Source-of-Wealth review context
@@ -52,6 +63,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 - Comment-save failures are written to the browser console without a failure toast.
 - Source-of-Wealth original-document failures leave the preview unavailable.
 - Flag calculations disappear when the page closes because only freeform comments are persisted.
+- A user can select a date range and filters without leaving a durable record of the reviewed population or criteria.
 
 ## Controls / Verification Points
 - Detective control: visible rules flag signed deposits above USD 10,000 and above the upper bounds of three financial categories.
@@ -62,7 +74,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 
 ## Evidence to Retain
 - Selected date range and latest monthly source files used by the report
-- Export or screenshot of the reviewed population, if retained by the operator
+- Screenshot or separately produced evidence of the reviewed population and exact date/filter criteria; this page has no built-in CSV export
 - `flagged_deposit` comment rows
 - Relevant Source-of-Wealth documents and processing output
 - API and browser logs for load or save failures
