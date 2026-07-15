@@ -1,11 +1,11 @@
 # Daily Screening Run
 
 ## Business Purpose
-Run the recurring sanctions-screening control for account-linked contacts after checking whether OFAC, UK, and UN sanctions lists changed since the prior business day, while also stamping each created screening with a FATF listed-jurisdiction result based on a maintained country list.
+Run the recurring sanctions-screening job for account-linked contacts after checking whether OFAC, UK, and UN backup files changed since the previous calendar day, while also stamping each created screening with a FATF listed-jurisdiction result based on a hardcoded country list. The scheduled job does not necessarily create screening records every day because it exits when all three sanctions files are unchanged.
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions workflow calls `POST /token` and then `GET /actions/run_screening_process`.
-- Frequency: Daily at 14:00 UTC / 9:00 AM Costa Rica time, plus manual workflow dispatch.
+- Frequency: Daily at 14:00 UTC / 8:00 AM Costa Rica time, plus manual workflow dispatch.
 
 ## Systems Involved
 - `agm-api`
@@ -22,36 +22,37 @@ Run the recurring sanctions-screening control for account-linked contacts after 
 ## Inputs / Prerequisites
 - Current account list from the AGM database
 - Latest IBKR details backup
-- Current and previous sanctions-list snapshots for OFAC, UK, and UN
+- Current-day and previous-calendar-day sanctions-list backups for OFAC, UK, and UN
 - Current hardcoded FATF listed-jurisdiction country set used during screening record creation
 - Existing contact-screening history
 - Working API auth token generated through `/token`
 
 ## Step-by-Step Workflow
 1. The scheduled GitHub workflow requests an API token and calls `/actions/run_screening_process`.
-2. The API compares today’s sanctions files against the previous business day through `compare_all_sanctions_today_vs_yesterday`.
+2. The API compares today’s sanctions backup files against the previous calendar day through `compare_all_sanctions_today_vs_yesterday`. A snapshot is considered present when a backup filename starts with the expected list name and `YYYYMMDD` date.
 3. If one or more sanctions files are unavailable, the process fails instead of screening against incomplete reference data.
 4. If all three sanctions lists are unchanged, the process exits early and returns a compact “skipped” result.
 5. If a list changed, the API loads accounts, IBKR details backup data, account-contact links, contacts, and existing contact screenings.
-6. For each account, the workflow matches linked contacts to IBKR associated persons by `entity_id` or normalized name.
-7. Contacts marked as trusted contacts in IBKR associated-person roles are excluded from targeting.
-8. The process determines which contacts are in scope and whether they already have a screening dated for the current day.
+6. For each account, the workflow attempts to match linked contacts to IBKR associated persons by `entity_id` or normalized name. It reads the associated-person roles but does not use them to exclude trusted contacts.
+7. Every account-linked contact with a nonblank contact id and name is added to the candidate population. Contacts appearing under more than one account are deduplicated by contact id, keeping the first account context encountered.
+8. The process determines whether the deduplicated contact population is fully covered by screening records dated for the current server date.
 9. If every targeted contact already has a screening for today, the process exits with a skipped result.
-10. When execution proceeds, the API calls `create_contact_screening_from_contact_id` for each planned contact, checks OFAC / UK / UN name matches, evaluates the holder residence country against the FATF listed-jurisdiction country set, and records success or error counts.
-11. GitHub Actions sends a success or failure email summarizing the run.
+10. When execution proceeds, the API builds all planned screening payloads in memory, checks OFAC / UK / UN exact normalized-name matches, evaluates the holder residence country against the FATF listed-jurisdiction country set, and inserts the successful payloads as a batch.
+11. If only some planned contacts already have a screening dated today, the current implementation still rebuilds and inserts screening rows for the full planned population rather than only the missing contacts.
+12. GitHub Actions sends a success or failure email summarizing the run.
 
 ## Workflow Diagram
 ```mermaid
 flowchart TD
     A["Scheduled or manual workflow"] --> B["Request API token"]
     B --> C["Call /actions/run_screening_process"]
-    C --> D["Compare sanctions files versus prior business day"]
+    C --> D["Compare sanctions files versus previous calendar day"]
     D --> E{"All source files available?"}
     E -- "No" --> F["Fail run"]
     E -- "Yes" --> G{"Any sanctions delta?"}
     G -- "No" --> H["Skip run"]
     G -- "Yes" --> I["Load accounts, IBKR details, contacts, links, existing screenings"]
-    I --> J["Exclude trusted contacts and already screened-today contacts"]
+    I --> J["Deduplicate linked contacts by contact id"]
     J --> K{"Targets remain?"}
     K -- "No" --> L["Skip run"]
     K -- "Yes" --> M["Create contact screening records"]
@@ -73,10 +74,11 @@ flowchart TD
 
 ## Controls / Verification Points
 - Preventive control: screening does not run when sanctions reference files are incomplete.
-- Preventive control: trusted contacts are excluded from targeted screening generation.
 - Detective control: process compares current and prior sanctions lists before deciding whether to screen.
 - Detective control: every created screening record evaluates the resolved holder residence country against the maintained FATF listed-jurisdiction country set.
-- Detective control: same-day duplicate screening runs are avoided when all targeted contacts already have today’s screening date.
+- Detective control: a full same-day duplicate screening run is avoided when every targeted contact already has today’s screening date.
+- Current limitation: unchanged sanctions files cause the job to skip before it checks whether new or previously unscreened contacts need coverage.
+- Current limitation: sanctions and IBKR data are cached per API worker and are not invalidated by this workflow.
 
 ## Evidence to Retain
 - GitHub Actions run history for `daily_screening.yaml`
@@ -86,10 +88,10 @@ flowchart TD
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-api/.github/workflows/daily_screening.yaml`, `agm-api/src/app/tools/private/actions.py`
-- Supporting modules: `agm-api/src/components/tools/private/screenings.py`
+- Supporting modules: `agm-api/src/components/tools/private/screenings.py`, `compliance/processes/15-compliance-reference-data-refresh.md`, `compliance/processes/16-contact-screening-and-aml-risk-assessment.md`
 - Downstream side effects: `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/public/reporting.py`
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-06-16
-- Reviewer: Codex initial draft
+- Date: 2026-07-15
+- Reviewer: Codex current-state code review

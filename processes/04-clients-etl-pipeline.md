@@ -29,29 +29,31 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 1. The workflow requests an API token and calls `/etl/clients`.
 2. The API resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
-4. During extract, each configured source file is fetched by its `extract_func`; skipped or failed steps are summarized.
+4. During extract, each configured source file is fetched by its `extract_func`; files with no extractor are marked skipped. The current summary treats every non-success step, including skipped steps, as failed when setting the stage status and failed count.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
 7. The route returns an overview object containing per-stage status, summary counts, and step-level outcomes.
-8. GitHub Actions captures the overview, formats a summary, and sends success or failure notification email.
+8. GitHub Actions captures the overview, formats a summary, and sends a notification email. It treats any HTTP `200` as workflow success even when the returned pipeline status is `partial`.
 
 ## Outputs / Records Created
 - Refreshed raw files in the batch and resources folders
-- Updated transformed client resource files
+- Updated transformed client resource files, including the stable OFAC, UK, and UN sanctions resource files when their report steps complete
 - ETL overview JSON returned by the API
 - Workflow notification email with stage summaries
 
 ## Exception Paths / Failure Handling
 - Token failure: workflow exits before calling the route.
-- Extract-step failure: stage status becomes `partial` and the failure is included in the overview.
-- Backup or transform failure: route overview captures the failing step and GitHub workflow can fail based on the HTTP result.
+- Extract-step failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue.
+- Backup or transform failure: route overview captures the failing step, but the route still returns HTTP `200` with a `partial` payload unless an uncaught service error escapes the pipeline wrapper.
 - Workflow retries: the GitHub workflow uses `wretry` with a long retry window before notifying failure.
+- Generic success notification: a `partial` API result still produces the success email because the workflow does not inspect the returned overall status before exiting.
 
 ## Controls / Verification Points
 - Preventive control: named pipeline config must exist or the route raises an error.
 - Detective control: every ETL stage returns counts of total, successful, skipped, and failed steps.
 - Detective control: workflow summary includes stage-level status and selected backup-step counts.
 - Detective control: success/failure emails preserve the final ETL overview for review.
+- Current limitation: the notification summary is aggregate and does not state the status, source date, row count, or version of each compliance reference list.
 
 ## Evidence to Retain
 - GitHub Actions run history for `etl_clients.yaml`
@@ -62,9 +64,9 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/app/tools/private/etl.py`
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`
-- Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files
+- Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files, and [Compliance Reference Data Refresh](15-compliance-reference-data-refresh.md)
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-06-16
-- Reviewer: Codex initial draft
+- Date: 2026-07-15
+- Reviewer: Codex current-state code review

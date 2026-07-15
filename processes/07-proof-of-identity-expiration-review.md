@@ -1,87 +1,54 @@
-# Proof of Identity Expiration Review
+# Proof of Identity Expiration Review (Not a Current Standalone Process)
 
 ## Business Purpose
-Identify proof-of-identity documents that are missing expiration data, already expired, or approaching expiration so the document metadata can be corrected or remediated.
+Record that POI-expiration review existed in the legacy Documents Review implementation but is not currently an operating standalone process in Accounts Audit.
 
 ## Trigger / Frequency
-- Trigger: User opens the Dashboard `POI Expiration Review` page.
-- Frequency: On demand.
+- Trigger: None in the current Accounts Audit workflow.
+- Frequency: Not operating. The old `/proofs-of-identity-review` route redirects to the legacy `/documents-review` route.
 
 ## Systems Involved
-- `agm-dashboard`
-- `agm-api`
-- Contacts, account-contact links, accounts, and contact-document records
+- Legacy `agm-dashboard` Documents Review component
+- Contact-document metadata
 
 ## Roles / Owners
-- Primary owner: Andres Aguilar
+- Process owner: Andres Aguilar
 - Backup owner: Hernan Castro
 - Executive oversight: Hernan Castro
 
 ## Inputs / Prerequisites
-- Contacts table
-- Account-contact links
-- Accounts table
-- Contact-document metadata with category, issue date, and expiration date
+- No current standalone-process prerequisites.
+- Expiration dates may exist in `contact_document`, but current Accounts Audit completeness checks only category presence and do not classify expiration.
 
 ## Step-by-Step Workflow
-1. A user opens the `POI Expiration Review` page.
-2. The page loads contacts, account-contact links, accounts, and contact-document data.
-3. It filters the document list down to records categorized as `Proof of Identity`.
-4. For each POI document, it resolves the associated account and contact context.
-5. It parses the expiration date and classifies the record as:
-   - missing
-   - expired
-   - expiring soon
-   - valid
-6. The page calculates `days_to_expiration` for records with parseable expiration dates.
-7. Users can filter the table by expiration state.
-8. Users can open the edit dialog and update document metadata such as category, type, issue date, expiration date, and comment.
-
-## Workflow Diagram
-```mermaid
-flowchart TD
-    A["Open POI Expiration Review page"] --> B["Load contacts, account links, accounts, and documents"]
-    B --> C["Filter to Proof of Identity documents"]
-    C --> D["Resolve account and contact context"]
-    D --> E["Parse expiration date"]
-    E --> F{"Expiration state"}
-    F -- "Missing" --> G["Classify as missing"]
-    F -- "Past date" --> H["Classify as expired"]
-    F -- "Near future" --> I["Classify as expiring soon"]
-    F -- "Valid date" --> J["Classify as valid"]
-    G --> K["User filters and reviews rows"]
-    H --> K
-    I --> K
-    J --> K
-    K --> L["Optional metadata edit via dialog"]
-```
+1. Current Accounts Audit checks whether a required document category exists.
+2. It does not determine whether a POI expiration date is missing, expired, or expiring soon.
+3. It does not remove an expired POI from Stage 3 completeness.
+4. Treat POI-expiration monitoring as an open control gap until a current workflow is implemented and approved.
 
 ## Outputs / Records Created
-- Operational review rows for POI documents
-- Updated contact-document metadata when the edit flow is used
-- Dashboard export `proofs-of-identity-review.csv`
+- No current standalone review output or retained expiration finding.
 
 ## Exception Paths / Failure Handling
-- Data-load failure: page shows an error toast and no rows are displayed.
-- Invalid or missing expiration dates: row is classified as `missing` instead of causing the page to fail.
-- Update failure: the edit dialog reports failure and no row refresh occurs until the user retries.
+- An expired or undated POI can still be counted as present by Accounts Audit.
+- The legacy page must not be cited as evidence that periodic POI-expiration review occurs.
 
 ## Controls / Verification Points
-- Detective control: explicit classification of missing, expired, and expiring-soon POI documents.
-- Detective control: exportable review grid allows follow-up outside the page.
-- Preventive control: document metadata edits flow through the API instead of spreadsheet-based manual edits.
+- Current limitation: category presence is not document validity.
+- Required future control: scheduled expiration evaluation, retained findings, assignment, remediation, and closure evidence.
 
 ## Evidence to Retain
-- Updated contact-document records
-- Dashboard review export
-- Page audit screenshots or review notes, if retained operationally
+- Current contact-document expiration metadata
+- Any manual review evidence retained outside the application
+- Future case and remediation records once implemented
 
 ## Related Code / Pages / Routes
-- Entry surfaces: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/proofs-of-identity-review/page.tsx`
-- Supporting modules: `agm-dashboard/src/components/dashboard/tools/private/reporting/proofs-of-identity-review/ProofsOfIdentityReviewPage.tsx`
-- Downstream side effects: contacts/documents update API
+- Redirecting route: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/proofs-of-identity-review/page.tsx`
+- Legacy implementation: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/DocumentsReviewPage.tsx`
+- Current completeness implementation: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsAuditReport.tsx`
+- Gap record: [Operational Lifecycle Control Gaps](gaps/operational-lifecycle-gaps.md)
 
 ## Last Reviewed
-- Status: draft
-- Date: 2026-06-16
-- Reviewer: Codex initial draft
+- Status: retired
+- Date: 2026-07-15
+- Reviewer: Codex, based on process-owner clarification

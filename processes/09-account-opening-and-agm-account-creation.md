@@ -36,7 +36,7 @@ Present bilingual personal and institutional document requirements, capture clie
 7. It creates or updates account-contact link records so downstream account and review pages can resolve the account holders.
 8. It uploads supporting documents, captures declared document language, and preserves document metadata linked to the proper contact context. The contact-document table presents category, type, language, issued date, and expiration date, hides internal ids, displays stored `en`/`es` language codes as `English`/`Spanish`, and formats stored timestamps as localized date-only values.
 9. Document uploads store the raw file and metadata without running text extraction or OCR in the API upload flow.
-10. It can create screening context for the relevant contacts during the onboarding flow.
+10. When the application is finalized, the Hub reads screening history for each linked contact and calls the contact-screening API only for contacts with no existing screening rows.
 11. The created account remains an internal AGM application until it is later submitted to IBKR.
 
 ## Workflow Diagram
@@ -54,7 +54,7 @@ flowchart TD
     J --> K["Create or link contacts"]
     K --> L["Create account-contact links"]
     L --> M["Upload supporting documents and language metadata"]
-    M --> O["Optional screening context creation"]
+    M --> O["Screen linked contacts with no screening history"]
     O --> P["Pending internal AGM application ready for dashboard review"]
 ```
 
@@ -90,9 +90,9 @@ flowchart TD
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`
 - Supporting modules: `agm-hub/src/components/hub/requirements/Requirements.tsx`, `agm-hub/src/components/hub/apply/ContactDocuments.tsx`, `agm-hub/src/app/[lang]/en.json`, `agm-hub/src/app/[lang]/es.json`, `agm-hub/src/utils/clients/application.ts`, `agm-hub/src/utils/clients/account.ts`
-- Downstream side effects: account, contact, account-contact, screening, and document APIs
+- Downstream side effects: account, contact, account-contact, screening, and document APIs; see [Contact Screening and AML Risk Assessment](16-contact-screening-and-aml-risk-assessment.md)
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-14
-- Reviewer: Codex
+- Date: 2026-07-15
+- Reviewer: Codex current-state code review

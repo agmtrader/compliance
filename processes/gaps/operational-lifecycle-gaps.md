@@ -27,6 +27,12 @@ This first remediation scope covers:
 - Sanctions candidate matching and review
 - Current FATF jurisdiction reference data
 - Persistent transaction-monitoring findings
+- Compliance-reference refresh integrity and freshness evidence
+- Daily screening population coverage and cache invalidation
+- Regulatory-file review data integrity and audit evidence
+- Fee-template review disposition and reconciliation
+- Investment-business report reproducibility and approval
+- Compliance-manual change notification and acknowledgment
 
 The original gap identifiers are retained so implementation work, process updates, and change records can refer to stable IDs.
 
@@ -39,7 +45,7 @@ The current workflows provide useful application capture, document upload, scree
 - OCR capability exists but is not automatically triggered by document upload.
 - Spanish document language is recorded, but translation is not part of the processing lifecycle.
 - Review assignments contain one mutable owner and comment per saved account/contact pair. A later save overwrites the prior assignment and comment, and no actor-specific change history is retained.
-- Missing-document emails are sent synchronously through Gmail, but the application does not persist a review-linked attempt, recipient/source snapshot, requested-document set, initiating user, delivery status, failure, resend, or Gmail message id.
+- Missing-document emails are sent synchronously through Gmail and now persist a review-linked attempt with primary recipient/source, requested-document set, language, immediate result, send timestamp, failure text, and Gmail message id. The initiating user, selected CC recipients, provider-side delivery state, and explicit resend relationship are not retained.
 - Review pages are primarily on-demand and do not create persistent alerts automatically.
 - Sending an application to IBKR acts as an implicit approval rather than following a recorded approval decision.
 - Critical edits and document deletion do not have a documented immutable application-level audit trail or retention workflow.
@@ -48,6 +54,11 @@ The current workflows provide useful application capture, document upload, scree
 - Sanctions screening relies on exact normalized-name matches and does not record a reviewer disposition for possible matches.
 - FATF-listed jurisdictions are maintained in a hardcoded application array rather than refreshed reference data.
 - Transaction-monitoring flags are calculated in Dashboard, while the database retains only freeform comments and can create duplicate rows for the same transaction.
+- Compliance-list ETL failures can be returned as HTTP `200` partial results and still produce a GitHub success email; source date, row count, checksum, and exact version are not recorded as control evidence.
+- The scheduled screening job skips contact coverage when all sanctions files are unchanged, can reuse stale worker-level caches, includes trusted contacts, and can duplicate same-day rows when coverage is partial.
+- The regulatory-file page calls an account-screening route absent from the current API, converts failed sections to empty data, and displays false-positive and true-match dispositions as hardcoded `False`.
+- Fee-template review and investment-business reporting are read-only views without persisted completion, exception disposition, preparer/reviewer approval, or reproducible run snapshots.
+- The compliance-manual notification endpoint sends a generic email to one hardcoded recipient without linking it to a document version or recording acknowledgment.
 
 ## Priority Summary
 
@@ -70,6 +81,12 @@ The current workflows provide useful application capture, document upload, scree
 | GAP-015 | Secure public document-upload requests | P0 | Upload-request token model |
 | GAP-016 | Current FATF jurisdiction reference data | P0 | Existing clients ETL pipeline |
 | GAP-017 | Persistent transaction-monitoring findings | P0 | Existing deposits and withdrawals report |
+| GAP-018 | Compliance-reference refresh integrity and freshness evidence | P0 | Existing clients ETL pipeline |
+| GAP-019 | Daily screening population coverage and cache invalidation | P0 | GAP-018 |
+| GAP-020 | Regulatory-file review data integrity and audit evidence | P0 | GAP-013, GAP-014 |
+| GAP-021 | Fee-template review disposition and reconciliation | P1 | Review case or audit-event model |
+| GAP-022 | Investment-business report reproducibility and approval | P1 | Reporting snapshot and approval model |
+| GAP-023 | Compliance-manual change notification and acknowledgment | P1 | Documentation governance workflow |
 
 ## GAP-001 - Category-Aware Document Validation
 
@@ -491,6 +508,8 @@ The current workflows provide useful application capture, document upload, scree
 ### Affected Processes
 - [Daily Screening Run](../01-daily-screening-run.md)
 - [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+- [Compliance Reference Data Refresh](../15-compliance-reference-data-refresh.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
 
 ## GAP-017 - Persistent Transaction-Monitoring Findings
 
@@ -514,7 +533,167 @@ The current workflows provide useful application capture, document upload, scree
 
 ### Affected Processes
 - [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
-- A dedicated deposits and withdrawals monitoring process must be documented before this gap is closed.
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+
+## GAP-018 - Compliance-Reference Refresh Integrity and Freshness Evidence
+
+### Current State
+- OFAC, UK, and UN downloads run as steps inside the broad Clients ETL pipeline.
+- Individual extraction or transformation failures produce `partial` stage results, but the route returns HTTP `200` and the GitHub workflow sends its success email.
+- Later stages continue after an extraction failure and can publish the most recent prior backup as the stable resource.
+- OFAC requests do not call `raise_for_status`; none of the three source requests has an explicit timeout.
+- Stable resources are replaced without a minimum row-count check, source publication-date check, change tolerance, source version, or retained checksum manifest.
+- The screening availability check proves only that date-prefixed backups can be found for today and the previous calendar day.
+
+### Required Control
+- Record one explicit refresh result for each source containing source URL, retrieval time, source publication date or version when available, HTTP result, row count, checksum, backup file id, and stable resource id.
+- Apply HTTP timeouts and status validation to every source.
+- Validate schema and nonempty/minimum-reasonable populations before a new snapshot becomes eligible for screening.
+- Replace the stable resource atomically only after validation succeeds; retain the last known good resource on failure.
+- Make the workflow fail and notify as a compliance-source failure when any required list is failed, stale, or unverified.
+- Keep the generic Clients ETL summary, but produce a separate compliance-source result that can be reconciled before screening.
+
+### Acceptance Criteria
+- A green workflow result proves that OFAC, UK, and UN each passed download, schema, population, storage, and publication checks for that run.
+- A failed source cannot be reported as a successful compliance refresh and cannot silently republish an older file as if it were current.
+- The exact snapshot used by a screening can be identified later by immutable id and checksum.
+- Automated tests cover HTTP errors, timeouts, empty data, malformed schema, unreasonable count changes, storage failures, and last-known-good behavior.
+
+### Affected Processes
+- [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+- [Compliance Reference Data Refresh](../15-compliance-reference-data-refresh.md)
+- [Daily Screening Run](../01-daily-screening-run.md)
+
+## GAP-019 - Daily Screening Population Coverage and Cache Invalidation
+
+### Current State
+- The scheduled job exits when OFAC, UK, and UN are unchanged before checking for new or previously unscreened contacts.
+- It reads associated-person roles but does not exclude trusted contacts even though earlier process documentation claimed that behavior.
+- If every target is already screened today, it skips. If only some are screened, it inserts rows for the whole planned population and can duplicate existing same-day rows.
+- Sanctions lists, sanctions indexes, and IBKR details are cached per API worker without an invalidation or snapshot key.
+- Contacts linked to multiple accounts are deduplicated by retaining the first account context encountered.
+- Snapshot comparison uses Costa Rica dates while screening coverage uses the server's `date.today()`.
+
+### Required Control
+- Evaluate contact coverage on every scheduled run independently of whether source lists changed.
+- Define and enforce the approved population policy for holders, beneficial owners, control persons, and trusted contacts.
+- Insert only missing required screenings and enforce an idempotency rule for contact, screening date, and source-snapshot version.
+- Reload or version-key sanctions and IBKR caches before building a scheduled batch.
+- Select account/holder context deterministically for multi-account contacts and retain that context on the screening record.
+- Use one explicit business timezone and reconcile planned, created, skipped, and failed contacts before declaring success.
+
+### Acceptance Criteria
+- A successful daily job proves that every in-scope contact has required coverage even when no list changed.
+- Partial prior coverage produces rows only for missing contacts and cannot create same-day duplicates.
+- Every record identifies the source snapshots and account/holder context used.
+- Cache state cannot cause a current backup comparison to be followed by screening against an older in-memory list.
+- Population counts reconcile exactly or the workflow fails visibly.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+
+## GAP-020 - Regulatory-File Review Data Integrity and Audit Evidence
+
+### Current State
+- The regulatory-file page calls `/accounts/screening`, but no matching route exists in the current API source.
+- Screening, financial-range, and document failures are converted to empty collections without a visible section-level failure.
+- False Positive and True Match rows are displayed as hardcoded `False` values rather than stored reviewer decisions.
+- Organization document coverage considers only the first associated person.
+- PDF creation occurs only in the browser and is not recorded.
+
+### Required Control
+- Use the supported contact-screening data model or implement and test an authoritative account-level aggregation endpoint.
+- Display unavailable, incomplete, and not-reviewed states distinctly from true zero-result states.
+- Populate candidate dispositions only from retained review records.
+- Apply documented holder/beneficial-owner/control-person coverage rules to organizations.
+- Record regulatory-file review and export events with account, source snapshot ids, reviewer, timestamp, result, and generated-file checksum or retained artifact reference.
+
+### Acceptance Criteria
+- A failed screening request cannot appear as `0 screenings`.
+- False-positive and true-match values reflect a retained disposition or show `Not reviewed`.
+- The page and exported file identify the data-as-of time and source snapshots.
+- Required organization persons are included under a tested policy.
+- Review and export actions are auditable.
+
+### Affected Processes
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Documents Review Workflow](../06-documents-review-workflow.md)
+
+## GAP-021 - Fee-Template Review Disposition and Reconciliation
+
+### Current State
+- Fee Template Review is an on-demand, read-only grid with filters and CSV export.
+- The page shows assigned fee-template data but does not compare it with an approved expected template or schedule.
+- No review period, owner, exception, disposition, correction link, or completion record is stored.
+- The `Needs Application` filter currently requires a missing IBKR account number and a present application payload, which may not represent the intended population.
+
+### Required Control
+- Define the expected fee-template rule by account, product, advisor, agreement, or other approved business attributes.
+- Reconcile actual against expected values and create a durable exception for each mismatch.
+- Store review period, population, owner, disposition, correction evidence, reviewer, and completion timestamp.
+- Correct and test each population filter against an approved business definition.
+
+### Acceptance Criteria
+- The review identifies actual-versus-expected mismatches rather than displaying assignments only.
+- Every exception has a unique lifecycle and cannot disappear when filters change.
+- Review coverage and completion can be reproduced for a defined period.
+- Filter tests cover missing applications, pending applications, live accounts, email changes, and missing fee templates.
+
+### Affected Processes
+- [Fee Template Review](../19-fee-template-review.md)
+- [Accounts Metadata Review and Analysis](../08-accounts-metadata-review.md)
+
+## GAP-022 - Investment-Business Report Reproducibility and Approval
+
+### Current State
+- The page is hardcoded to the 2025 trade period and two master account ids.
+- Missing NAV is treated as zero and missing country is treated as Costa Rica.
+- The page has no formal export, source manifest, run id, preparer, reviewer, reconciliation, certification, or filing record.
+- Debug counters are displayed as part of the production-facing report.
+
+### Required Control
+- Parameterize and validate the reporting period, as-of date, and included business/master-account population.
+- Preserve missing and unknown values instead of assigning factual defaults.
+- Generate a reproducible report run with source file ids/checksums, record counts, transformations, reconciliation totals, and exceptions.
+- Add preparer/reviewer approval and retain the approved artifact and any external submission reference.
+- Separate diagnostic counters from the approved report output.
+
+### Acceptance Criteria
+- Re-running an approved report with the retained source manifest produces the same totals.
+- Unknown country and missing NAV remain visibly unknown rather than becoming Costa Rica or zero.
+- Included and excluded master accounts are explicit and approved.
+- Every issued report has a period, run id, preparer, reviewer, approval time, artifact checksum, and filing/submission status where applicable.
+
+### Affected Processes
+- [Investment Business Regulatory Reporting](../20-investment-business-regulatory-reporting.md)
+- [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+
+## GAP-023 - Compliance-Manual Change Notification and Acknowledgment
+
+### Current State
+- The notification endpoint is invoked manually and is not connected to a committed compliance-document change.
+- It sends a generic message to one hardcoded recipient with no manual version, changed sections, reason, owner, due date, or approval request.
+- No delivery reconciliation, acknowledgment, review decision, approval, or publication status is stored.
+
+### Required Control
+- Create a governed manual-change record containing document/version, change summary, reason, author, approver, effective date, and affected processes or controls.
+- Trigger notifications from an approved change event or require the change record id in the manual endpoint.
+- Notify the configured review group, track delivery and acknowledgment, and escalate overdue reviews.
+- Prevent a changed manual from being marked effective until required approval is retained.
+
+### Acceptance Criteria
+- Every notification resolves to a specific immutable manual version and change record.
+- Required reviewers, delivery state, acknowledgment, decision, comments, and approval time are retained.
+- Rejected or overdue changes remain visibly unresolved.
+- The published/effective manual version matches the approved artifact checksum.
+
+### Affected Processes
+- [Compliance Manual Update Notification](../21-compliance-manual-update-notification.md)
+- [IT Documentation Standard](../../itgc/05-it-documentation-standard.md)
 
 ## Implementation Sequence
 
@@ -524,7 +703,8 @@ The current workflows provide useful application capture, document upload, scree
 4. Integrate expiration findings and scheduled audits through GAP-007 and GAP-009.
 5. Make GAP-011 preflight authoritative before changing the IBKR submission route.
 6. Replace contact-id public uploads with GAP-015 request tokens before expanding public outreach.
-7. Correct AML inputs first, then add sanctions candidate review, FATF refresh, and persistent transaction findings through GAP-012, GAP-013, GAP-016, and GAP-017.
+7. Correct AML inputs and compliance-source assurance first, then add sanctions candidate review, FATF refresh, daily coverage, and persistent transaction findings through GAP-012, GAP-013, and GAP-016 through GAP-019.
+8. Repair and govern the regulatory file, fee review, investment-business report, and manual-change lifecycle through GAP-020 through GAP-023.
 
 Implementation changes that add or alter database records must include SQL migration scripts under the workspace-level `sql/` directory.
 
@@ -537,5 +717,5 @@ Implementation changes that add or alter database records must include SQL migra
 
 ## Last Reviewed
 - Status: proposed
-- Date: 2026-07-14
-- Reviewer: Codex gap assessment
+- Date: 2026-07-15
+- Reviewer: Codex current-state and gap assessment

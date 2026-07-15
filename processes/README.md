@@ -16,7 +16,7 @@ The unit of documentation is a business process, not an individual endpoint or c
 Confirmed control gaps and remediation acceptance criteria are maintained separately in [Operational Lifecycle Control Gaps](gaps/operational-lifecycle-gaps.md). A gap document describes required future controls and must not be treated as evidence that those controls currently operate.
 
 ## Workflow Overview
-The current documented lifecycle is strongest in onboarding, screening, document review, and banking operations. Investigation-case management and regulatory filing workflows are not yet documented as first-class processes.
+The current documented lifecycle covers onboarding, compliance-reference refreshes, screening and AML scoring, document review, deposits and withdrawals monitoring, account-level regulatory review, fee-template review, investment-business reporting, and banking operations. Investigation-case management, formal disposition/approval lifecycles, regulatory filing submission, and evidence certification remain control gaps rather than operating processes.
 
 ```mermaid
 flowchart LR
@@ -26,12 +26,14 @@ flowchart LR
     D -- "No" --> E["Operational follow-up: documents, screenings, metadata fixes"]
     D -- "Yes" --> F["Submit to IBKR"]
     F --> G["Monitor registration tasks and pending tasks"]
-    G --> H["Ongoing reviews: sanctions, POI expiry, documents review"]
+    G --> H["Ongoing reviews: sanctions, transactions, documents, regulatory file"]
     H --> I["Cash and banking servicing"]
 
     E --> E1["Documents Review"]
     E --> E2["POI Expiration Review"]
     H --> H1["Daily Screening Run"]
+    H --> H2["Deposits & Withdrawals Monitoring"]
+    H --> H3["Regulatory File Review"]
     I --> I1["Internal instructions"]
     I --> I2["IBKR instruction status and cash flows"]
 ```
