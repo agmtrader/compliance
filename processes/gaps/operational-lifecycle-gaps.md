@@ -32,6 +32,22 @@ This first remediation scope covers:
 - Regulatory-file review data integrity and audit evidence
 - Investment-business report reproducibility and approval
 - Compliance-manual change notification and acknowledgment
+- Complete and current IBKR account-details refreshes
+- AGM-to-IBKR account-population reconciliation
+- Effective-dated IBKR associated-person and contact-link reconciliation
+- Authoritative KYC/AML readiness and account-activation gating
+- Resumable onboarding and incomplete-application remediation
+- Ongoing and event-driven customer due diligence
+- Beneficial-ownership and organization-control structures
+- PEP, adverse-media, and regulatory-action screening
+- AML risk-model governance and controlled overrides
+- Suspicious-activity investigation and SAR/STR decision lifecycles
+- Expanded transaction-monitoring coverage
+- Source-of-Funds and funding-party verification
+- Account closure, holder removal, dormancy, and offboarding
+- Compliance exceptions, waivers, and secondary approval
+- Compliance control testing, quality assurance, and certification
+- Regulatory-obligations and IBKR-reliance mapping
 
 The original gap identifiers are retained so implementation work, process updates, and change records can refer to stable IDs.
 
@@ -58,6 +74,22 @@ The current workflows provide useful application capture, document upload, scree
 - The regulatory-file page calls an account-screening route absent from the current API, converts failed sections to empty data, and displays false-positive and true-match dispositions as hardcoded `False`.
 - Investment-business reporting is a read-only view without persisted completion, exception disposition, preparer/reviewer approval, or a reproducible run snapshot.
 - The compliance-manual notification endpoint sends a generic email to one hardcoded recipient without linking it to a document version or recording acknowledgment.
+- The IBKR account-details backup carries prior account details forward and requests fresh details only for account numbers missing from the retained file, so changes to existing accounts and associated persons can remain stale indefinitely.
+- No completed reconciliation proves that every in-scope IBKR account exists once in AGM or identifies IBKR-only, AGM-only, duplicate, wrong-master-account, and status-mismatch populations.
+- Account-contact links do not retain an authoritative role, active/inactive state, effective dates, source snapshot, or controlled removal history.
+- There is no single compliance-readiness decision that proves KYC, AML assessment, current screening, accepted documents, beneficial ownership, and blocking-case resolution before IBKR submission and live-account activation.
+- Onboarding creates and changes records through multiple independent operations without a durable checkpoint model that identifies and safely resumes incomplete applications.
+- Document-expiration review does not constitute a complete risk-based ongoing CDD program with scheduled and event-driven reassessment.
+- Organization review does not maintain a complete versioned ownership and control structure covering indirect owners, beneficial owners, control persons, nominees, and other applicable roles.
+- The documented screening program does not define separate PEP, relative/close-associate, adverse-media, or regulatory-action candidate review.
+- AML scores do not have a documented model-governance lifecycle covering rule versions, validation, calibration, approval, and controlled overrides.
+- Transaction findings do not feed a restricted suspicious-activity investigation, SAR/STR decision, filing, deadline, confidentiality, or continuing-activity workflow.
+- Current transaction monitoring is on demand and does not cover aggregated behavior, structuring, rapid movement, third-party funding, dormant reactivation, related-account patterns, or other approved scenarios.
+- Source-of-Wealth evidence is not paired with a policy for verifying the source and ownership of funds used for material or unusual funding events.
+- Account closure, holder removal, dormancy, reactivation, rejection, and withdrawal are not governed by a complete compliance offboarding lifecycle.
+- Compliance exceptions and waivers are not centrally recorded with scope, risk, compensating controls, approval, expiration, and preflight effect.
+- The process library defines acceptance criteria but does not define a control-testing and independent quality-assurance program that proves the controls operate effectively.
+- The repository does not map each AML/KYC obligation to AGM, IBKR, or shared responsibility by legal entity, jurisdiction, product, account type, deadline, evidence, and retention requirement.
 
 ## Priority Summary
 
@@ -85,6 +117,23 @@ The current workflows provide useful application capture, document upload, scree
 | GAP-020 | Regulatory-file review data integrity and audit evidence | P0 | GAP-013, GAP-014 |
 | GAP-022 | Investment-business report reproducibility and approval | P1 | Reporting snapshot and approval model |
 | GAP-023 | Compliance-manual change notification and acknowledgment | P1 | Documentation governance workflow |
+| GAP-024 | Accounts Audit population reconciliation and review evidence | P0 | GAP-005, GAP-009, GAP-013, GAP-014 |
+| GAP-025 | Complete IBKR account-details refresh | P0 | Existing IBKR details ETL and master-account inventory |
+| GAP-026 | AGM/IBKR account-population reconciliation | P0 | GAP-025 |
+| GAP-027 | Associated-person and contact-link lifecycle reconciliation | P0 | GAP-008, GAP-014, GAP-025, GAP-026 |
+| GAP-028 | Authoritative KYC/AML readiness and activation gate | P0 | GAP-011, GAP-025 through GAP-027, GAP-030 through GAP-033 |
+| GAP-029 | Resumable onboarding and incomplete-application remediation | P0 | GAP-008, GAP-010, GAP-014 |
+| GAP-030 | Ongoing and event-driven CDD/KYC refresh | P0 | GAP-008, GAP-009, GAP-014, GAP-025 through GAP-027 |
+| GAP-031 | Beneficial ownership and organization-control structure | P0 | GAP-001, GAP-005, GAP-008, GAP-012 through GAP-014, GAP-027 |
+| GAP-032 | PEP, adverse-media, and regulatory-action screening | P0 | GAP-008, GAP-013, GAP-014, GAP-018, GAP-019 |
+| GAP-033 | AML risk-model governance and overrides | P1 | GAP-012, GAP-014, GAP-016, GAP-030 through GAP-032 |
+| GAP-034 | Suspicious-activity investigation and SAR/STR lifecycle | P0 | GAP-008, GAP-014, GAP-017, GAP-035, GAP-040 |
+| GAP-035 | Expanded transaction-monitoring coverage | P0 | GAP-008, GAP-014, GAP-017, GAP-025, GAP-026 |
+| GAP-036 | Source-of-Funds and funding-party verification | P0 | GAP-002, GAP-005, GAP-008, GAP-014, GAP-017, GAP-035 |
+| GAP-037 | Account closure, holder removal, dormancy, and offboarding | P1 | GAP-008, GAP-014, GAP-025 through GAP-030, GAP-034 |
+| GAP-038 | Compliance exceptions, waivers, and secondary approval | P0 | GAP-008, GAP-010, GAP-011, GAP-014, GAP-028 |
+| GAP-039 | Compliance control testing, QA, and certification | P1 | Implemented controls and retained test evidence |
+| GAP-040 | Regulatory obligations and IBKR reliance matrix | P0 | Legal and compliance review of AGM's operating perimeter |
 
 ## GAP-001 - Category-Aware Document Validation
 
@@ -700,17 +749,486 @@ The current workflows provide useful application capture, document upload, scree
 - [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
 - [Advisor Contact Linking](../15-advisor-contact-linking.md)
 
+## GAP-025 - Complete IBKR Account-Details Refresh
+
+### Current State
+- The daily IBKR details process reads the most recent retained account-details file and requests current details only for internal IBKR account numbers absent from that file.
+- Existing account details are carried forward without proving that account status, associated persons, residence, financial information, risk data, and other mutable fields were refreshed.
+- Per-account failures and hardcoded exclusions can leave accounts absent without making the resulting dataset unusable for downstream reviews.
+- The retained dataset does not provide a run manifest proving the expected population, requested accounts, successes, failures, skips, source time, and checksum.
+
+### Required Control
+- Retrieve current details for every in-scope account across every configured IBKR master account on each scheduled refresh.
+- Create an immutable run manifest containing run id, business date, master accounts, expected account count, requested count, success count, failure count, skipped count, account-level outcomes, retrieval timestamps, and snapshot checksum.
+- Classify each run as `complete`, `partial`, or `failed` under documented reconciliation rules.
+- Prevent a partial or failed run from replacing the last complete snapshot used by compliance decisions.
+- Retain partial results for investigation without presenting them as a current complete population.
+- Require every exclusion to have an approved reason, owner, effective date, and expiration or review date.
+
+### Acceptance Criteria
+- A successful run proves that every expected in-scope IBKR account was requested and returned successfully or was covered by a current approved exclusion.
+- Every account-level failure is visible and reconciles to the run totals.
+- The exact snapshot and manifest used by an audit, screening, reconciliation, or report can be identified later.
+- Changes to associated persons and other mutable fields on existing accounts appear in the next complete snapshot.
+- Automated tests cover complete runs, per-account failures, unavailable master accounts, exclusions, duplicate responses, and last-known-good behavior.
+
+### Affected Processes
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Investment Business Regulatory Reporting](../20-investment-business-regulatory-reporting.md)
+
+## GAP-026 - AGM/IBKR Account-Population Reconciliation
+
+### Current State
+- Reviews generally begin with internal AGM accounts and therefore do not prove that every in-scope IBKR account has a corresponding AGM application and compliance record.
+- No durable reconciliation identifies IBKR-only accounts, AGM-only live accounts, duplicate mappings, wrong-master-account assignments, status mismatches, or accounts omitted by the IBKR details feed.
+- Accounts Audit excludes internal accounts from Account Focus when no matching IBKR detail exists, which can hide rather than resolve population exceptions.
+
+### Required Control
+- Reconcile every complete IBKR account snapshot against the complete AGM account population.
+- Classify every record into mutually exclusive results: one-to-one match, IBKR-only, AGM-only, duplicate internal mapping, conflicting IBKR identity, unexpected master account, status mismatch, excluded, or unresolved.
+- Treat an IBKR-only account as a high-priority compliance exception until AGM obtains the required application, KYC, screenings, ownership information, and approvals or documents that the account is outside AGM's responsibility.
+- Create or update a deduplicated case for every unresolved exception with owner, severity, due date, and source snapshot.
+- Retain reconciliation counts, matching rules, exclusions, run id, reviewer, and completion decision.
+
+### Acceptance Criteria
+- Every completed reconciliation proves that the expected IBKR population equals matched accounts plus explicitly classified exceptions.
+- No account can disappear from the population because its details failed to load.
+- Duplicate and conflicting mappings cannot be classified as successful matches.
+- Dashboard totals reconcile to the retained run rather than recalculating from an unverified browser population.
+- A new IBKR-only account creates a case automatically.
+
+### Affected Processes
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+
+## GAP-027 - Associated-Person and Contact-Link Lifecycle Reconciliation
+
+### Current State
+- `account_contact` records do not define an authoritative holder role, source, active/inactive state, effective dates, last-confirmed IBKR snapshot, or controlled removal reason.
+- New identifiers can be populated through name or email matching without a retained identity-resolution decision.
+- No scheduled workflow compares current AGM contact links with every associated person in a complete IBKR snapshot.
+- A physical link deletion would remove current relationship state without preserving when, why, and by whom the relationship ended.
+
+### Required Control
+- Store relationship role, source, `valid_from`, `valid_to`, first-seen snapshot, last-seen snapshot, current state, decision reason, reviewer, and approval timestamp.
+- Support at minimum `pending_add`, `active`, `change_pending_review`, `pending_remove`, `inactive`, `ambiguous`, and `rejected` states.
+- Match associated persons using stable IBKR entity id, external id, or a previously approved mapping. Use exact verified email only as a controlled candidate and names only for manual review.
+- When a new IBKR person appears, create a case and require contact resolution, role classification, required KYC, screening, and approval before activation.
+- When an AGM-linked person no longer appears, mark the relationship `pending_remove`; do not delete or deactivate it from one absence.
+- Require a complete source snapshot plus consecutive confirmation or live IBKR confirmation, investigation of identifier and role changes, and an approved disposition before setting `valid_to` and `inactive`.
+- Preserve the contact, documents, screenings, cases, and historical relationship after deactivation.
+
+### Acceptance Criteria
+- Every active relationship identifies its current role and the authoritative source that last confirmed it.
+- A name-only candidate cannot update an IBKR entity or external id automatically.
+- One incomplete or failed IBKR snapshot cannot unlink or deactivate a person.
+- Added, changed, missing, ambiguous, and removed persons create distinct reconciliation findings.
+- Historical reports can reproduce which persons and roles were active on a prior date.
+- Downstream screening, outreach, and reporting use the approved relationship state and role.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Contact Deduplication and Dependency Merge](../14-contact-deduplication-workflow.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-028 - Authoritative KYC/AML Readiness and Activation Gate
+
+### Current State
+- Dashboard performs selected document and payload checks before IBKR submission, but there is no single server-owned decision proving that all KYC, AML, screening, ownership, case, and evidence requirements were satisfied.
+- Document presence and any historical screening can appear sufficient even when documents are unaccepted or expired and screening is stale or unresolved.
+- The manual organization-account path can populate an IBKR account number and submission date without the same compliance decision used for other applications.
+- An IBKR account number is treated as the practical boundary between an application and a live account without a separate compliance activation decision.
+
+### Required Control
+- Create one authoritative compliance preflight used by readiness displays, all IBKR submission routes, manual organization onboarding, and account activation.
+- Before submission, require approved application state; unambiguous required-party resolution; completed identity verification; accepted current documents; applicable Source-of-Wealth and Source-of-Funds evidence; current screening; resolved sanctions and other screening candidates; current AML assessment; required high-risk approval; complete beneficial ownership; no blocking cases; current CDD; current compliance sources; and retained agreements.
+- Return structured blockers and warnings tied to the affected party, document, assessment, source, case, or obligation.
+- Store the complete preflight result, rule version, source snapshots, acknowledgments, and decision with every submission attempt.
+- Before activation, additionally require confirmation in a complete IBKR snapshot, account and master-account reconciliation, associated-person reconciliation, and disposition of required IBKR compliance tasks.
+- Separate `approved_for_ibkr`, `submitted_to_ibkr`, `activation_pending`, and `active` states.
+
+### Acceptance Criteria
+- Direct API calls, Dashboard, Hub, and manual organization onboarding cannot use different compliance rules.
+- An account with a missing or expired document, stale screening, unresolved candidate, incomplete ownership structure, overdue CDD review, or open blocking case cannot be submitted or activated.
+- An IBKR account number alone cannot make an internal record active.
+- High-risk or exception-based approvals identify the required approver and supporting evidence.
+- Submission and activation decisions remain reproducible from the retained preflight result and source versions.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-029 - Resumable Onboarding and Incomplete-Application Remediation
+
+### Current State
+- Onboarding performs account creation, contact resolution, link creation, screening, document upload, agreement storage, IBKR submission, and result persistence as separate operations.
+- A later failure can leave earlier records committed without a durable indication of the last completed control step.
+- Retrying a partial application does not follow one documented idempotency and reconciliation rule.
+- Incomplete drafts can be difficult to distinguish from applications awaiting compliance review.
+
+### Required Control
+- Create a durable onboarding workflow with checkpoints such as `draft_created`, `contacts_resolved`, `relationships_created`, `documents_received`, `screenings_completed`, `compliance_review_pending`, `approved_for_ibkr`, `submission_in_progress`, `submitted`, `submission_failed`, `activation_pending`, and `active`.
+- Record the last successful step, current blocker, attempts, last error, correlation key, and records created or updated by each step.
+- Make each step idempotent so a retry resumes safely without duplicating contacts, relationships, screenings, documents, or external submissions.
+- Reconcile any uncertain external submission result before permitting another submission attempt.
+- Create a scheduled remediation population for incomplete or stalled workflows and define service levels and escalation.
+- Keep draft creation permissible while preventing any draft or partial workflow from satisfying compliance approval or activation.
+
+### Acceptance Criteria
+- Every partially completed application has an explicit state, blocker, owner, and recoverable next action.
+- A retry after failure does not create duplicate controlled records or duplicate IBKR submissions.
+- Stalled applications are detected without a user opening the application page.
+- Operators can distinguish client-abandoned drafts, operational failures, compliance holds, rejected applications, and submission failures.
+- The onboarding history identifies the result of each step and its source or external correlation reference.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-030 - Ongoing and Event-Driven CDD/KYC Refresh
+
+### Current State
+- Document-expiration findings are planned, but the lifecycle does not define a complete risk-based ongoing customer due-diligence review.
+- Contacts and accounts do not have a governed last-review date, next-review date, review reason, completed scope, or overdue status.
+- Material changes in customer information, ownership, activity, IBKR relationships, and risk do not automatically trigger reassessment.
+
+### Required Control
+- Assign each active customer and account a current risk category, last completed CDD review, next review due date, policy-based frequency, and current review status.
+- Define periodic review frequency by risk and applicable obligation without assuming that one interval fits every customer.
+- Trigger event-driven review for material identity, address, nationality, tax residence, employment, business activity, financial profile, wealth/funds, beneficial ownership, control-person, screening, IBKR relationship, transaction-pattern, document, jurisdiction-risk, dormant-reactivation, and regulatory changes.
+- Reassess customer risk and downstream review frequency when a trigger is material.
+- Create deduplicated cases for due, overdue, and event-triggered reviews and escalate overdue high-risk reviews.
+- Retain the data reviewed, source versions, changes since the prior review, reviewer, decision, and next-review calculation.
+
+### Acceptance Criteria
+- No active in-scope customer has an overdue CDD review without an open approved exception.
+- High-risk and lower-risk review frequencies follow the approved policy and are visible in the system.
+- A material IBKR associated-person or beneficial-ownership change triggers review automatically.
+- Completed reviews identify the exact customer information and compliance sources assessed.
+- Review completion recalculates risk and the next due date under a retained policy version.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-031 - Beneficial Ownership and Organization-Control Structure
+
+### Current State
+- Organization workflows do not maintain one complete, versioned ownership and control structure.
+- Some reviews use the first organization-associated person rather than applying approved coverage rules to all required beneficial owners, control persons, directors, authorized persons, and other applicable roles.
+- Indirect ownership, intermediate entities, ownership percentages, nominee relationships, and changes over time are not reconciled as a governed structure.
+
+### Required Control
+- Store the legal entity, formation and operating jurisdictions, direct owners, intermediate entities, indirect owners, calculated ultimate ownership, control persons, directors, officers, partners, authorized traders, nominees, and trust or similar roles where applicable.
+- Define the beneficial-ownership threshold and control tests in a versioned policy by applicable obligation and entity type.
+- Require ownership percentages to reconcile or create a documented exception.
+- Resolve every required natural person to a contact with their own KYC verification, screening, risk assessment, documents, and effective-dated relationship.
+- Detect missing intermediate entities, circular ownership, unexplained nominees, unverified controllers, conflicting identifiers, and differences between application, AGM, and IBKR data.
+- Preserve each approved ownership version and the evidence supporting it.
+
+### Acceptance Criteria
+- AGM can identify who ultimately owns and controls every in-scope organization and how that conclusion was reached.
+- Every required owner or controller has current KYC, screening, and relationship evidence.
+- Ownership totals and indirect calculations are reproducible under the retained policy version.
+- A material ownership or control change creates an event-driven CDD review and blocks readiness where required.
+- Organization review cannot be completed from only the first associated person.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-032 - PEP, Adverse-Media, and Regulatory-Action Screening
+
+### Current State
+- The documented screening program focuses on OFAC, UK, UN, and FATF-related results.
+- PEP or adverse indicators can influence the current risk formula when already present in source data, but no separate controlled workflow creates, investigates, and dispositions PEP, relative/close-associate, adverse-media, or regulatory-action candidates.
+- There is no retained evidence that every required party received current coverage from the approved sources.
+
+### Required Control
+- Define approved sources, coverage populations, refresh frequencies, matching rules, and review responsibilities for PEPs, relatives and close associates where required, adverse media, and regulatory or disciplinary actions.
+- Generate candidates using available names, aliases, birth dates, nationalities, residences, positions, organizations, locations, identification details, related parties, and timelines.
+- Do not automatically treat a candidate as a confirmed result.
+- Support `pending`, `false_positive`, `confirmed`, `insufficient_information`, and `escalated` dispositions with reviewer, timestamp, evidence, and rationale.
+- Require enhanced due diligence and appropriate approval for confirmed or material unresolved results under the approved policy.
+- Include current source versions and dispositions in the compliance-readiness gate and ongoing CDD review.
+
+### Acceptance Criteria
+- Every required holder, beneficial owner, control person, and other in-scope party has current coverage under each applicable screening type.
+- Candidates remain pending until an authorized reviewer records a disposition.
+- Confirmed and unresolved material results affect risk, case severity, approval, and review frequency.
+- False positives remain linked to the source candidate and can be reconsidered when identifiers or source data change.
+- Screening runs reconcile planned, completed, failed, skipped, and candidate counts by source.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-033 - AML Risk-Model Governance and Overrides
+
+### Current State
+- The AML assessment uses a defined weighted formula, but the operating workflow does not retain a governed model version, complete source inputs, component-level rationale, approval history, or model-change record.
+- Hardcoded jurisdiction and other risk classifications can change without preserving the effective model used by historical assessments.
+- Manual risk or score overrides do not have a documented request, approval, evidence, expiration, and review lifecycle.
+
+### Required Control
+- Retain model version, rule version, input values, input sources, component scores, weights, final score, assigned risk category, missing inputs, and calculation timestamp for every assessment.
+- Define model owner, approver, validation frequency, data-quality requirements, risk thresholds, consequences by risk level, and change-approval process.
+- Validate and calibrate the model using actual customer populations, investigations, false positives, missed cases, and material business or regulatory changes.
+- Test all model changes before release and preserve the before/after impact on representative populations.
+- For every override, retain the calculated result, requested result, reason, evidence, requester, approver, effective date, expiration, and required secondary approval for material risk reductions.
+- Never overwrite the original calculated assessment with an override.
+
+### Acceptance Criteria
+- Any historical risk assessment can be reproduced from retained inputs and the exact model version.
+- Model changes identify their approver, testing evidence, effective date, and population impact.
+- Missing or ambiguous required inputs prevent automatic completion rather than receiving silent defaults.
+- Overrides are visible separately from calculated results and expire or receive periodic review.
+- Risk level drives documented CDD frequency, approval, enhanced-due-diligence, and monitoring consequences.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-034 - Suspicious-Activity Investigation and SAR/STR Lifecycle
+
+### Current State
+- Transaction flags and screening findings do not feed a formal restricted suspicious-activity investigation and regulatory-reporting decision.
+- The process library does not define investigation ownership, decision authority, filing deadlines, filing acknowledgment, continuing-activity review, confidentiality, or a documented no-file rationale.
+- Exact filing obligations and information-sharing responsibilities between AGM and IBKR are not mapped.
+
+### Required Control
+- Create a restricted investigation model linking originating alerts, customers, related accounts and parties, transaction populations, narrative, evidence, requests for information, investigator, decision maker, and deadlines.
+- Support controlled decisions such as `file`, `do_not_file`, `continue_monitoring`, `restrict_activity`, and other outcomes approved in the applicable policy.
+- Retain the filing or submission reference, acknowledgment, filing date, decision rationale, continuing-activity review date, and links to related investigations.
+- Apply confidentiality and anti-tipping-off handling defined by the applicable jurisdiction without exposing filing existence in ordinary account notes or client communications.
+- Escalate overdue investigations and filing deadlines automatically.
+- Use GAP-040 to define the applicable SAR/STR authority, threshold, deadline, form, retention, and allocation of responsibility with IBKR.
+
+### Acceptance Criteria
+- Every escalated suspicious-activity investigation reaches a documented decision within the applicable deadline.
+- A filed report reconciles to a retained external acknowledgment or submission reference.
+- A decision not to file retains sufficient analysis, approver, and supporting evidence.
+- Related alerts and accounts can be investigated together without losing their individual source evidence.
+- Confidential filing information is separated from ordinary operational case information.
+
+### Affected Processes
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-035 - Expanded Transaction-Monitoring Coverage
+
+### Current State
+- Transaction monitoring is initiated when a user opens a report and evaluates a limited set of browser-derived rules.
+- The over-USD-10,000 rule uses signed amount and therefore does not detect withdrawals under the same threshold logic.
+- The workflow does not define scheduled coverage for aggregated activity, structuring, rapid movement, third-party funding, dormant reactivation, related-account patterns, geographic risk, or other scenarios selected from AGM's risk assessment.
+- Alert populations, rule versions, lookback windows, and source reconciliation are not retained.
+
+### Required Control
+- Approve a scenario inventory based on AGM's products, customer base, jurisdictions, delivery channels, expected activity, and division of responsibility with IBKR.
+- Consider large deposits and withdrawals, aggregation over defined periods, structuring, rapid in/out movement, profile inconsistencies, third-party funding, high-risk geographies, dormant reactivation, sudden volume changes, related-account activity, rejected or reversed instructions, unexplained internal/external transfers, and relevant securities activity.
+- Run approved scenarios on a documented schedule against a reconciled source population.
+- Persist account, transaction or event identifiers, rule and version, observed values, threshold or comparison, lookback period, customer risk, source manifest, status, owner, disposition, and escalation.
+- Deduplicate alerts by a stable finding identity while retaining recurrence and related-pattern history.
+- Reconcile source transactions, evaluated transactions, skipped transactions, alerts, failures, and exclusions before declaring a run successful.
+
+### Acceptance Criteria
+- Every expected transaction source and period is processed or appears as a visible failure or approved exclusion.
+- Re-running the same source and rule version cannot create duplicate active alerts.
+- Withdrawals and deposits are evaluated according to the approved amount and aggregation policy.
+- Alert evidence explains exactly why the rule fired and which activity was evaluated.
+- Escalated alerts can enter GAP-034 without losing their source rule and transaction evidence.
+
+### Affected Processes
+- [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+
+## GAP-036 - Source-of-Funds and Funding-Party Verification
+
+### Current State
+- The application captures Source-of-Wealth declarations and Accounts Audit expects supporting Source-of-Wealth evidence.
+- The workflow does not separately establish where funds for a material or unusual deposit originated or whether the originating account belongs to the customer.
+- Third-party funding, payer-to-customer relationships, funding purpose, and transaction-specific evidence are not governed as a persistent review.
+
+### Required Control
+- Define Source-of-Wealth as the origin of overall accumulated wealth and Source-of-Funds as the origin and ownership of funds used for a particular account or transaction.
+- Establish risk-based triggers using amount, customer risk, funding method, origin country, payer identity, third-party status, expected account purpose, and consistency with declared financial capacity.
+- Retain originating institution, account holder, relationship to the customer, funding purpose, Source-of-Funds category, supporting evidence, verification result, reviewer, and decision.
+- Prohibit third-party funding or define the limited permitted scenarios, evidence, approvals, and monitoring required.
+- Compare funding behavior with expected activity, Source-of-Wealth, financial profile, and related transaction-monitoring alerts.
+- Route material inconsistencies or unexplained funding to a case and, where appropriate, GAP-034.
+
+### Acceptance Criteria
+- AGM can identify the origin and ownership of every funding event that meets the approved review criteria.
+- A Source-of-Wealth document alone cannot resolve a transaction-specific Source-of-Funds requirement.
+- An unapproved or unexplained third-party funding event remains unresolved and cannot be marked reviewed solely through a freeform comment.
+- Verification evidence and decisions remain linked to the source transaction and customer profile.
+- Repeated or related funding events are evaluated collectively where required by the monitoring policy.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Account Banking Instructions Handling](../11-account-banking-instructions-handling.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-037 - Account Closure, Holder Removal, Dormancy, and Offboarding
+
+### Current State
+- The process library focuses on account opening and active servicing and does not define a complete compliance end-of-relationship lifecycle.
+- AGM and IBKR account status can diverge without a case or closure reconciliation.
+- Former holders can remain linked without an effective end date and may continue appearing in outreach, screening, document, and review populations.
+- Reactivation does not require a documented new compliance-readiness decision.
+
+### Required Control
+- Define `closure_requested`, `closure_under_review`, `closure_blocked`, `closing`, `closed`, `dormant`, `reactivation_under_review`, `rejected`, and `withdrawn` states with controlled transitions.
+- Before closure, evaluate open investigations, suspicious-activity decisions, filings, pending transactions, required IBKR tasks, remaining assets, legal holds, retention requirements, and active authorized persons.
+- Reconcile and retain IBKR closure confirmation, effective date, reason, reviewer, and any remaining exceptions.
+- Effective-date associated-person and contact relationships instead of deleting them.
+- Remove closed accounts and inactive persons from active outreach and servicing populations while retaining required compliance evidence.
+- Define legally required post-closure monitoring, reporting, retention, and purge approval.
+- Require a current compliance-readiness review before dormant or closed relationships are reactivated where policy permits reactivation.
+
+### Acceptance Criteria
+- AGM and IBKR closure status reconcile or create an owned case.
+- No closed account remains in an active outreach or servicing population solely because its internal row still exists.
+- Former relationships remain historically reproducible and cannot satisfy current-holder requirements.
+- An unresolved investigation or required filing cannot be silently lost through closure.
+- Reactivation records a new review, decision, source snapshots, and approval.
+
+### Affected Processes
+- [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-038 - Compliance Exceptions, Waivers, and Secondary Approval
+
+### Current State
+- Individual gaps mention selected waivers or approvals, but there is no central exception lifecycle covering all compliance blockers.
+- Operators can otherwise rely on comments or manual actions without recording the exact requirement overridden, risk introduced, compensating control, approval authority, and expiration.
+- The submission preflight does not distinguish valid approved exceptions from unresolved blockers.
+
+### Required Control
+- Create a controlled exception record identifying the requirement, affected entity, requested exception, reason, evidence, risk, compensating controls, requester, approving role, decision, comments, effective date, expiration, review date, and closure or revocation.
+- Define which requirements may be waived, which may never be waived, and which require secondary or senior approval.
+- Apply maximum duration, renewal, escalation, and periodic-review rules by exception type and severity.
+- Prevent the requester from acting as sole approver where the policy requires separation.
+- Make the compliance-readiness gate consume only current approved exceptions and display the exact blocker they affect.
+- Do not treat a confirmed sanctions match or legally prohibited activity as an ordinary document or timing waiver.
+
+### Acceptance Criteria
+- Every account that proceeds despite a standard blocker has a valid, approved, unexpired exception tied to that blocker.
+- An expired, revoked, rejected, or unrelated exception cannot satisfy preflight.
+- Compensating controls and follow-up dates create scheduled work and escalation.
+- Exception renewal preserves the prior decision and requires a new assessment.
+- Reports identify active, expiring, expired, rejected, and overdue exceptions by owner and risk.
+
+### Affected Processes
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-039 - Compliance Control Testing, QA, and Certification
+
+### Current State
+- Gap acceptance criteria describe intended tests, but no documented control-testing program proves that the implemented controls cannot be bypassed and continue to operate over complete populations.
+- Operational reviews do not define independent quality-assurance sampling across approved, rejected, high-risk, manually handled, and exception-based accounts.
+- Gap closure does not identify a standard design-effectiveness and operating-effectiveness evidence package.
+
+### Required Control
+- Define automated negative tests that attempt submission or activation with missing, expired, rejected, incorrectly linked, or unprocessed documents; stale or failed screening; unresolved candidates; incomplete ownership; overdue CDD; and open blocking cases.
+- Define operational reconciliation tests for scheduled populations, source manifests, IBKR accounts, associated persons, screenings, alerts, cases, exports, failures, and exclusions.
+- Define independent QA sampling using complete populations and documented risk-based or representative sample methods.
+- Record test period, scope, control and rule versions, tester, tester independence, population, sample, evidence, exceptions, severity, owner, remediation date, retest, and certification.
+- Require failed tests to reopen or prevent closure of the related gap and control certification.
+- Report control-failure trends and incorporate them into training, policy, model, and process changes.
+
+### Acceptance Criteria
+- Every material KYC, AML, screening, monitoring, reconciliation, approval, and evidence control has documented design and operating-effectiveness testing.
+- Negative tests prove the authoritative readiness gate fails closed for each required blocker.
+- QA samples can be reproduced from the retained population and selection method.
+- Findings remain open until remediation and successful retest are retained.
+- A business-owner certification cannot be completed when a material control test failed or the source population was incomplete.
+
+### Affected Processes
+- [Daily Screening Run](../01-daily-screening-run.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-040 - Regulatory Obligations and IBKR Reliance Matrix
+
+### Current State
+- The repository does not establish AGM's exact AML/KYC legal and contractual perimeter by legal entity, license, jurisdiction, product, account type, and IBKR relationship.
+- The process library does not identify which obligations AGM performs, which IBKR performs, which are shared, and what evidence AGM must retain when relying on IBKR.
+- Exact suspicious-activity reporting, CDD, beneficial-ownership, screening, retention, and information-sharing requirements cannot be derived from the application code alone.
+
+### Required Control
+- Create an approved matrix organized by AGM legal entity, license or registration, customer jurisdiction, product, account type, master/introducing/clearing relationship, regulator, law or rule, obligation, trigger, deadline, evidence, retention, escalation, and last review.
+- Assign each obligation to AGM, IBKR, or shared responsibility and identify the contractual or legal basis for that allocation.
+- Cover customer identification, beneficial ownership, sanctions, PEP and enhanced due diligence, ongoing CDD, transaction monitoring, suspicious-activity reporting, recordkeeping, regulatory reporting, account restrictions and closure, information sharing, examinations, and regulatory requests.
+- Define how AGM verifies that a control performed by IBKR operated and which evidence AGM receives and retains.
+- Link system rules, document requirements, screening populations, deadlines, reports, and process manuals to the obligation and policy version that requires them.
+- Review the matrix after regulatory, licensing, product, jurisdiction, contractual, or operating-model changes.
+
+### Acceptance Criteria
+- Every material AML/KYC control maps to an approved obligation, policy, or documented risk-based decision.
+- AGM can identify its responsibility and IBKR's responsibility for every in-scope account and compliance process.
+- Reliance on IBKR identifies the evidence, service level, exception path, and escalation required when the evidence is missing or the control fails.
+- Jurisdiction-specific filing and retention deadlines used by the system match the approved matrix.
+- Changes to the matrix trigger review of affected process documents, rules, tests, and controls.
+
+### Affected Processes
+- [AGM Process Library](../README.md)
+- [Account Opening and AGM Account Creation](../09-account-opening-and-agm-account-creation.md)
+- [IBKR Account Submission and Onboarding](../10-ibkr-account-submission-and-onboarding.md)
+- [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
+- [Deposits and Withdrawals Monitoring](../17-deposits-and-withdrawals-monitoring.md)
+- [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
+- [Investment Business Regulatory Reporting](../20-investment-business-regulatory-reporting.md)
+- [Accounts Audit Review](../22-accounts-audit-review.md)
+
 ## Implementation Sequence
 
-1. Define the document policy matrix and retention/audit requirements for GAP-001, GAP-002, and GAP-014.
-2. Add the document validity, processing, translation, and reconciliation foundations for GAP-003 through GAP-006.
-3. Add the case and application state models for GAP-008 and GAP-010.
-4. Integrate expiration findings and scheduled audits through GAP-007 and GAP-009.
-5. Make GAP-011 preflight authoritative before changing the IBKR submission route.
-6. Replace contact-id public uploads with GAP-015 request tokens before expanding public outreach.
-7. Correct AML inputs and compliance-source assurance first, then add sanctions candidate review, FATF refresh, daily coverage, and persistent transaction findings through GAP-012, GAP-013, and GAP-016 through GAP-019.
-8. Repair and govern the regulatory file, investment-business report, and manual-change lifecycle through GAP-020, GAP-022, and GAP-023.
-9. Add reproducible Accounts Audit population reconciliation, safe outreach, live task freshness, and retained review certification through GAP-024.
+1. Establish AGM's approved regulatory perimeter and allocation of responsibilities with IBKR through GAP-040 so later controls implement the correct obligations, populations, deadlines, evidence, and retention rules.
+2. Define the document policy matrix, Source-of-Wealth and Source-of-Funds policies, retention and audit requirements, and exception authority for GAP-001, GAP-002, GAP-014, GAP-036, and GAP-038.
+3. Replace the carried-forward IBKR details feed with complete manifested snapshots and reconcile the account population through GAP-025 and GAP-026.
+4. Add effective-dated associated-person relationships and complete organization ownership and control structures through GAP-027 and GAP-031.
+5. Add document validity, processing, translation, and extracted-data reconciliation through GAP-003 to GAP-006, and replace contact-id public uploads through GAP-015 before expanding outreach.
+6. Add the review-case, application-decision, onboarding-checkpoint, and immutable event foundations through GAP-008, GAP-010, GAP-014, and GAP-029.
+7. Correct AML inputs and compliance-source assurance, then implement sanctions candidate review, FATF refresh, daily coverage, PEP/adverse-media coverage, and governed model results through GAP-012, GAP-013, GAP-016, GAP-018, GAP-019, GAP-032, and GAP-033.
+8. Implement expiration findings, scheduled audits, and ongoing and event-driven CDD through GAP-007, GAP-009, and GAP-030.
+9. Make the server-side preflight and activation decision authoritative through GAP-011 and GAP-028, consuming current approved exceptions under GAP-038.
+10. Persist and expand transaction-monitoring scenarios and Source-of-Funds review through GAP-017, GAP-035, and GAP-036, then connect escalated cases to the suspicious-activity and SAR/STR lifecycle in GAP-034.
+11. Add account closure, holder removal, dormancy, reactivation, and offboarding through GAP-037 using the same IBKR reconciliation, case, audit, and retention foundations.
+12. Repair and govern the regulatory file, investment-business report, and manual-change lifecycle through GAP-020, GAP-022, and GAP-023.
+13. Add reproducible Accounts Audit population reconciliation, safe outreach, live task freshness, and retained review certification through GAP-024.
+14. Execute automated negative tests, population reconciliations, independent QA sampling, remediation, retesting, and business-owner certification through GAP-039 before closing any material lifecycle gap.
 
 Implementation changes that add or alter database records must include SQL migration scripts under the workspace-level `sql/` directory.
 
