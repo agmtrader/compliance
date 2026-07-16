@@ -142,6 +142,7 @@ The current workflows provide useful application capture, document upload, scree
 - Issue date and expiration date remain optional.
 - The contact-document API accepts document metadata without category-specific validation and requires only `contact_id` before creating the raw document and relationship records.
 - Applicant identification expiration is already required in the application schema, but the uploaded POI metadata is not required to carry the same value.
+- On 2026-07-16, a controlled one-time remediation populated 441 previously blank `contact_document.expiry_date` values from the strict OCR population. The transaction used a fixed 441-row plan and SHA-256 hash, blank-value and document-link guards, a pre-write backup, and post-commit reconciliation of all 441 rows. The retained evidence is `agm-api/id_expiry_update_evidence/20260716T154815Z_manifest.json` and its referenced backup CSV. This remediation does not create an ongoing processing, approval, or exception-management control; database mismatches remain manual review items.
 
 ### Required Control
 - Define one server-owned document policy matrix by account type, holder role, category, and document type.

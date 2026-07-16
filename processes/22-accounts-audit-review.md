@@ -23,7 +23,7 @@ Provide the current on-demand compliance review of account completeness, applica
 
 ## Inputs / Prerequisites
 - Internal accounts and stored `application_json`
-- IBKR details with account id, title, applicant type, status, equity, risk score, open/close dates, financial information, and associated persons
+- IBKR details with account id, title, applicant type, status, equity, risk score, open/close dates, financial information, and associated-person phone and employment data
 - Financial-range definitions for net worth, liquid net worth, and annual net income
 - Contacts and account-contact links, including optional linked `entity_id` and `external_id`
 - Contact-document metadata; file bodies are excluded from the initial load
@@ -58,8 +58,10 @@ Provide the current on-demand compliance review of account completeness, applica
 2. One row is created for each account-contact link that resolves to an existing contact. Accounts with no valid contact link create no Contact Focus row.
 3. Missing IBKR enrichment is displayed as blank, `-`, or unknown values; it does not exclude the row.
 4. A contact is a company when `contact_type` or `type` equals `company`, or when `company_name` is nonblank. Otherwise it is a person.
-5. A linked contact is a trusted contact only when it matches an IBKR associated person by entity id, external id, or email and that associated person has the `Trusted Contact` association.
-6. Advisor status is `available` only when `account.advisor_code` resolves to an advisor and that advisor's linked contact has an email; otherwise it is `no_advisor` or `no_email`.
+5. Phone and employment enrichment comes only from the IBKR associated person whose normalized `entityId` exactly matches the account-contact link's normalized `entity_id`. A missing link entity id or missing exact IBKR person leaves those fields blank; this enrichment does not fall back to external id, email, or name.
+6. The displayed phone prefers `phones.mobile`; when mobile is blank, the first nonblank value in the IBKR `phones` object is used. Employment displays the available employment type, occupation, employer, employer business, employer address, and description.
+7. A linked contact is a trusted contact only when it matches an IBKR associated person by entity id, external id, or email and that associated person has the `Trusted Contact` association.
+8. Advisor status is `available` only when `account.advisor_code` resolves to an advisor and that advisor's linked contact has an email; otherwise it is `no_advisor` or `no_email`.
 
 ## Document Completeness and Stage Rules
 
@@ -129,7 +131,7 @@ Different Contact Focus filters combine with logical AND. Within the Status, Mis
 | Responsible | Multi-select unassigned when no current user id is stored and Dashboard user ids. A row is included when it matches any selected responsible value. The selectable user list is limited to `@agmtechnology.com`. |
 | Account age | All; opened within 1 through 10 years; or missing open date. |
 | NAV | Multi-select using the same exact bands as Account Focus. A row is included when its NAV matches any selected band. |
-| Search | Case-insensitive substring across contact name/email, account title/number/status, and joined missing-document names. |
+| Search | Case-insensitive substring across contact name/email, IBKR phone and employment fields, account title/number/status, and joined missing-document names. |
 
 The stage chart and counts are recalculated from the filtered rows. The table uses 25-row pagination and sorting.
 
@@ -160,7 +162,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 
 ## CSV Export
 
-Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.csv`. The export includes contact identity/type/role; account identity/type/status; NAV; open and close dates; account age; risk score; stage; present/required/missing documents; POI/POE/POA/SOW flags; IBKR-task flag; responsible; review comment; sent-email count; last sent time and recipient; and latest attempt status. Values beginning with `=`, `+`, `-`, or `@` are prefixed to reduce spreadsheet-formula execution risk.
+Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.csv`. The export includes contact identity/type/role; entity-id-matched IBKR phone and employment fields; account identity/type/status; NAV; open and close dates; account age; risk score; stage; present/required/missing documents; POI/POE/POA/SOW flags; IBKR-task flag; responsible; review comment; sent-email count; last sent time and recipient; and latest attempt status. Values beginning with `=`, `+`, `-`, or `@` are prefixed to reduce spreadsheet-formula execution risk.
 
 ## Outputs / Records Created
 - Browser-derived Account Focus and Contact Focus review populations
@@ -182,6 +184,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Preventive control: contact document requirements are chosen by contact type, preventing person rows from requesting POE and company rows from requesting POI.
 - Preventive control: trusted contacts are excluded by default and blocked from assignment, upload, and outreach actions.
 - Detective control: missing-holder filters use entity id, external id, or email rather than assuming a name match.
+- Detective control: Contact Focus phone and employment fields use only the account-contact entity-id join, preventing one associated person's IBKR data from being attributed to another contact through a loose name or email match.
 - Detective control: application and IBKR financial values are displayed side by side with explicit mismatch labels.
 - Detective control: Contact Focus exports the exact filtered row set visible to the reviewer.
 - Control limitation: Stage 3 proves category presence only, not valid or approved evidence.
@@ -207,5 +210,5 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-15
+- Date: 2026-07-16
 - Reviewer: Codex current-state code review and process-owner clarification

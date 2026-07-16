@@ -34,6 +34,7 @@ flowchart LR
     H --> H2["Deposits & Withdrawals Monitoring"]
     H --> H3["Regulatory File Review"]
     H --> H4["Accounts Audit follow-up"]
+    H --> H5["Contact-document categorization quality analysis"]
     I --> I1["Internal instructions"]
     I --> I2["IBKR instruction status and cash flows"]
 ```
