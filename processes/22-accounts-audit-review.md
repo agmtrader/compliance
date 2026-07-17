@@ -14,7 +14,7 @@ Provide the current on-demand compliance review of account completeness, applica
 - Internal accounts, contacts, account-contact links, advisors, contact documents, users, review assignments, and email-attempt records
 - Latest available IBKR details reporting resource and IBKR financial ranges
 - Static Dashboard IBKR compliance-task snapshot
-- Gmail send path and public AGM Hub compliance-document upload page
+- Browser clipboard, reviewer-selected messaging channel, Gmail send path, and public AGM Hub compliance-document upload page
 
 ## Roles / Owners
 - Primary owner: Andres Aguilar
@@ -144,7 +144,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 5. Review document stages and specific missing categories. IBKR task warning icons are supporting indicators from a static snapshot, not live task confirmation.
 6. Assign a responsible user or edit the review comment. Saving upserts the current account/contact record; it does not create immutable assignment/comment history.
 7. Upload a document when needed. The action requires a selected row, file, category, and language; only the first selected file is sent. The browser calculates SHA-1 and sends filename, size, MIME type, base64 file data, category, type, language, dates, and comment.
-8. Send a missing-documents email only after verifying the contact, missing categories, greeting, primary recipient, CC list, and company name where applicable.
+8. Open `Missing Docs Outreach` and verify the missing categories, greeting, language, and company name where applicable. Either copy the generated plain-text message for a reviewer-selected messaging channel or verify the primary recipient and CC list before sending the email.
 9. Review the email-attempt history and use `View Account` for account-level follow-up.
 10. Export the filtered Contact Focus population and retain it with the filter criteria and review date.
 
@@ -154,6 +154,8 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 - Email language defaults to Spanish when the action opens.
 - Greeting and recipient candidates combine linked database contacts and IBKR associated persons for the same account, excluding trusted contacts.
 - A person row requests POI/POA/SOW; a company row requests POE/POA/SOW. The public upload link includes `contact_id` and required form numbers.
+- `Copy Message` generates a bilingual plain-text version from the same selected greeting, contact type, company name, missing-document descriptions, accepted types, and upload link used by the email. Channel-specific wording refers to the link and replying to the message instead of an email button or email reply.
+- Copying uses the browser clipboard only. It does not send the message, select a destination, or create/update review-email evidence; the reviewer is responsible for pasting it into the intended messaging channel and retaining any required delivery evidence there.
 - A corporate email is blocked when the selected company contact name is blank or `-`.
 - Related CC candidates are deduplicated case-insensitively and the primary recipient is removed.
 - The advisor CC checkbox is selected by default only when an advisor and advisor-contact email resolve; reviewers may uncheck it.
@@ -169,13 +171,14 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Current `document_review_responsible` assignment/comment per account/contact pair
 - Uploaded raw document and contact-document metadata
 - Missing-document email attempt and provider result
+- Generated missing-document plain text copied transiently to the browser clipboard; no copy or messaging record is persisted by Accounts Audit
 - Filtered Contact Focus CSV export
 - No persisted overall audit run, filters used, population count, reviewer certification, exception disposition, or completion record
 
 ## Exception Paths / Failure Handling
 - Initial load failure: an error toast appears and both populations become empty arrays; empty results therefore require confirmation that the load succeeded.
 - Assignment metadata failure: a separate error toast appears and responsible/comment/email-history context may be unavailable.
-- Upload or email failure: the action shows an error toast; email attempts can remain available as failed evidence when attempt creation succeeded.
+- Upload, clipboard, or email failure: the action shows an error toast; email attempts can remain available as failed evidence when attempt creation succeeded, while a clipboard failure creates no outreach record.
 - Missing/incorrect account-contact links can omit Contact Focus rows or incorrectly share contact-level documents across linked account rows.
 - Missing IBKR details exclude accounts from Account Focus but not Contact Focus, so the two focus populations are not directly reconcilable without applying their documented population rules.
 - A static IBKR task snapshot can become stale and is not proof of the live IBKR task state.
@@ -196,6 +199,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Current `document_review_responsible` rows
 - Uploaded document and contact-document records
 - `document_review_email` attempts and Gmail message evidence
+- Evidence retained in the reviewer-selected messaging channel for copied-message outreach; Accounts Audit does not retain the copy action or delivery result
 - Supporting IBKR-details and financial-range snapshots used for the review
 - Follow-up account changes and remediation evidence
 
