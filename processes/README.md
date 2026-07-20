@@ -36,7 +36,7 @@ flowchart LR
     H --> H4["Accounts Audit follow-up"]
     H --> H5["Contact-document categorization quality analysis"]
     H --> H6["Source-of-Wealth OCR analysis"]
-    H6 --> H7["Source-of-Wealth document OCR matching"]
+    H6 --> H7["Source-of-Wealth flagged transaction Gemini sizing"]
     I --> I1["Internal instructions"]
     I --> I2["IBKR instruction status and cash flows"]
 ```
