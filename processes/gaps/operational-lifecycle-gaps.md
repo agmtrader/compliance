@@ -115,6 +115,7 @@ The current workflows provide useful application capture, document upload, scree
 | GAP-018 | Compliance-reference refresh integrity and freshness evidence | P0 | Existing clients ETL pipeline |
 | GAP-019 | Daily screening population coverage and cache invalidation | P0 | GAP-018 |
 | GAP-020 | Regulatory-file review data integrity and audit evidence | P0 | GAP-013, GAP-014 |
+| GAP-021 | Retired - former fee-template review gap | N/A | Consolidated into GAP-024 on 2026-07-15 |
 | GAP-022 | Investment-business report reproducibility and approval | P1 | Reporting snapshot and approval model |
 | GAP-023 | Compliance-manual change notification and acknowledgment | P1 | Documentation governance workflow |
 | GAP-024 | Accounts Audit population reconciliation and review evidence | P0 | GAP-005, GAP-009, GAP-013, GAP-014 |
@@ -550,7 +551,7 @@ The current workflows provide useful application capture, document upload, scree
 ### Affected Processes
 - [Daily Screening Run](../01-daily-screening-run.md)
 - [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
-- [Compliance Reference Data Refresh](../15-compliance-reference-data-refresh.md)
+- [Compliance Reference Data Refresh](../15b-compliance-reference-data-refresh.md)
 - [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
 
 ## GAP-017 - Persistent Transaction-Monitoring Findings
@@ -603,7 +604,7 @@ The current workflows provide useful application capture, document upload, scree
 
 ### Affected Processes
 - [Clients ETL Pipeline](../04-clients-etl-pipeline.md)
-- [Compliance Reference Data Refresh](../15-compliance-reference-data-refresh.md)
+- [Compliance Reference Data Refresh](../15b-compliance-reference-data-refresh.md)
 - [Daily Screening Run](../01-daily-screening-run.md)
 
 ## GAP-019 - Daily Screening Population Coverage and Cache Invalidation
@@ -663,6 +664,10 @@ The current workflows provide useful application capture, document upload, scree
 - [Regulatory File Review and Export](../18-regulatory-file-review-and-export.md)
 - [Contact Screening and AML Risk Assessment](../16-contact-screening-and-aml-risk-assessment.md)
 - [Accounts Audit Review](../22-accounts-audit-review.md)
+
+## GAP-021 - Retired Identifier
+
+`GAP-021` formerly identified Fee-Template Review Disposition and Reconciliation. The Fee Template Review process was removed on 2026-07-15 as redundant, and the surviving account-population and filter-control requirements were consolidated into `GAP-024 - Accounts Audit Population Reconciliation and Review Evidence`. The identifier is retained for historical traceability and must not be reassigned.
 
 ## GAP-022 - Investment-Business Report Reproducibility and Approval
 
@@ -748,7 +753,7 @@ The current workflows provide useful application capture, document upload, scree
 - [Accounts Audit Review](../22-accounts-audit-review.md)
 - [Accounts Metadata Review and Analysis](../08-accounts-metadata-review.md)
 - [Daily IBKR Details Backup and Reporting Feed](../13-daily-ibkr-details-backup.md)
-- [Advisor Contact Linking](../15-advisor-contact-linking.md)
+- [Advisor Contact Linking](../15a-advisor-contact-linking.md)
 
 ## GAP-025 - Complete IBKR Account-Details Refresh
 

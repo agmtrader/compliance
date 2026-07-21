@@ -1,7 +1,7 @@
 # Accounts Audit Review
 
 ## Business Purpose
-Provide the current on-demand compliance review of account completeness, application-versus-IBKR financial/profile information, account/contact linkage, required documents, local-OCR support placeholders, IBKR task indicators, reviewer ownership, missing-document outreach, and supporting-document uploads.
+Provide the current on-demand compliance review of account completeness, application-versus-IBKR financial/profile information, account/contact linkage, required documents, live OCR-backed profile-document support, IBKR task indicators, reviewer ownership, missing-document outreach, and supporting-document uploads.
 
 ## Trigger / Frequency
 - Trigger: An authorized user opens Dashboard `Accounts Audit`.
@@ -27,10 +27,11 @@ Provide the current on-demand compliance review of account completeness, applica
 - Financial-range definitions for net worth, liquid net worth, and annual net income
 - Contacts and account-contact links, including optional linked `entity_id` and `external_id`
 - Contact-document metadata; file bodies are excluded from the initial load
+- Raw document bodies may be requested only for explicitly supplied document ids. The API rejects `include_data=true` without a `document_id`, and the database manager rejects unfiltered reads that include `document.data`.
 - Advisors and advisor-linked contacts
 - `document_review_responsible` and `document_review_email` records
 - Dashboard users whose email ends in `@agmtechnology.com`
-- The browser does not load local ID or Source-of-Wealth OCR CSVs; profile-document support fields in Account Focus are therefore frontend placeholders and are not evidence that OCR was reviewed.
+- `contact_document` metadata and `document_processing` `text_extraction` rows must be available for OCR-backed Account Focus support analysis.
 
 ## Population and Join Rules
 
@@ -103,8 +104,10 @@ Provide the current on-demand compliance review of account completeness, applica
 1. Account Focus separately compares broader application-versus-IBKR profile fields where both sides are available: account type, base currency, investment objectives, and normalized Source-of-Wealth families.
 2. Source-of-Wealth family normalization groups common terms such as employment, salary, wage, income, sueldo, salario, and ingreso into `income`; business, company, profit, revenue, empresa, negocio, and utilidad into `business_income`; and similar families for savings, inheritance, interest, dividends, property, pension, and market/investment gains.
 3. Profile audit state is `mismatch` if any comparable profile field mismatches, `match` when the application exists and at least one IBKR profile field exists with no mismatch, and `cannot_compare` otherwise.
-4. Account Focus exposes profile-document support fields with the same names used by the local Python account-analysis CSV. The Python support state uses OCR-vs-profile checks, such as ID text against holder/contact names and Source-of-Wealth extracted values against financial profile values. It does not simply copy the frontend financial/profile audit result. Because local OCR CSV files are not available in the browser, every frontend row is treated as missing local OCR evidence and no row is shown as profile-supported by OCR.
-5. The local Python account analysis is the evidence-support view. It links completed ID OCR and Source-of-Wealth OCR by stored document/contact/account identifiers only, never by OCR name matching.
+4. Account Focus exposes OCR-backed profile-document support fields derived in the browser from live `document_processing` `text_extraction` rows attached to the linked documents. The dashboard uses the same core rule families as the Python account audit: ID text against holder/contact names, Source-of-Wealth OCR text against declared financial profile values, and application/IBKR residence addresses against both ID and Proof-of-Address OCR. The frontend links OCR strictly through stored document/contact/account relationships, never by OCR name matching.
+5. POA remains primary address evidence; an ID with no comparable address is inconclusive rather than conflicting. A nonmatching POA is treated as `not_supported` only when its type/text looks like real address-bearing evidence such as a utility bill or bank statement. Marriage certificates and generic documents remain `cannot_compare`.
+6. Source-of-Wealth support remains driven by comparable financial evidence, not by category presence alone. The dashboard attempts keyword-and-amount extraction directly from stored OCR text, compares annual income, liquid-net-worth, and net-worth candidates against the application and IBKR ranges, converts USD and CRC using the same `500 CRC/USD` working rate used by the Python audit, and treats ambiguous periods/currencies or source-only evidence as `cannot_compare`.
+7. The Python `account_audit.py` output remains the fuller operator dataset because it retains extracted JSON bundles and full OCR text exports, but the dashboard no longer treats every OCR support field as a placeholder.
 
 ## Account Focus Filters
 
@@ -117,13 +120,13 @@ All Account Focus filters combine with logical AND. `Reset Filters` returns ever
 | Application | All; with application when `application_json` is truthy; without application when it is falsy. |
 | Financial audit | All, match, mismatch, or cannot compare using the financial rules above. |
 | Profile audit | All, match, mismatch, or cannot compare using the profile rules above. |
-| Profile OCR support | All, supported, not supported, missing evidence, or cannot compare. In the dashboard this is expected to show missing evidence because local OCR CSVs are not loaded. |
+| Profile OCR support | All, supported, not supported, missing evidence, or cannot compare based on live `document_processing` OCR plus application/IBKR profile data. |
 | Contacts | All; with contacts when at least one link resolves; without contacts when none resolve; any holder missing contact; or any non-trusted holder missing contact. |
 | Account age | All; opened within 1 through 10 years; or missing open date. Age is elapsed days divided by 365.25, the boundary is inclusive, invalid/missing dates are unknown, and future dates are age zero. |
 | NAV | All; exactly 0; greater than 0 through 5,000; greater than 5,000 through 10,000; greater than 10,000 through 50,000; or greater than 50,000. Unknown NAV is excluded from every specific band. |
 | Search | Case-insensitive substring across account title, IBKR account number, status, joined linked-contact display names, missing-document names, and profile-document support labels. |
 
-The Account Focus summary cards are recalculated after filtering: financial mismatches, profile mismatches, profile OCR supported, missing application JSON, no linked contacts, and holder coverage issues. Account Focus uses 25-row pagination and sorting and exports the current filtered account population.
+The Account Focus summary cards are recalculated after filtering: financial mismatches, profile mismatches, profile documents supported, missing application JSON, no linked contacts, and residence supported. Account Focus uses 25-row pagination and sorting and exports the current filtered account population.
 
 ## Contact Focus Filters
 
@@ -155,6 +158,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 5. Review document stages and specific missing categories. IBKR task warning icons are supporting indicators from a static snapshot, not live task confirmation.
 6. Assign a responsible user or edit the review comment. Saving upserts the current account/contact record; it does not create immutable assignment/comment history.
 7. Upload a document when needed. The action requires a selected row, file, category, and language; only the first selected file is sent. The browser calculates SHA-1 and sends filename, size, MIME type, base64 file data, category, type, language, dates, and comment.
+   Viewing an uploaded file requests its raw body by that file's explicit document id; the API does not load all raw document bodies.
 8. Open `Missing Docs Outreach` and verify the missing categories, greeting, language, and company name where applicable. Either copy the generated plain-text message for a reviewer-selected messaging channel or verify the primary recipient and CC list before sending the email.
 9. Review the email-attempt history and use `View Account` for account-level follow-up.
 10. Export the filtered Account Focus or Contact Focus population and retain it with the filter criteria and review date.
@@ -175,7 +179,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 
 ## CSV Export
 
-Account Focus exports the current filtered rows as `accounts-audit-YYYY-MM-DD.csv`. The export includes account identity/status/type; NAV; open and close dates; stage; application presence; linked contacts; holder coverage flags; document counts and missing names; financial audit state and mismatch labels; profile audit state and mismatch labels; and frontend profile-document support fields. The frontend support fields are expected to be missing evidence because local OCR CSVs are not loaded.
+Account Focus exports the current filtered rows as `accounts-audit-YYYY-MM-DD.csv`. The export includes account identity/status/type; NAV; open and close dates; stage; application presence; linked contacts; holder coverage flags; document counts and missing names; financial audit state and mismatch labels; profile audit state and mismatch labels; completed ID/SOW/POA OCR flags; residence-profile state; address-document evidence state; and profile-document support fields derived from live OCR text.
 
 Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.csv`. The export includes contact identity/type/role; entity-id-matched IBKR phone and employment fields; account identity/type/status; NAV; open and close dates; account age; risk score; stage; present/required/missing documents; POI/POE/POA/SOW flags; IBKR-task flag; responsible; review comment; sent-email count; last sent time and recipient; and latest attempt status. Values beginning with `=`, `+`, `-`, or `@` are prefixed to reduce spreadsheet-formula execution risk.
 
@@ -203,8 +207,8 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Detective control: missing-holder filters use entity id, external id, or email rather than assuming a name match.
 - Detective control: Contact Focus phone and employment fields use only the account-contact entity-id join, preventing one associated person's IBKR data from being attributed to another contact through a loose name or email match.
 - Detective control: application and IBKR financial values are displayed side by side with explicit mismatch labels.
-- Detective control: application and IBKR profile values are compared separately from financial ranges, and dashboard profile-document support fields remain missing evidence unless a local Python analysis CSV is reviewed outside the browser.
-- Matching control: local OCR support analysis uses stored document/contact/account identifiers only and does not use name-based OCR matching.
+- Detective control: application and IBKR profile values are compared separately from financial ranges, and dashboard profile-document support fields are derived from live OCR text plus profile data rather than copied from the financial/profile mismatch states.
+- Matching control: OCR support analysis uses stored document/contact/account identifiers only; it does not link documents to accounts by OCR text.
 - Detective control: Contact Focus exports the exact filtered row set visible to the reviewer.
 - Control limitation: Stage 3 proves category presence only, not valid or approved evidence.
 - Control limitation: the process is on demand and stores no audit-run completion or population reconciliation.
@@ -216,7 +220,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Uploaded document and contact-document records
 - `document_review_email` attempts and Gmail message evidence
 - Evidence retained in the reviewer-selected messaging channel for copied-message outreach; Accounts Audit does not retain the copy action or delivery result
-- Supporting IBKR-details and financial-range snapshots used for the review
+- Supporting IBKR-details, financial-range, and `document_processing` OCR snapshots used for the review
 - Follow-up account changes and remediation evidence
 
 ## Related Code / Pages / Routes
@@ -225,12 +229,12 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Account filters: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsFocus.tsx`
 - Account filters/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsFocus.tsx`
 - Contact filters/actions/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/ContactFocus.tsx`
-- Local OCR account support: `agm-api/source_of_wealth_account_analysis.py`
+- Local OCR account support: `agm-api/account_audit.py`
 - Static task source: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/ibkrComplianceTasks.ts`
 - Public upload: `agm-hub/src/components/hub/apply/ContactDocuments.tsx`
 - Downstream records: contact documents, document-review-responsibles, document-review-email attempts, Gmail messages
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-20
+- Date: 2026-07-21
 - Reviewer: Codex current-state code review and process-owner clarification

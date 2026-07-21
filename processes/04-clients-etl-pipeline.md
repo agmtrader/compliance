@@ -64,7 +64,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/app/tools/private/etl.py`
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`
-- Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files, and [Compliance Reference Data Refresh](15-compliance-reference-data-refresh.md)
+- Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files, and [Compliance Reference Data Refresh](15b-compliance-reference-data-refresh.md)
 
 ## Last Reviewed
 - Status: draft

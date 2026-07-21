@@ -25,7 +25,7 @@ Create a manual-review dataset from documents categorized as `Source of Wealth`.
 - API virtual environment and `.env` loaded according to `agm-api/AGENTS.MD`
 
 ## Step-by-Step Workflow
-1. The operator runs `source_of_wealth_account_analysis.py` from `agm-api` after loading `.env`.
+1. The operator runs `account_audit.py` from `agm-api` after loading `.env`.
 2. The script reads its existing extraction CSV and excludes already processed contact-document and document identifiers. Existing rows are not text-only reanalyzed because that would discard the positioned OCR evidence used for table extraction.
 3. It selects the requested number of newest remaining documents categorized as Source of Wealth, defaulting to 10 and without selecting the same raw document more than once in a batch.
 4. It reads and decodes each linked raw document, then calls the shared Google Document AI OCR pipeline with the same render settings and cache behavior used by the identity-expiration analysis.
@@ -68,7 +68,7 @@ Create a manual-review dataset from documents categorized as `Source of Wealth`.
 - Any separately approved customer-profile correction or compliance decision and its supporting evidence
 
 ## Related Code / Pages / Routes
-- Entry surface: `agm-api/source_of_wealth_account_analysis.py`
+- Entry surface: `agm-api/account_audit.py`
 - Shared OCR: `agm-api/src/components/clients/document_processing.py`
 - Source-of-Wealth declarations: `agm-hub/src/lib/clients/schemas/application.ts` and `agm-hub/src/lib/clients/application.ts`
 - Operational consumer: [Deposits and Withdrawals Monitoring](17-deposits-and-withdrawals-monitoring.md)

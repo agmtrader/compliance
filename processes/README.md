@@ -47,6 +47,12 @@ flowchart LR
 - Recommended format: `NN-short-process-name.md`
 - Keep file names workflow-oriented, for example `01-daily-screening-run.md` instead of endpoint names.
 
+### Identifier Governance
+- Process identifiers are stable and must not be reused after a process is retired.
+- `PROC-006`, `PROC-007`, and `PROC-019` are retired identifiers. Their former workflows were removed on 2026-07-15: Documents Review and Proof of Identity Expiration Review were consolidated into Accounts Audit, while Fee Template Review was removed as redundant.
+- The historical duplicate at process 15 is resolved with stable sub-identifiers: `PROC-015A` for Advisor Contact Linking and `PROC-015B` for Compliance Reference Data Refresh. Their filenames use the same `15a` and `15b` prefixes.
+- New processes receive the next unused whole-number identifier. Retired identifiers and alphabetic sub-identifiers are retained permanently for audit traceability.
+
 ## Required Sections
 Each process document must include:
 - Process name
@@ -70,6 +76,7 @@ Each process must have one status in [process-register.csv](/Users/aguilarcarbon
 - `inventory`: process identified but not yet written
 - `draft`: process documented but still subject to business-owner confirmation
 - `reviewed`: process doc confirmed against current business practice
+- `retired`: historical identifier retained after the documented workflow was removed or consolidated; the identifier must not be reused
 
 ## Documentation Rules
 - Every process doc must link the primary code surfaces that implement the workflow.
