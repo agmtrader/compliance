@@ -26,7 +26,7 @@ Provide an on-demand operational account list for reviewing NAV, status, advisor
 
 ## Population and Display Derivation
 
-1. The page loads accounts-with-metadata, advisors, and all contacts in parallel.
+1. The page calls one Dashboard server-side loader that fans out accounts-with-metadata, advisors, and all contacts in parallel before hydrating the client page. Within the accounts-with-metadata request, the API concurrently loads accounts, cached client/NAV/IBKR reports, account-contact links, contacts, and optional advisors; each worker thread uses an isolated Google Drive service connection.
 2. A non-array accounts response fails the load. Valid rows are sorted newest to oldest by the internal `created` string.
 3. Missing alias, status, title, master account, SLS devices, client email, and fee-template summary are normalized to `-`; missing NAV is normalized to zero for this page.
 4. The contact label uses the first available source in this order:
@@ -90,6 +90,7 @@ NAV, advisor, SLS device, and status combine with logical AND. The email/applica
 ## Related Code / Pages / Routes
 - Entry: `agm-dashboard/src/app/(dashboard)/(services)/(clients)/accounts/page.tsx`
 - Page logic: `agm-dashboard/src/components/dashboard/clients/accounts/AccountsPage.tsx`
+- Server loader: `agm-dashboard/src/utils/tools/account_pages.ts`
 - Data client: `agm-dashboard/src/utils/clients/account.ts`
 - Current compliance audit: [Accounts Audit Review](22-accounts-audit-review.md)
 

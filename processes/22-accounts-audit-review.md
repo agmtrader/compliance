@@ -37,7 +37,7 @@ Provide the current on-demand compliance review of account completeness, applica
 
 ### Shared source loading
 
-1. The page loads accounts, IBKR details, financial ranges, contacts, account-contact links, contact-document metadata, and advisors in parallel.
+1. The page invokes one server action that loads accounts, IBKR details, financial ranges, contacts, account-contact links, contact-document metadata with OCR processing, advisors, contact screenings, and sent review emails in parallel. Using one server action prevents the browser-to-Next.js server-action queue from serializing the API requests.
 2. Nested `ibkrdetails` arrays are flattened. IBKR details are indexed by `account.accountId`; a later duplicate account id replaces an earlier map entry.
 3. Contacts are indexed by contact id. Advisors are indexed by normalized advisor code.
 4. Account-contact links are grouped by account id and also used to identify all accounts associated with a contact.
@@ -226,6 +226,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 ## Related Code / Pages / Routes
 - Entry: `agm-dashboard/src/app/(dashboard)/(services)/(tools)/(private)/(compliance)/accounts-audit/page.tsx`
 - Population and derivation: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsAuditReport.tsx`
+- Parallel source loader: `agm-dashboard/src/utils/tools/accounts_audit.ts`
 - Account filters: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsFocus.tsx`
 - Account filters/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsFocus.tsx`
 - Contact filters/actions/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/ContactFocus.tsx`
