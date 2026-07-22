@@ -75,7 +75,8 @@ Provide the current on-demand compliance review of account completeness, applica
 
 ### Contact Focus
 
-- Person contacts require `Proof of Identity`, `Proof of Address`, and `Source of Wealth`.
+- Person contacts always require `Proof of Identity` and `Proof of Address`.
+- Person contacts require `Source of Wealth` only when the linked IBKR employment type is `Employed` or `Self-Employed`. Any other employment type currently removes the Source-of-Wealth requirement.
 - Company contacts require `Proof of Existence`, `Proof of Address`, and `Source of Wealth`.
 - Presence is based on the contact's documents, so one contact's document can count on every linked account row for that contact.
 
@@ -120,7 +121,10 @@ All Account Focus filters combine with logical AND. `Reset Filters` returns ever
 | Application | All; with application when `application_json` is truthy; without application when it is falsy. |
 | Financial audit | All, match, mismatch, or cannot compare using the financial rules above. |
 | Profile audit | All, match, mismatch, or cannot compare using the profile rules above. |
-| Profile OCR support | All, supported, not supported, missing evidence, or cannot compare based on live `document_processing` OCR plus application/IBKR profile data. |
+| Profile OCR support | All; all documents match when the combined state is supported; at least one mismatch; missing evidence; or needs review based on live `document_processing` OCR plus application/IBKR profile data. |
+| ID evidence | All, matching, mismatch, missing, or needs review using the ID-document evidence state. |
+| Address evidence | All, matching, mismatch, missing, or needs review using the address-document evidence state. |
+| SOW evidence | All, matching, mismatch, missing, or needs review using the Source-of-Wealth evidence state. |
 | Contacts | All; with contacts when at least one link resolves; without contacts when none resolve; any holder missing contact; or any non-trusted holder missing contact. |
 | Account age | All; opened within 1 through 10 years; or missing open date. Age is elapsed days divided by 365.25, the boundary is inclusive, invalid/missing dates are unknown, and future dates are age zero. |
 | NAV | All; exactly 0; greater than 0 through 5,000; greater than 5,000 through 10,000; greater than 10,000 through 50,000; or greater than 50,000. Unknown NAV is excluded from every specific band. |
@@ -168,7 +172,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 - Trusted contacts cannot be assigned as responsible and cannot use upload or missing-document-email actions. Review comments remain editable for trusted-contact rows in the current code.
 - Email language defaults to Spanish when the action opens.
 - Greeting and recipient candidates combine linked database contacts and IBKR associated persons for the same account, excluding trusted contacts.
-- A person row requests POI/POA/SOW; a company row requests POE/POA/SOW. The public upload link includes `contact_id` and required form numbers.
+- A person row always requests POI/POA and requests SOW only when the linked IBKR employment type is `Employed` or `Self-Employed`; a company row requests POE/POA/SOW. The public upload link includes `contact_id` and required form numbers.
 - `Copy Message` generates a bilingual plain-text version from the same selected greeting, contact type, company name, missing-document descriptions, accepted types, and upload link used by the email. Channel-specific wording refers to the link and replying to the message instead of an email button or email reply.
 - Copying uses the browser clipboard only. It does not send the message, select a destination, or create/update review-email evidence; the reviewer is responsible for pasting it into the intended messaging channel and retaining any required delivery evidence there.
 - A corporate email is blocked when the selected company contact name is blank or `-`.
@@ -202,7 +206,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - A static IBKR task snapshot can become stale and is not proof of the live IBKR task state.
 
 ## Controls / Verification Points
-- Preventive control: contact document requirements are chosen by contact type, preventing person rows from requesting POE and company rows from requesting POI.
+- Preventive control: contact document requirements are chosen by contact type plus linked IBKR employment type, preventing person rows from requesting POE, preventing non-employed/non-self-employed people from being asked for SOW, and preventing company rows from requesting POI.
 - Preventive control: trusted contacts are excluded by default and blocked from assignment, upload, and outreach actions.
 - Detective control: missing-holder filters use entity id, external id, or email rather than assuming a name match.
 - Detective control: Contact Focus phone and employment fields use only the account-contact entity-id join, preventing one associated person's IBKR data from being attributed to another contact through a loose name or email match.
