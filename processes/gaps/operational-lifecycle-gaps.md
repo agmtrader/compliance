@@ -1,5 +1,7 @@
 Below is the more detailed implementation scope for Phase 1 and Phase 2. Phase 1 is the minimum credible compliance-control layer. Phase 2 makes those controls consistent, reliable and reproducible.
 
+Implementation note: AGM does not need one shared compliance case model to close these gaps. The preferred direction is domain-specific workflow tables with clear escalation paths. For example, transaction monitoring can persist its own alerts, screenings can keep their own operational tables, and suspicious-activity investigations can exist as a separate restricted workflow fed by escalated alerts or other red flags.
+
 The BVI requirements referenced below come primarily from the supplied [BVIFSC Revised Sanctions Guidelines](</Users/aguilarcarboni/Downloads/BVIFSC 31.12.2024_-_revised_sanctions_guidelines-_final.pdf>), particularly pages 27–40 and 48–55.
 
 # Phase 1 — Critical regulatory controls
@@ -12,29 +14,25 @@ Every material transaction alert, sanctions concern, PEP concern or other red fl
 
 ### What to implement
 
-Create a restricted investigation record containing:
+Create a restricted investigation record containing the fields AGM will actually use in the first investigation workflow. The minimum viable implementation does not need a universal case engine. It does need a dedicated restricted investigation workflow that can be created from escalated alerts and later extended if more timeline or filing fields are required.
+
+The initial investigation record should contain:
 
 - Investigation ID and status.
-- Date and time the concern was first detected.
-- Date the AMLCO determined that suspicion existed.
-- Customer, account, related parties and related accounts.
-- Originating alerts, transactions, screenings or employee reports.
-- Investigator and authorized decision-maker.
-- Risk level and applicable deadline.
-- Investigation narrative and supporting evidence.
-- Requests for information and responses.
+- Customer or account context.
+- Originating alert or other red flag reference.
+- Risk level.
 - Decision: `file`, `do_not_file`, `continue_monitoring`, `restrict_activity`, `freeze`, or `close/reject relationship`.
-- Decision rationale and approver.
-- FIA SAR/STR submission date, reference and acknowledgment.
-- Sanctions Unit CRF submission date, reference and acknowledgment.
-- Continuing-activity review date, if required.
+- Decision rationale and decision-maker.
 - Final closure date and reason.
+
+Additional fields such as AMLCO escalation time, suspicion-formed time, filing deadline, filing references, acknowledgments, or continuing review dates may be added later when AGM is ready to operationalize those exact steps. They should not be invented up front if the workflow does not yet use them.
 
 Access must be limited to the AMLCO and specifically authorized personnel. The existence of a SAR or filing decision must not appear in ordinary account comments, client communications or broadly accessible Dashboard screens.
 
 ### Deadline control
 
-The system should separately record:
+When AGM adds filing-deadline tracking, the system should separately record:
 
 1. When the original alert arose.
 2. When the information was escalated to the AMLCO.
@@ -44,7 +42,7 @@ The system should separately record:
 
 The manuals generally specify filing within five working days. The BVI guidelines use “as soon as reasonably practicable” and identify no more than five working days for certain CTA reporting. AGM should have BVI counsel confirm the deadline and authority for each report type rather than apply one universal deadline to everything.
 
-The system should warn before deadlines and escalate overdue cases to the AMLCO, CEO or other approved authority.
+The system should warn before deadlines and escalate overdue cases to the AMLCO, CEO or other approved authority. This is still a required target state, but it does not need to be part of the first restricted investigation release if AGM is initially implementing only decision and closure tracking.
 
 ### Process changes
 
@@ -61,19 +59,18 @@ Add a dedicated suspicious-activity process covering:
 - Retention.
 - Continuing-activity review.
 
-Process 17 should end with either a documented non-escalation or a link to this restricted investigation.
+Process 17 should end with either a documented non-escalation on the alert record or an escalation into this restricted investigation workflow.
 
 ### Completion criteria
 
 This control is complete when:
 
 - Every escalated alert has one investigation or a documented link to an existing related investigation.
-- Every investigation has an owner, deadline and final decision.
+- Every investigation has a final decision.
 - No-file decisions contain rationale and approval.
-- Filed reports contain a submission reference or acknowledgment.
 - SAR information is inaccessible through ordinary account comments.
-- Overdue investigations and filings are visible to the AMLCO.
-- A test case can reproduce the complete timeline from original alert to final regulatory action.
+- Overdue investigations and filings are visible to the AMLCO once deadline tracking is implemented.
+- A test case can reproduce the transaction-alert-to-investigation path and final decision.
 
 ---
 
@@ -87,89 +84,58 @@ Opening a Dashboard report cannot be the event that causes monitoring to occur.
 
 ### What to implement
 
-Move the rules from browser-only calculation into a controlled backend process. Each monitoring run should retain:
+Move the rules from browser-only calculation into a controlled backend process that runs daily over new deposits and withdrawals. AGM does not need a large generic monitoring-run framework for the first release. The first implementation can build on the existing Deposits & Withdrawals workflow by running the current analysis logic on a schedule and persisting alert records for review.
 
-- Run ID.
-- Review period.
-- Source files and source-as-of dates.
-- Expected transaction count.
-- Successfully evaluated count.
-- Failed, skipped, excluded and duplicate counts.
-- Rule inventory and rule versions.
-- Run status: `complete`, `partial`, or `failed`.
-- Start and completion timestamps.
-- Output checksum.
-
-Each alert should contain:
+Each alert should contain at least:
 
 - Stable alert ID.
-- Customer and account.
-- Transaction or related transaction group.
-- Rule and rule version.
-- Observed value.
-- Threshold or comparison condition.
-- Lookback period.
+- Account.
+- Transaction ID.
+- Transaction datetime.
+- Amount.
+- Currency.
 - Deposit/withdrawal direction.
-- Customer risk level.
-- Source data reference.
 - Alert date.
-- Assigned reviewer.
+- Reviewer comment.
 - Status and disposition.
-- Explanation.
+- Reviewer and review date.
 - Escalation or linked investigation.
-- Closure date and approver.
 
 ### Initial monitoring scenarios
 
-Do not implement dozens of weak rules initially. Begin with the scenarios clearly supported by AGM’s manuals:
+Do not implement dozens of weak rules initially. Begin with the scenarios clearly supported by AGM’s manuals and already closest to the current report logic:
 
 - Large incoming deposits.
 - Large outgoing withdrawals.
-- Aggregated transactions intended to identify structuring below a threshold.
-- Rapid deposit followed by withdrawal or transfer.
-- Third-party funding.
 - Activity inconsistent with declared income, net worth or Source-of-Wealth.
-- Sudden activity in a dormant or historically inactive account.
-- Material changes in transaction volume or frequency.
-- Transfers involving higher-risk or sanctioned jurisdictions.
-- Related-account or unexplained internal transfer patterns.
+
+Additional scenarios such as structuring, rapid in-and-out movement, third-party funding, higher-risk jurisdictions, dormancy changes, or related-account patterns may be layered on after the persisted alert workflow is stable.
 
 The current `Amount > 10,000` logic must be corrected so negative withdrawals are not missed merely because they are stored as negative amounts.
 
 ### Deduplication
 
-Reprocessing the same source data with the same rule version should not create another active alert. Use a stable identity derived from:
-
-- Account.
-- Transaction or transaction group.
-- Rule version.
-- Lookback period.
-- Relevant observed values.
-
-A later recurrence may be linked to the existing history without losing the fact that it occurred again.
+Reprocessing the same source data should not create another active alert for the same transaction when the transaction identifier is already stable in the IBKR source. AGM can treat the IBKR transaction ID as the primary identity for the first implementation rather than introducing an additional deduplication model.
 
 ### Process changes
 
 Rewrite Process 17 to describe:
 
 - Scheduled execution.
-- Source reconciliation.
-- Approved rule inventory.
+- Daily processing of new deposits and withdrawals.
 - Alert creation.
 - Review and disposition.
 - Escalation into Priority 1.
-- Run completion and exception handling.
 - Retention.
 
 ### Completion criteria
 
-- Monitoring runs without a user opening a webpage.
-- Every expected transaction is processed or appears as a visible failure or approved exclusion.
+- Monitoring occurs without a user opening a webpage.
 - Deposits and withdrawals are evaluated correctly.
 - Alerts survive logout, refresh and later review.
 - Every alert reaches a documented disposition.
-- Escalated alerts retain their original transaction and rule evidence.
-- A failed or partial run cannot be presented as complete.
+- Escalated alerts retain their original transaction context.
+- New daily deposits and withdrawals produce persisted alerts and reminders for review.
 
 ---
 
