@@ -31,7 +31,8 @@ Move an internally prepared AGM application into the IBKR onboarding process, th
 4. The operator triggers `/accounts/send_to_ibkr`, passing the AGM account id, selected master account, and application payload.
 5. After submission, Dashboard can query `/accounts/ibkr/details`, `/accounts/ibkr/registration_tasks`, and `/accounts/ibkr/pending_tasks` to follow the onboarding state.
 6. Additional onboarding remediation can occur through IBKR document submission, fee template application, trading permissions, CLP capability, and other account-management flows.
-7. Once an IBKR account number exists, the record is treated as an account page rather than a pending application page.
+7. Before a live-account CLP capability request can be submitted from Dashboard, the account must already show `OPT` investment experience with at least 3 years trading and at least the `11-25` trades-per-year band.
+8. Once an IBKR account number exists, the record is treated as an account page rather than a pending application page.
 
 ## Workflow Diagram
 ```mermaid
@@ -64,6 +65,7 @@ flowchart TD
 - Preventive control: when the operator sends an application to IBKR, the Dashboard checks the stored documents returned by the API and blocks the request with a warning if any selected document is larger than 2 MB.
 - Preventive control: the Dashboard and its IBKR request helper reject submission unless `application.documents` is populated, and the page checks each prepared document for file data and required metadata.
 - Preventive control: application payload validation checks run before critical submission.
+- Preventive control: the live-account CLP capability action in Dashboard stays disabled unless IBKR account details show `OPT` investment experience with at least 3 years trading and at least `11-25` trades per year.
 - Preventive control: choosing `Other` for a categorized contact document requires a nonblank free-text document type before upload or metadata save.
 - Detective control: registration and pending tasks provide a post-submission checklist for follow-up.
 - Detective control: supporting documents and screenings can be reviewed from the application context before submission.
