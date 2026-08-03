@@ -70,7 +70,7 @@ Refresh and retain the sanctions reference files used by AGM contact screening s
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/app/tools/private/etl.py`
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`, `agm-api/src/utils/connectors/drive.py`
-- Downstream side effects: `agm-api/src/components/tools/public/reporting.py`, `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/private/screenings.py`
+- Downstream side effects: `agm-api/src/components/tools/public/reporting.py`, `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/private/actions.py`
 
 ## Last Reviewed
 - Status: draft

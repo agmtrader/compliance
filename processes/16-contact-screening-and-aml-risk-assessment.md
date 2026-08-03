@@ -4,7 +4,7 @@
 Create contact-level sanctions results and a weighted AML risk score during onboarding, manual screening, or batch screening, and expose the latest results in account and application views.
 
 ## Trigger / Frequency
-- Trigger: Finalization of an AGM Hub application with a linked contact that has no screening history; an authenticated `POST /contacts/screening`; or the Daily Screening Run.
+- Trigger: Finalization of an AGM Hub application with a linked contact that has no screening history; an authenticated `POST /contacts/screen`; or the Daily Screening Run.
 - Frequency: Event-driven during onboarding or manual use, and conditionally during the scheduled screening workflow.
 
 ## Systems Involved
@@ -27,7 +27,7 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 - Hardcoded jurisdiction-risk and FATF-listed country sets in the contacts service
 
 ## Step-by-Step Workflow
-1. During final Hub application persistence, the Hub reads each linked contact's screening history. If a contact has no records, it calls `POST /contacts/screening` for that contact.
+1. During final Hub application persistence, the Hub reads each linked contact's screening history. If a contact has no records, it calls `POST /contacts/screen` for that contact.
 2. A direct screening request loads the contact and selects its most recently created or updated `account_contact` link. If no link exists, it searches stored account applications for a matching customer email or normalized holder name and uses the most recently updated matching account.
 3. If the selected account has an IBKR account number, the service uses the cached IBKR details backup when a matching detail exists; otherwise it uses the stored application payload.
 4. The service loads OFAC, UK, and UN resource files on first use in the API worker and builds in-memory exact-name indexes. OFAC uses its `name` field, UK uses `Name 1` through `Name 6`, and UN uses primary names plus pipe-separated aliases.
@@ -73,7 +73,7 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`, `agm-api/src/app/clients/contacts.py`, `agm-api/src/app/tools/private/actions.py`
-- Supporting modules: `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/private/screenings.py`
+- Supporting modules: `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/private/actions.py`
 - Downstream side effects: `agm-dashboard/src/components/dashboard/clients/screenings/ContactScreenings.tsx`, account and application detail pages
 
 ## Last Reviewed

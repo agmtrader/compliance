@@ -27,31 +27,28 @@ Maintain the advisor-to-contact relationship used to resolve advisor names, emai
 2. The operator opens `Link contact` for the intended advisor. The dialog shows the current linked contact before any change is made.
 3. For an existing contact, the operator searches by name, email, phone, or contact ID and selects the intended record.
 4. Save remains disabled until the selected contact differs from the current link.
-5. The API verifies that both the advisor and selected contact exist, updates only `advisor.contact_id`, reads the advisor back, and rejects the request if the saved link cannot be verified.
+5. The Dashboard sends the selected contact ID to the advisor update API, which updates `advisor.contact_id`.
 6. If no suitable contact exists, the operator selects `Create new`. The form prefills the advisor name and requires a valid email; phone is optional.
-7. The Dashboard blocks a new contact when the loaded contact list already contains the same email. The API repeats required-field, email-format, advisor-existence, and exact-email duplicate checks.
-8. The API locks the advisor row, creates the contact, and assigns its ID to `advisor.contact_id` in one transaction. Any failure rolls back both operations.
-9. The API returns the saved advisor and contact. The Dashboard updates the table and contact search list and shows a success toast.
+7. The Dashboard blocks a new contact when the loaded contact list already contains the same email. The contacts API validates and creates the contact.
+8. After contact creation succeeds, the Dashboard sends the new contact ID to the advisor update API.
+9. The Dashboard refreshes its contact list and advisor row and shows a success toast. If the advisor update fails after contact creation, the contact remains available for retry or reuse.
 
 ## Outputs / Records Created
 - Updated `advisor.contact_id` for an existing-contact link
-- New `contact` row plus updated `advisor.contact_id` for a create-and-link action
+- New `contact` row plus updated `advisor.contact_id` for a create-then-update action
 - Updated advisor `updated` timestamp
 
 ## Exception Paths / Failure Handling
 - Missing or invalid advisor/contact IDs: request is rejected and no link changes.
 - Unknown advisor or contact: request is rejected and no link changes.
 - Invalid or duplicate new-contact email: creation is rejected and no contact is created.
-- Create-and-link database failure: the transaction rolls back both the new contact and advisor update.
-- Existing-contact readback mismatch: the API rejects the result and the Dashboard shows an error toast.
+- Advisor update failure after contact creation: the new contact remains in the database and the Dashboard shows an error toast so the operator can retry the advisor update.
 
 ## Controls / Verification Points
 - Preventive control: advisor contact selection is manual; no fuzzy or automatic name match can update production data.
 - Preventive control: the dialog displays the current link before replacement and disables unchanged saves.
-- Preventive control: the existing-link API permits only `advisor.contact_id`; it cannot modify other advisor fields.
-- Preventive control: new contacts require a valid email and exact duplicate emails are rejected by both the loaded-page check and the API.
-- Preventive control: new-contact creation and advisor assignment commit in one transaction while holding an advisor-row lock.
-- Detective control: existing-link updates are read back and compared with the requested contact ID before success is returned.
+- Preventive control: advisor-link updates send only `advisor.contact_id`.
+- Preventive control: new contacts require a valid email and exact duplicate emails are rejected by the loaded-page check.
 - Detective control: the Advisors table immediately displays the linked contact name and email after a successful response.
 
 ## Evidence to Retain
@@ -66,7 +63,7 @@ Maintain the advisor-to-contact relationship used to resolve advisor names, emai
 ## Related Code / Pages / Routes
 - Entry surface: `agm-dashboard/src/components/dashboard/clients/advisors/AdvisorsPage.tsx`
 - Dashboard client: `agm-dashboard/src/utils/clients/advisor.ts`
-- API routes: `POST /advisors/contact`, `POST /advisors/contact/create`
+- API routes: `POST /contacts/create`, `POST /advisors/update`
 - API service: `agm-api/src/components/clients/advisors.py`
 - Downstream consumers: unfunded-account advisor CC and Accounts Audit missing-document advisor CC
 
