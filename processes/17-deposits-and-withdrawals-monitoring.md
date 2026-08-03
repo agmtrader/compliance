@@ -35,7 +35,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 6. A transaction receives an `over_10k` flag when its signed amount is greater than USD 10,000. Negative withdrawals do not satisfy this rule because the comparison is not made on absolute value.
 7. When IBKR financial information and range definitions are available, the signed amount is compared with the upper bounds for annual income, liquid net worth, and net worth. Exceeding a bound produces a separate mismatch flag.
 8. The page compares stored application financial information with current IBKR financial ranges and displays mismatched fields in account details.
-9. The page locates linked Source-of-Wealth documents, shows whether evidence is on file, displays extracted processing text when available, and permits loading the original stored document.
+9. The page locates linked Source-of-Wealth documents, shows whether evidence is on file, displays extracted processing text when available, and permits loading the original stored document. The SOW support view uses liquid net worth as the profile comparison field and checks whether declared liquid net worth also covers current NAV.
 10. The reviewer can filter to flagged transactions, select a flag type, search by account identifier, and view summary counts.
 11. Editing a comment calls `POST /flagged_deposits/create`, creating a new row with account id, transaction id, and comment. Clearing a comment also creates a new row.
 
