@@ -32,7 +32,7 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 3. If the selected account has an IBKR account number, the service uses the cached IBKR details backup when a matching detail exists; otherwise it uses the stored application payload.
 4. The service loads OFAC, UK, and UN resource files on first use in the API worker and builds in-memory exact-name indexes. OFAC uses its `name` field, UK uses `Name 1` through `Name 6`, and UN uses primary names plus pipe-separated aliases.
 5. The contact name and source names are normalized by removing accents and non-alphanumeric punctuation, converting to lowercase, and collapsing spaces. Only exact normalized-name matches are returned.
-6. The service resolves a risk country from the matched IBKR associated person or the selected holder in the stored application.
+6. The service resolves the customer type from IBKR `applicantType` when present, falling back to the stored application customer type when IBKR details are partial, and resolves a risk country from the matched IBKR associated person or the selected holder in the stored application.
 7. It calculates five risk components: customer risk, jurisdiction risk, product risk, delivery-channel risk, and introducer risk.
 8. The component weights are 30%, 25%, 15%, 15%, and 15%, respectively. Delivery-channel risk is always `5`; introducer risk is `3` when the account has an advisor code and `1` otherwise.
 9. Customer risk considers account type, PEP or adverse regulatory indicators, investment experience, wealth-source complexity, cross-border information, employment, and organization structure. Jurisdiction and product scores use hardcoded country and product groups.
