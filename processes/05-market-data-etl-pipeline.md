@@ -31,12 +31,17 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 4. Extract pulls each configured market-data source into the batch area and summarizes step success, skip, or failure.
 5. Backup renames batch files, moves them into the resource structure, and clears the batch folder.
 6. Transform converts the resource files into downstream market-data outputs consumed by reporting logic.
+   The ETF and stock resources include `Current Yield`, calculated from five sequential
+   one-year close-to-close returns from IBKR historical daily bars; investment proposals
+   use this field when ranking or explicitly selecting equity assets.
 7. The route returns a stage overview with summary counts and step details.
 8. GitHub Actions formats the overview and sends a success or failure email.
 
 ## Outputs / Records Created
 - Refreshed raw market-data files in Google Drive
 - Updated transformed market-data resources
+- ETF resource rows with populated `Current Yield` values when five years of bars are available
+- Stock resource rows with populated `Current Yield` values when five years of bars are available
 - ETL overview payload returned by the API
 - Workflow notification email
 
