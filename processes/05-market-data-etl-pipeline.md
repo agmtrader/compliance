@@ -35,7 +35,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
    one-year close-to-close returns from IBKR historical daily bars; investment proposals
    use this field when ranking or explicitly selecting equity assets.
 7. The route returns a stage overview with summary counts and step details.
-8. GitHub Actions formats the overview and sends a success or failure email.
+8. GitHub Actions persists the workflow output, formats the overview (including stage counts, backup sub-step counts, and failure details), and sends a success or failure email. If the API call fails before an overview is available, the email includes the captured request error or directs the reviewer to the workflow logs.
 
 ## Outputs / Records Created
 - Refreshed raw market-data files in Google Drive
@@ -43,7 +43,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - ETF resource rows with populated `Current Yield` values when five years of bars are available
 - Stock resource rows with populated `Current Yield` values when five years of bars are available
 - ETL overview payload returned by the API
-- Workflow notification email
+- Workflow notification email containing the overall result, extract/backup/transform stage statuses and counts, and any reported failures
 
 ## Exception Paths / Failure Handling
 - Token failure: workflow exits before the route call.

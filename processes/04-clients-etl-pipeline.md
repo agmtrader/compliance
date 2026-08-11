@@ -29,7 +29,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 1. The workflow requests an API token and calls `/etl/clients`.
 2. The API resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
-4. During extract, each configured source file is fetched by its `extract_func`; files with no extractor are marked skipped. The current summary treats every non-success step, including skipped steps, as failed when setting the stage status and failed count.
+4. During extract, each configured source file is fetched by its `extract_func`. Sources with no extractor are expected to have their configured `backup_name` already present in the batch folder when the stage starts; those present files are marked skipped, while missing files are marked failed. The extract stage is partial only when an extractor fails or a required pre-existing file is missing.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
 7. The route returns an overview object containing per-stage status, summary counts, and step-level outcomes.
@@ -43,7 +43,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 
 ## Exception Paths / Failure Handling
 - Token failure: workflow exits before calling the route.
-- Extract-step failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue.
+- Extract-step failure or missing pre-existing batch file: stage status becomes `partial` and the failure is included in the overview, but later stages continue.
 - Backup or transform failure: route overview captures the failing step, but the route still returns HTTP `200` with a `partial` payload unless an uncaught service error escapes the pipeline wrapper.
 - Workflow retries: the GitHub workflow uses `wretry` with a long retry window before notifying failure.
 - Generic success notification: a `partial` API result still produces the success email because the workflow does not inspect the returned overall status before exiting.
