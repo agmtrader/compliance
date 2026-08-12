@@ -68,6 +68,14 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`
 - Downstream side effects: reporting resource files and market-data-derived outputs
 
+## Bond Description Parsing
+
+Bond snapshot transformation prioritizes the percentage-marked coupon in the
+IBKR financial-instrument description so issue-date components are not
+mistaken for coupon values. Descriptions whose maturity is represented only by
+an IBKR shorthand code remain dependent on the source snapshot's explicit
+maturity field.
+
 ## Last Reviewed
 - Status: draft
 - Date: 2026-06-16

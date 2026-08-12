@@ -66,6 +66,13 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`
 - Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files, and [Compliance Reference Data Refresh](15b-compliance-reference-data-refresh.md)
 
+## Reporting Data-Quality Note
+
+The accrued-interest consumer may fall back from `OpenDateTime` to
+`HoldingPeriodDateTime` when calculating holding days. Bond descriptions with
+an IBKR issue-date prefix (`DMM/DD/YY`) must not have that date treated as the
+maturity date.
+
 ## Last Reviewed
 - Status: draft
 - Date: 2026-07-15
