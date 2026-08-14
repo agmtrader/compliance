@@ -49,6 +49,9 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Token failure: workflow exits before the route call.
 - Missing pipeline config: route fails immediately.
 - Extract, backup, or transform failure: overview captures the failing step and workflow can terminate with failure.
+- Bond duration calculation failure for an individual row: the transform logs the
+  exception with the row inputs, leaves that row's duration blank, reports the
+  failure count, and continues processing the remaining rows.
 - Workflow retry behavior is short compared with the clients pipeline and should be reviewed if repeated source instability occurs.
 
 ## Controls / Verification Points
