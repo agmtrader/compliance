@@ -37,8 +37,9 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 7. It maps each account’s advisor code to an advisor email address by joining advisors to contacts.
 8. It merges the candidate accounts to the client contact record to obtain the destination email.
 9. It skips records with missing or invalid client email addresses.
-10. For each remaining contact, it sends a funding notification email in Spanish, optionally copying the advisor.
-11. The route returns the merged contact list used for the outreach batch.
+10. It excludes the following opt-out addresses from the outreach batch, matching case-insensitively after trimming whitespace: `ramirezfumero1995@gmail.com`, `andrealeon.aluz@gmail.com`, `paulbernavidesr@gmail.com`, and `esquivelyrodriguez358@gmail.com`.
+11. For each remaining contact, it sends a funding notification email in Spanish, optionally copying the advisor.
+12. The route returns the merged contact list used for the outreach batch, excluding opt-out addresses.
 
 ## Outputs / Records Created
 - Funding notification emails to qualifying clients
@@ -49,6 +50,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 - Token failure: GitHub workflow exits without calling the route.
 - Reporting or database failure: route fails and the workflow returns a non-200 response.
 - Missing client email: account is logged and skipped instead of failing the full batch.
+- Explicit opt-out email: account is logged and excluded from the batch without sending.
 - Missing advisor email: client email still sends with blank CC.
 
 ## Controls / Verification Points
