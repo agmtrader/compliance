@@ -44,7 +44,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 ## Outputs / Records Created
 - Funding notification emails to qualifying clients
 - A response payload listing candidate accounts and email targets
-- Workflow logs showing the batch result
+- Workflow logs showing an overview (sent, failed, skipped, and total records) plus expandable per-recipient context/outcome (client, account, email, advisor, aging, notice number)
 
 ## Exception Paths / Failure Handling
 - Token failure: GitHub workflow exits without calling the route.
@@ -52,6 +52,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 - Missing client email: account is logged and skipped instead of failing the full batch.
 - Explicit opt-out email: account is logged and excluded from the batch without sending.
 - Missing advisor email: client email still sends with blank CC.
+- Email-send failure: the API logs the full recipient context and exception, then fails the route so the workflow cannot report a false success.
 
 ## Controls / Verification Points
 - Preventive control: only accounts with `Open` status are eligible.
@@ -62,6 +63,8 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 ## Evidence to Retain
 - GitHub Actions run history for `send_unfunded_emails.yml`
 - API logs showing skipped invalid-email records
+- API logs showing prepared batch counts and each send attempt, success, exclusion, skip, or failure with client/account/advisor context
+- GitHub Actions summary overview showing total sent, failed, skipped, and returned records
 - Sent funding-notification emails
 - Returned candidate contact list from the route
 

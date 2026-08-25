@@ -61,9 +61,13 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
   available. Missing snapshot rows are excluded from that output; they do not abort
   the remaining symbols. The snapshot summary reports requested, returned, and
   failed counts.
-- Bond duration calculation failure for an individual row: the transform logs the
-  exception with the row inputs, leaves that row's duration blank, reports the
-  failure count, and continues processing the remaining rows.
+- Bond duration calculation failure for an individual dated bond: the transform
+  logs the exception with the row inputs and, when maturity is missing, identifies
+  the affected bond by symbol, financial instrument, and company name. It leaves
+  that row's duration blank, reports the failure count, and continues processing
+  the remaining rows. Perpetual/non-maturing instruments are an expected
+  exception: duration is not applicable, so the row remains blank and a warning
+  is recorded without raising an error-group traceback.
 - Workflow retry behavior is short compared with the clients pipeline and should be reviewed if repeated source instability occurs.
 
 ## Controls / Verification Points
@@ -89,7 +93,9 @@ Bond snapshot transformation prioritizes the percentage-marked coupon in the
 IBKR financial-instrument description so issue-date components are not
 mistaken for coupon values. Descriptions whose maturity is represented only by
 an IBKR shorthand code remain dependent on the source snapshot's explicit
-maturity field.
+maturity field. Descriptions marked ``Perpetual`` (or ``Perp``) intentionally
+have no maturity; their duration is left blank because a principal repayment
+date does not exist.
 
 ## Last Reviewed
 - Status: draft

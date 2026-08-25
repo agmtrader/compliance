@@ -30,6 +30,9 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 4. For each qualifying account, it reads `Account ID`, `Title`, and `Master Account`.
 5. If the required identifiers are present, it generates a new alias as `<Account ID> <Title>`.
 6. It calls the IBKR alias update helper to apply the alias change.
+   - The supplied master-account identifier is forwarded to IBKR.
+   - Dedicated credentials are used for configured master accounts; any other
+     nonblank identifier uses the default I6413690 credential set.
 7. Successful updates are collected into the response payload with old and new alias values.
 8. Failures are logged per account while the remaining accounts continue processing.
 9. GitHub Actions emails the list of updated aliases on success or a failure notice if the job fails.
@@ -43,6 +46,7 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 - Token failure: workflow exits before calling the route.
 - Missing account identifiers: account is silently not updated because the required fields are incomplete.
 - IBKR update failure for one account: error is logged and processing continues for other pending accounts.
+- Master-account credential selection: unknown master-account identifiers are accepted and use the default I6413690 credentials; the fallback is logged.
 - Route failure: workflow sends failure email.
 
 ## Controls / Verification Points
