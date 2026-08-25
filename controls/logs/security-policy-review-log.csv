@@ -1,0 +1,2 @@
+review_id,policy_name,policy_version,review_date,reviewer,executive_approver,review_scope,decision,next_review_date,evidence_reference,notes
+SPR-2026-001,Information Security Policy,Current repository version,2026-08-25,Hernan Castro,Junta Directiva,Annual adequacy review including technology changes risks critical services and third parties,Adequate and approved,2027-08-25,Third-party cybersecurity evidence folder and AGM compliance repository,Retain the approval/communication email with the submitted evidence.

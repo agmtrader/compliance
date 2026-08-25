@@ -3,7 +3,7 @@
 ## Purpose
 This folder documents AGM operational and analytical processes in a procedure-oriented format that can be used for compliance reviews, operational onboarding, and change tracking.
 
-The process library complements `compliance/ITGC/` by translating application behavior into business workflows with clear triggers, controls, evidence, and code references.
+The process library complements `compliance/controls/` by translating application behavior into business workflows with clear triggers, controls, evidence, and code references.
 
 ## Scope
 This library covers recurring and material workflows executed through:
@@ -93,7 +93,7 @@ For each process, derive the documentation in this order:
 3. Operational interpretation
    Translate the code path into business steps, records touched, validations, outputs, and evidence.
 
-## Relationship to ITGC Artifacts
+## Relationship to Control Artifacts
 - The process register in this folder is the working inventory for process mapping.
-- `compliance/ITGC/transaction-processing-register.csv` remains the formal transaction register for critical flows.
-- High-risk workflows documented here should be reflected in the ITGC transaction register when they represent critical transaction processing.
+- The control repository's transaction register remains the formal transaction register for critical flows when that register is maintained.
+- High-risk workflows documented here should be reflected in the corresponding control log or register when they represent critical transaction processing.

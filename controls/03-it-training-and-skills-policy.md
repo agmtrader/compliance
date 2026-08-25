@@ -4,7 +4,7 @@
 Ensure IT personnel maintain the skills needed to operate AGM systems securely and effectively.
 
 ## System of Record
-GitHub repository document control under `Compliance/ITGC/` in this repository.
+GitHub repository document control under `compliance/controls/` in this repository.
 
 ## Scope
 Applies to all personnel with IT operational or administrative responsibilities (employees and contractors).
@@ -26,13 +26,13 @@ Applies to all personnel with IT operational or administrative responsibilities 
 - Training can include internal walkthroughs, vendor courses, certifications, tabletop exercises, or documented self-study.
 
 4. Record completion
-- Completion is recorded in `it-training-log.csv` with date, topic, and evidence link.
+- Completion is recorded in `compliance/controls/logs/it-training-log.csv` with date, topic, and evidence link.
 
 5. Address gaps
 - Overdue or missing training is marked `Open` with remediation target date.
 
 ## Minimum Evidence to Retain
-- Current annual training plan entries in `it-training-log.csv`.
+- Current annual training plan entries in `compliance/controls/logs/it-training-log.csv`.
 - Completion records with dates and evidence links.
 - Open gap records and closure updates.
 
