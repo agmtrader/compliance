@@ -64,7 +64,7 @@ flowchart TD
 ## Outputs / Records Created
 - New `contact_screening` records for in-scope contacts when execution occurs
   Each record can contain FATF status of `Listed` or `null`, plus OFAC / UK / UN screening evidence.
-- An API response containing the raw OFAC / UK / UN comparison (`all_available`, `all_same`, per-list change summaries), plus targeted contacts, executed screenings, contacts with and without OFAC / UK / UN matches, per-list match counts, screening-error contact ids, and any sanctions-availability warnings
+- An API response containing compact OFAC / UK / UN comparison flags (`all_available`, `all_same`) and numeric per-list deltas, plus targeted contacts, executed screenings, contacts with and without OFAC / UK / UN matches, per-list match counts, screening-error contact ids, and any sanctions-availability warnings
 - GitHub Actions success or failure email notification
 
 ## Exception Paths / Failure Handling

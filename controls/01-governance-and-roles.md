@@ -36,8 +36,3 @@ Applies to AGM personnel and contractors performing IT, security, compliance, or
 - Approved IT plan and quarterly status records, where applicable.
 - GitHub approval and merge history for material governance changes.
 - Quarterly governance review and open-action records.
-
-## Control Mapping
-
-- B320 GITC row 26: management responsibility for IT plan and strategy.
-- B320 GITC row 32: defined IT roles, responsibilities, reporting, policies, standards, and procedures.

@@ -24,10 +24,14 @@ Applies to AGM employees, contractors, systems, applications, infrastructure, da
 6. Security incidents or suspected incidents are reported promptly, documented, escalated, and tracked through closure.
 7. Third-party access requires explicit approval, defined scope, appropriate security requirements, and review or revocation when no longer needed.
 8. Personnel with system access receive security guidance appropriate to their role.
+9. Cloud services use secure configuration practices: only required APIs and services are enabled, configuration changes are restricted to authorized development/administrative personnel, and credentials or secrets are stored in managed secret storage such as Google Secret Manager.
+10. AGM performs internal vulnerability testing of relevant applications approximately annually using OWASP ZAP and monitors available cloud and application logs for indicators of security weaknesses. Security patches are applied when a vulnerability or security defect is identified. AGM's current operational target is to address identified issues within approximately one to two days; a formal severity-based SLA remains to be documented.
+11. Suspected or confirmed security incidents are handled under `compliance/controls/04-incident-response-policy.md`.
+12. Security-relevant events from AGM services are sent to Google Cloud Logging and reviewed through Google Cloud Error Reporting, daily automated analysis, and manual investigation when necessary. Google Workspace provides security alerts, including suspicious-login notifications.
 
 ## Critical Asset Inventory
 
-AGM maintains an inventory of critical hardware, software, and services in `compliance/controls/logs/critical-asset-inventory.csv`. The inventory uses the B310 Understanding the IT Environment - Listing 2025 for the equipment and application baseline and the official third-party provider register for external services. It identifies the asset or service, purpose, type, criticality, dependency scope, primary provider, review date, and status. It is reviewed at least annually and after material changes.
+AGM maintains an inventory of critical hardware, software, and services in `compliance/controls/logs/critical-asset-inventory.csv`. The inventory and the official third-party provider register identify the asset or service, purpose, type, criticality, dependency scope, primary provider, review date, and status. They are reviewed at least annually and after material changes.
 
 ## Communication and Acknowledgement
 
@@ -48,8 +52,3 @@ Exceptions require documented business justification, risk assessment, compensat
 - Board approval and policy communication record.
 - Policy communication and completed adequacy reviews.
 - Exception records, if any.
-
-## Control Mapping
-
-- B320 GITC row 36: formal IT security policy approved by management and communicated to employees.
-- B320 GITC row 38: IT security policy appropriate for the size and complexity of the entity.

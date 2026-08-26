@@ -39,6 +39,3 @@ Applies to all personnel with IT operational or administrative responsibilities 
 ## Review Frequency
 - Training plan review annually.
 - Completion tracking reviewed quarterly (calendar quarters).
-
-## Control Mapping
-- B320 GITC row 47: Procedures exist to ensure IT personnel have proper training and skills updates.
