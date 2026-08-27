@@ -33,6 +33,8 @@ Applies to AGM employees, contractors, systems, applications, infrastructure, da
 
 AGM maintains an inventory of critical hardware, software, and services in `compliance/controls/logs/critical-asset-inventory.csv`. The inventory and the official third-party provider register identify the asset or service, purpose, type, criticality, dependency scope, primary provider, review date, and status. They are reviewed at least annually and after material changes.
 
+AGM uses the default Google Cloud Logging retention configuration for its cloud logs: the `_Required` bucket retains applicable audit logs for 400 days and the `_Default` bucket retains application logs for 30 days.
+
 ## Communication and Acknowledgement
 
 - The policy is communicated to personnel with system access at issuance and after material updates. The communication record is retained with the policy evidence.

@@ -31,6 +31,17 @@ Applies to all personnel with IT operational or administrative responsibilities 
 5. Address gaps
 - Overdue or missing training is marked `Open` with remediation target date.
 
+## Compliance Training Requirements
+
+For personnel involved in client-facing, compliance, or security-related activities, AGM's training requirements include:
+
+- Initial training during onboarding before handling client accounts or compliance activities.
+- Annual refresher training for existing personnel.
+- Training on the risk-based approach, sanctions obligations, identifying red flags, escalation, and reporting responsibilities.
+- Targeted training for client-facing and compliance roles when appropriate.
+- Updating training materials after material changes to the regulatory or risk framework.
+- Retaining completion dates and assessment or participation records.
+
 ## Minimum Evidence to Retain
 - Current annual training plan entries in `compliance/controls/logs/it-training-log.csv`.
 - Completion records with dates and evidence links.
