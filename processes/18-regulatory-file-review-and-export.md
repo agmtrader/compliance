@@ -33,7 +33,7 @@ Assemble an account-level compliance review for one account that combines IBKR a
 2. It requests IBKR account details and reads all account-contact links for the internal account.
 3. In parallel, it attempts to load account-level screenings, IBKR financial ranges, all Dashboard contacts, and all linked contacts' document data, metadata, and `document_processing` rows.
 4. Screening, financial-range, contact, and document requests use `Promise.allSettled`; a failed request is replaced by an empty collection while the rest of the page continues.
-5. The page groups returned account-level screenings by exact case-insensitive holder name and calculates Low, Medium, or High using score thresholds below `3.5`, below `7`, or `7` and above.
+5. The page groups returned account-level screenings by exact case-insensitive holder name and calculates Low, Medium, or High using the approved AML/RBA thresholds: Low when less than or equal to `3.5`, Medium when greater than `3.5` and less than or equal to `5.0`, and High when greater than `5.0`.
 6. If no screening-derived account score is available, the page displays the IBKR account risk score.
 7. The page derives a single-account document stage using the same required-category rules as Account Focus: individual/joint accounts require Proof of Identity, Proof of Address, and Source of Wealth; organization accounts additionally require Proof of Existence.
 8. When `application_json` exists, the page compares application-versus-IBKR financial fields for net worth, liquid net worth, and annual income using IBKR financial-range bounds when needed, and it separately compares account type, base currency, investment objectives, and normalized Source-of-Wealth families.

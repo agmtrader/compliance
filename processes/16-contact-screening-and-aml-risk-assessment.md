@@ -33,10 +33,10 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 4. The service loads OFAC, UK, and UN resource files on first use in the API worker and builds in-memory exact-name indexes. OFAC uses its `name` field, UK uses `Name 1` through `Name 6`, and UN uses primary names plus pipe-separated aliases.
 5. The contact name and source names are normalized by removing accents and non-alphanumeric punctuation, converting to lowercase, and collapsing spaces. Only exact normalized-name matches are returned.
 6. The service resolves the customer type from IBKR `applicantType` when present, falling back to the stored application customer type when IBKR details are partial, and resolves a risk country from the matched IBKR associated person or the selected holder in the stored application.
-7. It calculates five risk components: customer risk, jurisdiction risk, product risk, delivery-channel risk, and introducer risk.
-8. The component weights are 30%, 25%, 15%, 15%, and 15%, respectively. Delivery-channel risk is always `5`; introducer risk is `3` when the account has an advisor code and `1` otherwise.
+7. It calculates four risk components under the approved RBA model: customer risk, jurisdiction risk, product/service risk, and delivery-channel risk.
+8. The component weights are 35%, 35%, 15%, and 15%, respectively. Delivery-channel risk is always `5`. Introducer/Relationship Risk is excluded because AGM does not currently operate through introducer arrangements.
 9. Customer risk considers account type, PEP or adverse regulatory indicators, investment experience, wealth-source complexity, cross-border information, employment, and organization structure. Jurisdiction and product scores use hardcoded country and product groups.
-10. The weighted result is constrained to the range `1` through `10`. Any exact OFAC, UK, or UN match raises the final score to at least `9`.
+10. The weighted result is constrained to the range `1` through `10`. Scores are classified as Low when less than or equal to `3.5`, Medium when greater than `3.5` and less than or equal to `5.0`, and High when greater than `5.0`. Any exact OFAC, UK, or UN match raises the final score to at least `9`.
 11. FATF status is set to `Listed` when the resolved country matches a hardcoded FATF country code or normalized country name; otherwise it is stored as `null`.
 12. The API creates a `contact_screening` row containing the contact id, risk score, FATF status, OFAC results, UK results, UN results, and a compact timestamp.
 13. Account and application pages read screening history, sort it by the stored timestamp, and show counts, latest date, latest risk score, and source hit counts.
