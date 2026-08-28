@@ -7,6 +7,13 @@ on:
       - 'processes/**'
       - '**/*.md'
       - '**/*.csv'
+  pull_request:
+    types: [opened, ready_for_review, review_requested, synchronize]
+    paths:
+      - 'controls/**'
+      - 'processes/**'
+      - '**/*.md'
+      - '**/*.csv'
   workflow_dispatch:
 
 jobs:
@@ -15,6 +22,11 @@ jobs:
     steps:
       - name: Call compliance email endpoint
         shell: bash
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url || '' }}
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          COMMIT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -uo pipefail
 
@@ -42,7 +54,12 @@ jobs:
           response=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $access_token" \
             -H "Content-Type: application/json" \
-            -d '{}' \
+            -d "$(jq -n \
+              --arg pr_url "$PR_URL" \
+              --arg pr_title "$PR_TITLE" \
+              --arg commit_sha "$COMMIT_SHA" \
+              --arg repository "$REPOSITORY" \
+              '{pr_url: (if $pr_url == "" then null else $pr_url end), pr_title: (if $pr_title == "" then null else $pr_title end), commit_sha: $commit_sha, repository: $repository}')" \
             https://api.agmtechnology.com/actions/send_compliance_manual_update_email)
 
           http_status=$(echo "$response" | tail -n1)
