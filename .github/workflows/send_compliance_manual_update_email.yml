@@ -3,7 +3,8 @@ name: Send Compliance Manual Update Email
 on:
   push:
     paths:
-      - 'Compliance/ITGC/**'
+      - 'controls/**'
+      - 'processes/**'
       - '**/*.md'
       - '**/*.csv'
   workflow_dispatch:

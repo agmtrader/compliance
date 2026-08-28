@@ -1,0 +1,6 @@
+# Revisión obligatoria recomendada para políticas, controles, registros y procesos de Compliance.
+/controls/ @aguilarcarboni
+/processes/ @aguilarcarboni
+
+# El propio archivo CODEOWNERS también queda bajo revisión del Code Owner.
+/.github/CODEOWNERS @aguilarcarboni
