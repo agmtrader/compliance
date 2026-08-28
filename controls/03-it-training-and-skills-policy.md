@@ -1,52 +1,52 @@
-# Procedimiento de Actualización de Capacitación y Habilidades de TI
+# IT Training and Skills Update Procedure
 
-## Propósito
-Garantizar que el personal de TI mantenga las habilidades necesarias para operar los sistemas de AGM de forma segura y eficaz.
+## Purpose
+Ensure IT personnel maintain the skills needed to operate AGM systems securely and effectively.
 
-## Registro oficial
-Control documental del repositorio GitHub en `compliance/controls/` de este repositorio.
+## System of Record
+GitHub repository document control under `compliance/controls/` in this repository.
 
-## Alcance
-Aplica a todo el personal con responsabilidades operativas o administrativas de TI, incluidos empleados y contratistas.
+## Scope
+Applies to all personnel with IT operational or administrative responsibilities (employees and contractors).
 
-## Titularidad y aprobación
-- Responsable del procedimiento: Andres Aguilar.
-- Supervisión ejecutiva: Hernan Castro (CEO).
-- Método de aprobación: aprobación del Pull Request y registro del merge en GitHub.
+## Ownership and Approval
+- Procedure Owner: Andres Aguilar
+- Executive Oversight: Hernan Castro (CEO)
+- Approval Method: Pull Request approval and merge record in GitHub.
 
-## Procedimiento
-1. Definir las habilidades requeridas
-- Andres Aguilar define las habilidades requeridas por rol (seguridad, operaciones, sistemas, desarrollo y gestión de incidentes).
+## Procedure
+1. Define required skills
+- Andres Aguilar defines required skills by role (security, operations, systems, development, incident handling).
 
-2. Establecer el plan anual de capacitación
-- Al menos una vez al año, Andres Aguilar establece los temas de capacitación y las fechas objetivo de finalización.
+2. Set annual training plan
+- At least once per year, Andres Aguilar sets the training topics and target completion dates.
 
-3. Completar la capacitación
-- Cada persona incluida en el alcance completa la capacitación asignada.
-- La capacitación puede incluir sesiones internas, cursos de proveedores, certificaciones, ejercicios de mesa o autoestudio documentado.
+3. Complete training
+- Each in-scope person completes assigned training.
+- Training can include internal walkthroughs, vendor courses, certifications, tabletop exercises, or documented self-study.
 
-4. Registrar la finalización
-- La finalización se registra en `compliance/controls/logs/it-training-log.csv` con fecha, tema y enlace de evidencia.
+4. Record completion
+- Completion is recorded in `compliance/controls/logs/it-training-log.csv` with date, topic, and evidence link.
 
-5. Atender brechas
-- La capacitación vencida o faltante se marca como `Open` con una fecha objetivo de remediación.
+5. Address gaps
+- Overdue or missing training is marked `Open` with remediation target date.
 
-## Requisitos de capacitación de Compliance
+## Compliance Training Requirements
 
-Para el personal involucrado en actividades frente a clientes, de Compliance o relacionadas con seguridad, los requisitos de capacitación de AGM incluyen:
+For personnel involved in client-facing, compliance, or security-related activities, AGM's training requirements include:
 
-- Capacitación inicial durante el onboarding antes de gestionar cuentas de clientes o actividades de Compliance.
-- Capacitación anual de actualización para el personal existente.
-- Capacitación sobre el enfoque basado en riesgos, obligaciones de sanciones, identificación de señales de alerta, escalamiento y responsabilidades de reporte.
-- Capacitación dirigida a roles frente a clientes y de Compliance cuando corresponda.
-- Actualización de materiales después de cambios materiales en el marco regulatorio o de riesgos.
-- Conservación de fechas de finalización y registros de evaluación o participación.
+- Initial training during onboarding before handling client accounts or compliance activities.
+- Annual refresher training for existing personnel.
+- Training on the risk-based approach, sanctions obligations, identifying red flags, escalation, and reporting responsibilities.
+- Targeted training for client-facing and compliance roles when appropriate.
+- Updating training materials after material changes to the regulatory or risk framework.
+- Retaining completion dates and assessment or participation records.
 
-## Evidencia mínima a conservar
-- Entradas del plan anual vigente en `compliance/controls/logs/it-training-log.csv`.
-- Registros de finalización con fechas y enlaces de evidencia.
-- Registros de brechas abiertas y actualizaciones de cierre.
+## Minimum Evidence to Retain
+- Current annual training plan entries in `compliance/controls/logs/it-training-log.csv`.
+- Completion records with dates and evidence links.
+- Open gap records and closure updates.
 
-## Frecuencia de revisión
-- Revisión anual del plan de capacitación.
-- Seguimiento trimestral de finalizaciones (trimestres calendario).
+## Review Frequency
+- Training plan review annually.
+- Completion tracking reviewed quarterly (calendar quarters).

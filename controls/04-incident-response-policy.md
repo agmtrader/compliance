@@ -1,33 +1,33 @@
-# Política de Respuesta a Incidentes de Seguridad de la Información
+# Information Security Incident Response Policy
 
-## Propósito
+## Purpose
 
-Definir la respuesta de AGM ante incidentes de seguridad de la información sospechados o confirmados.
+Define AGM's response to suspected or confirmed information-security incidents.
 
-## Alcance
+## Scope
 
-Aplica a incidentes que afecten sistemas, código, datos, credenciales, servicios cloud o integraciones de AGM y que puedan afectar a AGM, a un cliente o a una parte relacionada con el servicio.
+Applies to incidents affecting AGM systems, code, data, credentials, cloud services, or integrations that could affect AGM or an affected customer or service party.
 
-## Procedimiento de respuesta
+## Response Procedure
 
-1. Identificar y evaluar el incidente, incluidos los sistemas, datos, usuarios y terceros afectados.
-2. Abrir o actualizar un GitHub Issue en el repositorio de AGM cuando se requiera investigación, contención o remediación de código.
-3. Contener el problema y aplicar la corrección requerida, incluida una corrección de código o configuración cuando corresponda.
-4. Verificar la corrección y registrar las acciones, fechas, decisiones y estado de cierre en el GitHub Issue.
-5. Comunicar los incidentes materiales y la información relevante de recuperación a las partes afectadas, incluidos clientes, proveedores o reguladores cuando corresponda.
-6. Después del cierre, registrar las lecciones aprendidas, la causa raíz y las acciones preventivas para incidentes materiales.
+1. Identify and assess the incident, including affected systems, data, users, and third parties.
+2. Open or update a GitHub Issue in the AGM repository when investigation, containment, or code remediation is required.
+3. Contain the issue and apply the required correction, including a code or configuration fix where applicable.
+4. Verify the correction and record the actions, dates, decisions, and closure status in the GitHub Issue.
+5. Communicate material incidents and relevant recovery information to affected parties, including customers, providers, or regulators when applicable.
+6. After closure, record lessons learned, root cause, and preventive actions for material incidents.
 
 ## Roles
 
-- Chief Compliance Officer: coordina la evaluación, el escalamiento, la evidencia y las comunicaciones.
-- Personal de desarrollo y operaciones: investiga el impacto técnico, implementa correcciones y proporciona la verificación.
-- Junta Directiva: recibe el escalamiento de incidentes materiales y aprueba comunicaciones externas significativas cuando corresponda.
+- Chief Compliance Officer: coordinates assessment, escalation, evidence, and communications.
+- Development/operations personnel: investigate technical impact, implement fixes, and provide verification.
+- Junta Directiva: receives escalation for material incidents and approves significant external communications where appropriate.
 
-## Evidencia a conservar
+## Evidence to Retain
 
-- GitHub Issue, notas de investigación, cambio de código o configuración, verificación, comunicaciones y registro de cierre.
-- Revisión posterior al incidente y registro de acciones correctivas para incidentes materiales.
+- GitHub Issue, investigation notes, code/configuration change, verification, communications, and closure record.
+- Post-incident review and corrective-action record for material incidents.
 
-## Revisión
+## Review
 
-Esta política se revisa anualmente y después de un incidente material.
+This policy is reviewed annually and after a material incident.
