@@ -1,2 +1,4 @@
-training_year,person_name,person_email,role,training_topic,training_type,assigned_date,target_completion_date,completion_date,status,evidence_link,notes
-2026,Andres Aguilar,,IT Owner,Compliance control ownership and evidence management,Internal walkthrough,2026-01-15,2026-03-31,,Open,,Initial baseline entry
+ano_capacitacion,persona,correo,rol,tema_capacitacion,tipo_capacitacion,fecha_asignacion,fecha_objetivo,fecha_finalizacion,estado,enlace_evidencia,notas
+2024,Personal de AGM,,Todo el personal incluido en el alcance,Concienciacion anual sobre seguridad de la informacion y Compliance,Capacitacion interna,2024-12-01,2024-12-31,2024-12-20,Completada,,Registro de capacitacion anual
+2025,Personal de AGM,,Todo el personal incluido en el alcance,Concienciacion anual sobre seguridad de la informacion y Compliance,Capacitacion interna,2025-12-01,2025-12-31,2025-12-19,Completada,,Registro de capacitacion anual
+2026,Andres Aguilar,,Responsable de TI,Responsabilidades sobre controles de Compliance y gestion de evidencia,Sesion interna,2026-01-15,2026-03-31,,Abierta,,Entrada de linea base inicial

@@ -1,38 +1,38 @@
-# IT Governance, Roles, and Responsibilities Policy
+# Política de Gobierno, Roles y Responsabilidades de TI
 
-## Purpose
+## Propósito
 
-Define the governance model, decision rights, ownership, reporting, and approval workflow for AGM's technology and security activities.
+Definir el modelo de gobierno, los derechos de decisión, la titularidad, los reportes y el flujo de aprobación de las actividades de tecnología y seguridad de AGM.
 
-## Scope
+## Alcance
 
-Applies to AGM personnel and contractors performing IT, security, compliance, or system-ownership activities.
+Aplica al personal y contratistas de AGM que realizan actividades de TI, seguridad, cumplimiento o titularidad de sistemas.
 
-## Governance and Approval
+## Gobierno y aprobación
 
-- The Junta Directiva provides executive approval for material IT governance and security documents and changes.
-- The IT Owner maintains the governance documentation, coordinates the annual IT plan, and reports status, risks, and overdue actions.
-- Process and System Owners execute controls assigned to their systems and retain evidence of execution.
-- Governance documents and material changes are approved through the AGM Compliance GitHub repository.
+- La Junta Directiva brinda la aprobación ejecutiva de los documentos y cambios materiales de gobierno de TI y seguridad.
+- El responsable de TI mantiene la documentación de gobierno, coordina el plan anual de TI e informa el estado, los riesgos y las acciones vencidas.
+- Los responsables de procesos y sistemas ejecutan los controles asignados y conservan la evidencia de ejecución.
+- Los documentos de gobierno y los cambios materiales se aprueban mediante el repositorio GitHub de Compliance de AGM.
 
-## Core Roles
+## Roles principales
 
-- Junta Directiva: approves the annual IT plan, material governance documents, material changes, and significant exceptions.
-- IT Owner: drafts and maintains the IT plan, assigns operational ownership, tracks initiatives, and reports status.
-- Chief Compliance Officer (Cristian Ramirez): serves as AGM's security/compliance responsible officer, overseeing compliance controls, role assignments, segregation of functions, and control evidence.
-- Process/System Owners: operate assigned controls, maintain records, and escalate risks or exceptions.
+- Junta Directiva: aprueba el plan anual de TI, los documentos materiales de gobierno, los cambios materiales y las excepciones significativas.
+- Responsable de TI: redacta y mantiene el plan de TI, asigna responsables operativos, da seguimiento a las iniciativas e informa el estado.
+- Chief Compliance Officer (Cristian Ramirez): actúa como responsable de seguridad y cumplimiento de AGM y supervisa los controles de cumplimiento, la asignación de roles, la segregación de funciones y la evidencia de controles.
+- Responsables de procesos y sistemas: operan los controles asignados, mantienen los registros y escalan riesgos o excepciones.
 
-## Operating Requirements
+## Requisitos operativos
 
-1. Maintain an annual IT plan covering objectives, initiatives, expected outcomes, resources, risks, and dependencies.
-2. Review initiative status quarterly and record causes and mitigations for items that are at risk.
-3. Keep control and process ownership current in the governing policies and system permission records.
-4. Review document ownership, control status, and open remediation items quarterly.
-5. Review the role model and governance documentation at least annually and after material organizational or technology changes.
+1. Mantener un plan anual de TI que cubra objetivos, iniciativas, resultados esperados, recursos, riesgos y dependencias.
+2. Revisar trimestralmente el estado de las iniciativas y registrar las causas y mitigaciones de los elementos en riesgo.
+3. Mantener actualizada la titularidad de controles y procesos en las políticas de gobierno y en los registros de permisos de sistemas.
+4. Revisar trimestralmente la titularidad de documentos, el estado de controles y las acciones de remediación abiertas.
+5. Revisar el modelo de roles y la documentación de gobierno al menos anualmente y después de cambios organizativos o tecnológicos materiales.
 
-## Minimum Evidence to Retain
+## Evidencia mínima a conservar
 
-- Current governance records and approval history in `compliance/controls/logs/`.
-- Approved IT plan and quarterly status records, where applicable.
-- GitHub approval and merge history for material governance changes.
-- Quarterly governance review and open-action records.
+- Registros de gobierno vigentes e historial de aprobaciones en `compliance/controls/logs/`.
+- Plan de TI aprobado y registros trimestrales de estado, cuando aplique.
+- Historial de aprobaciones y merges de GitHub para cambios materiales de gobierno.
+- Revisión trimestral de gobierno y registros de acciones abiertas.

@@ -1,56 +1,56 @@
-# Information Security Policy
+# Política de Seguridad de la Información
 
-## Purpose
+## Propósito
 
-Establish minimum security requirements to protect AGM data, systems, operations, and third-party integrations.
+Establecer los requisitos mínimos de seguridad para proteger los datos, sistemas, operaciones e integraciones con terceros de AGM.
 
-## Scope
+## Alcance
 
-Applies to AGM employees, contractors, systems, applications, infrastructure, data, and external services supporting AGM operations, including IBKR and Interclear integrations.
+Aplica a empleados, contratistas, sistemas, aplicaciones, infraestructura, datos y servicios externos que apoyan las operaciones de AGM, incluidas las integraciones con IBKR e Interclear.
 
-## Ownership and Approval
+## Titularidad y aprobación
 
-- Policy Owner: Chief Compliance Officer.
-- Executive Approver: Junta Directiva.
-- Approval Method: approval and merge record in the AGM Compliance GitHub repository, supported by the board communication record.
+- Responsable de la política: Chief Compliance Officer.
+- Aprobador ejecutivo: Junta Directiva.
+- Método de aprobación: registro de aprobación y merge en el repositorio GitHub de Compliance de AGM, respaldado por el registro de comunicación de la Junta Directiva.
 
-## Policy Statements
+## Declaraciones de la política
 
-1. Access is based on least privilege, authenticated identities, defined roles, and segregation of functions. Shared accounts are prohibited unless explicitly approved.
-2. Administrative and privileged access uses stronger authentication controls where technically available.
-3. Production changes are documented, reviewed, and approved before implementation. Emergency changes are documented after implementation.
-4. Security-relevant activities are logged where technically feasible and retained for review or investigation.
-5. Sensitive data is protected in storage and transmission using appropriate industry-standard controls where supported.
-6. Security incidents or suspected incidents are reported promptly, documented, escalated, and tracked through closure.
-7. Third-party access requires explicit approval, defined scope, appropriate security requirements, and review or revocation when no longer needed.
-8. Personnel with system access receive security guidance appropriate to their role.
-9. Cloud services use secure configuration practices: only required APIs and services are enabled, configuration changes are restricted to authorized development/administrative personnel, and credentials or secrets are stored in managed secret storage such as Google Secret Manager.
-10. AGM performs internal vulnerability testing of relevant applications approximately annually using OWASP ZAP and monitors available cloud and application logs for indicators of security weaknesses. Security patches are applied when a vulnerability or security defect is identified. AGM's current operational target is to address identified issues within approximately one to two days; a formal severity-based SLA remains to be documented.
-11. Suspected or confirmed security incidents are handled under `compliance/controls/04-incident-response-policy.md`.
-12. Security-relevant events from AGM services are sent to Google Cloud Logging and reviewed through Google Cloud Error Reporting, daily automated analysis, and manual investigation when necessary. Google Workspace provides security alerts, including suspicious-login notifications.
+1. El acceso se basa en mínimo privilegio, identidades autenticadas, roles definidos y segregación de funciones. Las cuentas compartidas están prohibidas salvo aprobación expresa.
+2. El acceso administrativo y privilegiado utiliza controles de autenticación reforzada cuando están técnicamente disponibles.
+3. Los cambios de producción se documentan, revisan y aprueban antes de su implementación. Los cambios de emergencia se documentan después de su implementación.
+4. Las actividades relevantes para la seguridad se registran cuando es técnicamente viable y se conservan para revisión o investigación.
+5. Los datos sensibles se protegen durante el almacenamiento y la transmisión mediante controles apropiados de la industria cuando están disponibles.
+6. Los incidentes de seguridad o sospechas de incidentes se reportan oportunamente, se documentan, se escalan y se siguen hasta su cierre.
+7. El acceso de terceros requiere aprobación expresa, alcance definido, requisitos de seguridad apropiados y revisión o revocación cuando deja de ser necesario.
+8. El personal con acceso a sistemas recibe orientación de seguridad adecuada a su rol.
+9. Los servicios cloud utilizan prácticas de configuración segura: solo se habilitan las APIs y servicios requeridos, los cambios de configuración se restringen al personal autorizado de desarrollo o administración y las credenciales o secretos se almacenan en servicios administrados como Google Secret Manager.
+10. AGM realiza pruebas internas de vulnerabilidades de las aplicaciones relevantes aproximadamente una vez al año utilizando OWASP ZAP y monitorea los logs cloud y de aplicaciones disponibles para identificar indicios de debilidades de seguridad. Los parches de seguridad se aplican cuando se identifica una vulnerabilidad o defecto de seguridad. El objetivo operativo actual de AGM es atender los problemas identificados en aproximadamente uno o dos días; queda pendiente documentar un SLA formal basado en severidad.
+11. Los incidentes de seguridad sospechados o confirmados se gestionan conforme a `compliance/controls/04-incident-response-policy.md`.
+12. Los eventos relevantes para la seguridad de los servicios de AGM se envían a Google Cloud Logging y se revisan mediante Google Cloud Error Reporting, análisis automatizado diario e investigación manual cuando es necesario. Google Workspace proporciona alertas de seguridad, incluidas notificaciones de inicios de sesión sospechosos.
 
-## Critical Asset Inventory
+## Inventario de activos críticos
 
-AGM maintains an inventory of critical hardware, software, and services in `compliance/controls/logs/critical-asset-inventory.csv`. The inventory and the official third-party provider register identify the asset or service, purpose, type, criticality, dependency scope, primary provider, review date, and status. They are reviewed at least annually and after material changes.
+AGM mantiene un inventario de hardware, software y servicios críticos en `compliance/controls/logs/critical-asset-inventory.csv`. El inventario y el registro oficial de proveedores terceros identifican el activo o servicio, propósito, tipo, criticidad, alcance de dependencia, proveedor principal, fecha de revisión y estado. Se revisan al menos anualmente y después de cambios materiales.
 
-AGM uses the default Google Cloud Logging retention configuration for its cloud logs: the `_Required` bucket retains applicable audit logs for 400 days and the `_Default` bucket retains application logs for 30 days.
+AGM utiliza la configuración predeterminada de retención de Google Cloud Logging para sus logs cloud: el bucket `_Required` conserva los logs de auditoría aplicables durante 400 días y el bucket `_Default` conserva los logs de aplicaciones durante 30 días.
 
-## Communication and Acknowledgement
+## Comunicación y acuse
 
-- The policy is communicated to personnel with system access at issuance and after material updates. The communication record is retained with the policy evidence.
+- La política se comunica al personal con acceso a sistemas al emitirse y después de actualizaciones materiales. El registro de comunicación se conserva con la evidencia de la política.
 
-## Adequacy Review
+## Revisión de adecuación
 
-The policy is reviewed at least annually, after material business or technology changes, or after a significant security incident. The reviewer evaluates company size and staffing, system criticality, data sensitivity, regulatory obligations, vendor access exposure, and current threats or incidents. The decision, rationale, gaps, and actions are recorded in `compliance/controls/logs/security-policy-review-log.csv`. The Junta Directiva reviews the outcome and approves material updates.
+La política se revisa al menos anualmente, después de cambios materiales de negocio o tecnología, o después de un incidente de seguridad significativo. El revisor evalúa el tamaño y personal de la compañía, la criticidad de los sistemas, la sensibilidad de los datos, las obligaciones regulatorias, la exposición al acceso de proveedores y las amenazas o incidentes actuales. La decisión, justificación, brechas y acciones se registran en `compliance/controls/logs/security-policy-review-log.csv`. La Junta Directiva revisa el resultado y aprueba las actualizaciones materiales.
 
-## Exceptions
+## Excepciones
 
-Exceptions require documented business justification, risk assessment, compensating controls, expiration date, and approval by the Junta Directiva.
+Las excepciones requieren justificación de negocio documentada, evaluación de riesgos, controles compensatorios, fecha de vencimiento y aprobación de la Junta Directiva.
 
-## Minimum Evidence to Retain
+## Evidencia mínima a conservar
 
-- Current approved policy version.
-- GitHub approval and merge history.
-- Board approval and policy communication record.
-- Policy communication and completed adequacy reviews.
-- Exception records, if any.
+- Versión vigente y aprobada de la política.
+- Historial de aprobaciones y merges de GitHub.
+- Registro de aprobación de la Junta Directiva y comunicación de la política.
+- Comunicación de la política y revisiones de adecuación completadas.
+- Registros de excepciones, si existen.

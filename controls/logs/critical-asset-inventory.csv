@@ -1,12 +1,12 @@
-asset_id,asset_name,asset_type,business_purpose,criticality,data_or_dependency,primary_provider,last_reviewed,status
-AST-009,Mac Mini M4 2024,Hardware,Office workstation supporting AGM operations,Medium,Local operational access,AGM,2026-08-25,Active
-AST-010,MacBook Air M3 13 inch,Hardware,Office workstation supporting AGM operations,Medium,Local operational access,AGM,2026-08-25,Active
-AST-011,Mac Mini M2 2022,Hardware,Office workstation supporting AGM operations,Medium,Local operational access,AGM,2026-08-25,Active
-AST-012,Python 3.x,Software,Data processing and financial reporting workflows,High,Internal files and curated datasets,Open-source ecosystem,2026-08-25,Active
-AST-013,Microsoft Excel / Microsoft 365,Software and SaaS,Spreadsheet analysis reconciliations schedules and reporting,High,Financial and operational workbooks,Microsoft,2026-08-25,Active
-AST-014,Power BI Service,Software and SaaS,Analytics dashboards KPI summaries and reporting,High,Financial and operational datasets,Microsoft Azure,2026-08-25,Active
-AST-015,Google Workspace Drive and Gmail,Cloud service,Corporate identity collaboration and document storage,High,Corporate and compliance information,Google,2026-08-25,Active
-AST-016,IBKR integration,External service,Brokerage account and trading-service connectivity,High,Account and trading-related information,Interactive Brokers,2026-08-25,Active
-AST-018,GitHub Compliance repository,Cloud service,Versioned source code and compliance documentation,High,Source code and compliance records,GitHub,2026-08-25,Active
-AST-019,Supabase,Cloud service,Application data persistence and authentication support,High,Application and client data,Supabase,2026-08-25,Active
-AST-020,Google Document AI,Cloud service,Document processing and analysis support,Medium,Uploaded document content,Google,2026-08-25,Active
+id_activo,nombre_activo,tipo_activo,proposito_negocio,criticidad,datos_o_dependencia,proveedor_principal,ultima_revision,estado
+AST-009,Mac Mini M4 2024,Hardware,Estacion de trabajo de oficina para las operaciones de AGM,Media,Acceso operativo local,AGM,2026-08-25,Activo
+AST-010,MacBook Air M3 13 pulgadas,Hardware,Estacion de trabajo de oficina para las operaciones de AGM,Media,Acceso operativo local,AGM,2026-08-25,Activo
+AST-011,Mac Mini M2 2022,Hardware,Estacion de trabajo de oficina para las operaciones de AGM,Media,Acceso operativo local,AGM,2026-08-25,Activo
+AST-012,Python 3.x,Software,Procesamiento de datos y reportes financieros,Alta,Archivos internos y conjuntos de datos curados,Ecosistema de codigo abierto,2026-08-25,Activo
+AST-013,Microsoft Excel / Microsoft 365,Software y SaaS,"Analisis en hojas de calculo, conciliaciones, cronogramas y reportes",Alta,Libros de trabajo financieros y operativos,Microsoft,2026-08-25,Activo
+AST-014,Power BI Service,Software y SaaS,"Dashboards analiticos, indicadores y reportes",Alta,Conjuntos de datos financieros y operativos,Microsoft Azure,2026-08-25,Activo
+AST-015,"Google Workspace, Drive y Gmail",Servicio cloud,"Identidad corporativa, colaboracion y almacenamiento documental",Alta,Informacion corporativa y de Compliance,Google,2026-08-25,Activo
+AST-016,Integracion con IBKR,Servicio externo,Conectividad con cuentas y servicios de intermediacion,Alta,Informacion de cuentas y operaciones de intermediacion,Interactive Brokers,2026-08-25,Activo
+AST-018,Repositorio de Compliance de GitHub,Servicio cloud,Codigo fuente versionado y documentacion de Compliance,Alta,Codigo fuente y registros de Compliance,GitHub,2026-08-25,Activo
+AST-019,Supabase,Servicio cloud,Persistencia de datos de aplicaciones y soporte de autenticacion,Alta,Datos de aplicaciones y clientes,Supabase,2026-08-25,Activo
+AST-020,Google Document AI,Servicio cloud,Procesamiento y analisis de documentos,Media,Contenido de documentos cargados,Google,2026-08-25,Activo
