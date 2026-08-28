@@ -1,20 +1,13 @@
 name: Send Compliance Manual Update Email
 
 on:
-  push:
-    paths:
-      - 'controls/**'
-      - 'processes/**'
-      - '**/*.md'
-      - '**/*.csv'
   pull_request:
-    types: [opened, ready_for_review, review_requested, synchronize]
+    types: [opened]
     paths:
       - 'controls/**'
       - 'processes/**'
       - '**/*.md'
       - '**/*.csv'
-  workflow_dispatch:
 
 jobs:
   notify-compliance-update:
