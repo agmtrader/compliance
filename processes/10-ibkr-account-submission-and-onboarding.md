@@ -56,7 +56,8 @@ flowchart TD
 - Updated internal account state as IBKR identifiers and dates become populated
 
 ## Exception Paths / Failure Handling
-- IBKR submission failure: application remains pending and must be corrected before retry.
+- IBKR validation failure: the API returns HTTP 422 with structured validation messages; the application remains pending and must be corrected before retry.
+- Other IBKR submission failure: the API returns a gateway failure and the application remains pending for investigation before retry.
 - Missing onboarding prerequisites such as documents or malformed payload fields can block submission.
 - Registration-task and pending-task read failures prevent monitoring but do not necessarily roll back the submission.
 

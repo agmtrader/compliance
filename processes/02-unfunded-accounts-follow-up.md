@@ -28,7 +28,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 - Advisors table with advisor-contact linkage
 
 ## Step-by-Step Workflow
-1. The scheduled workflow requests an API token and calls `/actions/send_unfunded_emails`.
+1. The scheduled workflow requests an authenticated AGM user token and calls `/actions/send_unfunded_emails`.
 2. The API loads NAV data, clients data, accounts data, contacts data, and advisors data.
 3. It builds DataFrames and identifies accounts with either zero NAV or no NAV report row at all.
 4. It filters the candidate set down to accounts whose client status is `Open`.

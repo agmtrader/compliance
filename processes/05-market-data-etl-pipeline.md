@@ -25,7 +25,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Functional transform steps for market-data output
 
 ## Step-by-Step Workflow
-1. The workflow requests an API token and calls `/etl/market_data`.
+1. The workflow requests an authenticated AGM user token and calls `/etl/market_data`.
 2. The API resolves the `market_data` ETL configuration.
 3. The ETL runner executes `extract`, `backup`, and `transform` stages in order.
 4. Extract pulls each configured market-data source into the batch area and summarizes step success, skip, or failure.
