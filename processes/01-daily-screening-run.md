@@ -28,11 +28,11 @@ Run the recurring sanctions-screening job for account-linked contacts after chec
 - Working API auth token generated through `/token`
 
 ## Step-by-Step Workflow
-1. The scheduled GitHub workflow requests an API token and calls `/actions/run_screening_process`.
-2. The API compares today’s sanctions backup files against the previous calendar day through `compare_all_sanctions_today_vs_yesterday`. A snapshot is considered present when a backup filename starts with the expected list name and `YYYYMMDD` date.
-3. If one or more sanctions files are unavailable, the process logs the gap, includes the unavailable-list detail in the returned summary, and continues instead of failing the run.
+1. The scheduled GitHub workflow requests an authenticated AGM user token and calls `/actions/run_screening_process`.
+2. The API compares today’s sanctions backup files against the previous calendar day through `compare_all_sanctions_today_vs_yesterday`. A snapshot is considered present when a backup filename starts with the expected list name and `YYYYMMDD` date. ETL backup names are generated at the start of each pipeline request in Costa Rica time; they must not be derived from module-import time.
+3. If one or more sanctions files are unavailable, the process logs the gap and includes the unavailable-list detail in the returned summary. Without a confirmed positive delta, it exits with a controlled skip instead of screening on incomplete comparison evidence.
 4. If all three sanctions lists are available and unchanged, the process exits early and returns a compact “skipped” result.
-5. If a list changed, a comparison error occurred, or one or more sanctions files are unavailable, the API loads accounts, IBKR details backup data, account-contact links, contacts, and existing contact screenings.
+5. If a confirmed list delta exists, the API loads accounts, IBKR details backup data, account-contact links, contacts, and existing contact screenings.
 6. For each account, the workflow attempts to match linked contacts to IBKR associated persons by `entity_id` or normalized name. It reads the associated-person roles but does not use them to exclude trusted contacts.
 7. Every account-linked contact with a nonblank contact id and name is added to the candidate population. Contacts appearing under more than one account are deduplicated by contact id, keeping the first account context encountered.
 8. The process determines whether the deduplicated contact population is fully covered by screening records dated for the current server date.
@@ -68,7 +68,8 @@ flowchart TD
 - GitHub Actions success or failure email notification
 
 ## Exception Paths / Failure Handling
-- Sanctions file unavailable: process continues, logs the missing list, and includes the unavailable-list detail in the response summary.
+- Sanctions file unavailable: process logs the missing list, includes the unavailable-list detail in the response summary, and skips unless another list has a confirmed positive delta.
+- Stale ETL worker date: runtime configuration refreshes date-stamped backup names at pipeline start so long-lived workers cannot reuse an earlier import-time date.
 - Token generation failure: GitHub workflow exits before calling the screening route.
 - Contact-level screening failure: API increments `screening_errors` and continues processing remaining planned contacts.
 - No sanctions changes or all targets already screened today: process exits with a skipped result instead of writing new screenings.

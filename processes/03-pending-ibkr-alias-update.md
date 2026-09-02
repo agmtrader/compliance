@@ -24,7 +24,7 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 - Working IBKR alias-update connectivity
 
 ## Step-by-Step Workflow
-1. The workflow requests an API token and calls `PATCH /actions/update_pending_alias`.
+1. The workflow requests an authenticated AGM user token and calls `PATCH /actions/update_pending_alias`.
 2. The API loads the clients report.
 3. It filters to accounts whose `Alias` is blank and whose `Status` is not `Rejected`, `Closed`, or `Funded Pending`.
 4. For each qualifying account, it reads `Account ID`, `Title`, and `Master Account`.

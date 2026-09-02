@@ -26,10 +26,10 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Working extract, backup, and transform step functions
 
 ## Step-by-Step Workflow
-1. The workflow requests an API token and calls `/etl/clients`.
+1. The workflow requests an authenticated AGM user token and calls `/etl/clients`.
 2. The API resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
-4. During extract, each configured source file is fetched by its `extract_func`. Sources with no extractor are expected to have their configured `backup_name` in the batch folder; files present at the initial check are marked skipped, and a final batch-folder check reconciles files that arrive while extractor functions are running. Only files still missing after that final check are marked failed. The extract stage is partial only when an extractor fails or a required file remains missing.
+4. During extract, each configured source file with an `extract_func` is fetched. Sources with no extractor are manually supplied batch inputs: if the configured raw batch filename is present at the initial batch-folder snapshot, the step is successful; if absent, the step is skipped.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
 7. The route returns an overview object containing per-stage status, summary counts, and step-level outcomes.
@@ -43,7 +43,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 
 ## Exception Paths / Failure Handling
 - Token failure: workflow exits before calling the route.
-- Extract-step failure or a file still missing after the final batch check: stage status becomes `partial` and the failure is included in the overview, but later stages continue. A manually supplied file that arrives during extraction is treated as skipped once it is found, so backup/transform success is not reported as an extract failure.
+- Extractor failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue. Manually supplied files are successful or skipped based only on their presence at ETL start; backup/transform report later missing or unusable files.
 - Backup or transform failure: route overview captures the failing step, but the route still returns HTTP `200` with a `partial` payload unless an uncaught service error escapes the pipeline wrapper.
 - Workflow retries: the GitHub workflow uses `wretry` with a long retry window before notifying failure.
 - Generic success notification: a `partial` API result still produces the success email because the workflow does not inspect the returned overall status before exiting.
