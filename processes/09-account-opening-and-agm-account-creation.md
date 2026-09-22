@@ -27,6 +27,15 @@ Present bilingual personal and institutional document requirements, capture clie
 - Localized accepted-document guidance for personal and institutional applicants
 
 ## Step-by-Step Workflow
+
+### Provider-branded application links
+
+The public application may be opened with `provider_id=<uuid>` (the legacy
+`provider`, `application_provider`, and apply-page `id` aliases are also accepted). The Hub
+looks up the UUID through the public provider-read API, disables AGM logo
+navigation to the index, and applies the provider's validated JSON color
+scheme. Without a valid provider record, the normal AGM branding and
+navigation remain in effect.
 1. The Hub requirements page presents localized personal and institutional document guidance before application, including an income certification by a public or private accountant as an accepted Source-of-Wealth document.
 2. The Hub application form loads the application schema defaults and fetches required reference data.
 3. The applicant progresses through account type, personal information, financial information, regulatory information, documents, and agreements steps.

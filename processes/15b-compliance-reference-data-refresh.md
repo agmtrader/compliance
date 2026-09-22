@@ -4,7 +4,7 @@
 Refresh and retain the sanctions reference files used by AGM contact screening so the screening process can compare daily snapshots and read a current resource copy. This document describes the control as it operates now; FATF jurisdiction data is not part of this automated refresh.
 
 ## Trigger / Frequency
-- Trigger: The scheduled Clients ETL GitHub Actions workflow requests an API token and calls `GET /etl/clients`; the route can also be dispatched manually.
+- Trigger: The scheduled Clients ETL GitHub Actions workflow requests an authenticated AGM user token and calls `GET /etl/clients`; the route can also be dispatched manually.
 - Frequency: Daily at 10:00 UTC / 4:00 AM Costa Rica time.
 
 ## Systems Involved

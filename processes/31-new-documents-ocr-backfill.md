@@ -21,13 +21,12 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 
 ## Step-by-Step Workflow
 1. The operator runs `new_documents_ocr.py` from `agm-api`.
-2. The script reads `new_documents_ocr_extractions.csv` and treats only previously completed rows as already processed; failed CSV rows remain eligible for retry.
-3. It selects up to 100 unique linked raw documents that do not already have a completed non-empty `document_processing` `text_extraction` row.
+2. The script performs a database-only preflight and prints how many unique linked raw documents would be OCR'd.
+3. It selects every unique linked raw document that does not already have a completed non-empty `document_processing` `text_extraction` row. The CSV is not read and does not affect eligibility.
 4. It decodes the raw stored document bytes and runs the shared Google OCR provider.
 5. For PDFs above the provider's 30-page limit, it reruns the same OCR request in ordered page chunks and combines the per-chunk OCR pages into one document result.
 6. If OCR succeeds and produces non-empty text, it upserts a completed `document_processing` `text_extraction` row for that `document_id`.
-7. It appends one CSV row per attempt, including OCR status, quality metadata, preview text, full text, and any exact failure message.
-8. Failed OCR attempts are retained in the CSV and remain retryable until a completed `document_processing` row exists.
+7. It appends one CSV row per attempt as an output log, including OCR status, quality metadata, preview text, full text, and any exact failure message.
 
 ## Outputs / Records Created
 - `new_documents_ocr_extractions.csv`
@@ -43,7 +42,7 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 
 ## Controls / Verification Points
 - Population control: only documents without a completed non-empty `document_processing` `text_extraction` row are selected.
-- Retry control: failed CSV history does not permanently block reruns; completed CSV rows still prevent duplicate repeat work before a DB row exists.
+- Database-only eligibility control: CSV history never blocks or admits a document; only a completed non-empty database extraction row does.
 - Provider-limit control: oversized PDFs are chunked into ordered page groups of at most 30 pages.
 - Write control: only successful OCR attempts write to `document_processing`.
 - Reconciliation control: console output reports eligible rows, selected rows, completed rows, failed rows, and successful database writes.
