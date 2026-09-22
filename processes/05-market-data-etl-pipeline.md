@@ -23,12 +23,17 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Valid `market_data` ETL config
 - Access to configured market-data sources and Google Drive
 - Functional transform steps for market-data output
+- IBKR market-data session can be established, bootstrapped with a successful
+  `/iserver/accounts` response, and closed after extraction
 
 ## Step-by-Step Workflow
 1. The workflow requests an authenticated AGM user token and calls `/etl/market_data`.
 2. The API resolves the `market_data` ETL configuration.
 3. The ETL runner executes `extract`, `backup`, and `transform` stages in order.
 4. Extract pulls each configured market-data source into the batch area and summarizes step success, skip, or failure.
+   For IBKR sources, each extract opens one SSO/brokerage session, queries
+   `/iserver/accounts` before security or snapshot requests, and logs out in a
+   `finally` path after the source completes or fails.
 5. Backup renames batch files, moves them into the resource structure, and clears the batch folder.
 6. Transform converts the resource files into downstream market-data outputs consumed by reporting logic.
    When `DEV_MODE=true`, the extractor also runs the existing IBKR historical daily-bar
