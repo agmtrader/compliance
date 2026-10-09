@@ -31,6 +31,8 @@ Submit an operator-approved request to close an eligible IBKR account when the c
 - Local execution output when the closure script is used.
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Missing required input returns structured HTTP 400. Known IBKR validation or account-access rejection returns 400/422 or 403 without an exception report. Unknown upstream and credential/configuration failures remain reportable. Operators must still verify the business outcome before retrying.
 - Missing inputs are rejected before the IBKR request.
 - IBKR rejects accounts that are funded or not in an eligible status; the operator must resolve the condition and retry only after confirmation.
 - Network errors are retried by the connector's transient-connection retry wrapper.

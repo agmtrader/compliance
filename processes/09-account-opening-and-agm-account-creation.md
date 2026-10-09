@@ -23,6 +23,7 @@ Present bilingual personal and institutional document requirements, capture clie
 - Valid application schema and default payload
 - Reference data from `GetFinancialRanges`, `GetBusinessAndOccupation`, and `GetForms`
 - Optional advisor code from the Hub URL
+- Advisor code from an Advisor Hub application link, when the advisor shares one
 - Applicant personal, financial, regulatory, and document data
 - Localized accepted-document guidance for personal and institutional applicants
 
@@ -36,6 +37,11 @@ looks up the UUID through the public provider-read API, disables AGM logo
 navigation to the index, and applies the provider's validated JSON color
 scheme. Without a valid provider record, the normal AGM branding and
 navigation remain in effect.
+
+### Advisor application links
+
+In Advisor Hub > Advisor Details, the advisor can select `Copy application link`, choose English or Spanish, preview the URL, and copy it. The URL uses `https://agmtechnology.com/{language}/apply?ad={advisor.code}`. The same action is available to operators from the Dashboard Advisors list. Copying the link does not submit an application or change advisor records; the applicant starts the Hub workflow by opening it. The Advisor Details action remains available when the advisor has no linked contact.
+
 1. The Hub requirements page presents localized personal and institutional document guidance before application, including an income certification by a public or private accountant as an accepted Source-of-Wealth document.
 2. The Hub application form loads the application schema defaults and fetches required reference data.
 3. The applicant progresses through account type, personal information, financial information, regulatory information, documents, and agreements steps.
@@ -47,6 +53,8 @@ navigation remain in effect.
 9. Document uploads store the raw file and metadata without running text extraction or OCR in the API upload flow.
 10. When the application is finalized, the Hub reads screening history for each linked contact and calls the contact-screening API only for contacts with no existing screening rows.
 11. The created account remains an internal AGM application until it is later submitted to IBKR.
+
+The contact-document upload and edit forms provide separate clear buttons for issue and expiry dates when a date is selected. Clearing resets the field; saving an edit sends null for an empty date to remove the stored value.
 
 ## Workflow Diagram
 ```mermaid
@@ -97,7 +105,7 @@ flowchart TD
 - Client-side and server-side logs for onboarding failures
 
 ## Related Code / Pages / Routes
-- Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`
+- Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`, `agm-dashboard/src/components/dashboard/clients/advisors/AdvisorsPage.tsx`, and `agm-dashboard/src/components/dashboard/clients/advisors/AdvisorDetailPage.tsx`
 - Supporting modules: `agm-hub/src/components/hub/requirements/Requirements.tsx`, `agm-hub/src/components/hub/apply/ContactDocuments.tsx`, `agm-hub/src/app/[lang]/en.json`, `agm-hub/src/app/[lang]/es.json`, `agm-hub/src/utils/clients/application.ts`, `agm-hub/src/utils/clients/account.ts`
 - Downstream side effects: account, contact, account-contact, screening, and document APIs; see [Contact Screening and AML Risk Assessment](16-contact-screening-and-aml-risk-assessment.md)
 

@@ -34,6 +34,8 @@ Move an internally prepared AGM application into the IBKR onboarding process, th
 7. Before a live-account CLP capability request can be submitted from Dashboard, the account must already show `OPT` investment experience with at least 3 years trading and at least the `11-25` trades-per-year band.
 8. Once an IBKR account number exists, the record is treated as an account page rather than a pending application page.
 
+The contact-document upload and edit forms provide separate clear buttons for issue and expiry dates when a date is selected. Clearing resets the field; saving an edit sends null for an empty date to remove the stored value.
+
 ## Workflow Diagram
 ```mermaid
 flowchart TD
@@ -56,6 +58,8 @@ flowchart TD
 - Updated internal account state as IBKR identifiers and dates become populated
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Known IBKR request validation and account-access denials retain structured 400/422 or 403 responses without error-level exception logs. Dashboard carries controlled API errors across server actions as data so toast handlers retain the message, validation details, and request id in production. Pending-task failures now reach a toast instead of becoming a null success. Missing CLP documents and rejected document submissions stop before the capability request and preserve the original validation error. Unknown server/configuration failures remain reportable.
 - IBKR validation failure: the API returns HTTP 422 with structured validation messages; the application remains pending and must be corrected before retry.
 - Other IBKR submission failure: the API returns a gateway failure and the application remains pending for investigation before retry.
 - Missing onboarding prerequisites such as documents or malformed payload fields can block submission.

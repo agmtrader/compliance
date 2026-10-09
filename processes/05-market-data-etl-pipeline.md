@@ -5,7 +5,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions workflow calls `POST /token` and then `GET /etl/market_data`.
-- Frequency: Daily at 10:00 UTC / 4:00 AM Costa Rica time, plus manual workflow dispatch.
+- Frequency: Daily at 01:00 UTC / 7:00 PM on the previous calendar day in Costa Rica, plus manual workflow dispatch. This is a schedule-timing test; GitHub Actions can still create the run late.
 
 ## Systems Involved
 - `agm-api`
@@ -56,6 +56,8 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Workflow notification email containing the overall result, extract/backup/transform stage statuses and counts, and any reported failures
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- An expired IBKR trading session or the known accounts-bootstrap prerequisite returns a structured 409 with reconnect guidance, without an exception report. Stage/symbol failure outcomes remain visible. IBKR service authentication, unknown upstream failures, and missing or duplicate reporting resources remain reportable.
 - Token failure: workflow exits before the route call.
 - Missing pipeline config: route fails immediately.
 - Extract, backup, or transform failure: overview captures the failing step and workflow can terminate with failure.
@@ -101,6 +103,10 @@ an IBKR shorthand code remain dependent on the source snapshot's explicit
 maturity field. Descriptions marked ``Perpetual`` (or ``Perp``) intentionally
 have no maturity; their duration is left blank because a principal repayment
 date does not exist.
+
+## Dependency Initialization
+
+Drive and IBKR trading connectors are constructed on the first ETL operation that needs them, rather than during API startup. Their initialization failures remain within the existing ETL step/error handling. Schema compatibility is checked by the candidate-image deployment preflight before rollout; API startup no longer creates or reflects the entire database schema.
 
 ## Last Reviewed
 - Status: draft

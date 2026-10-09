@@ -5,7 +5,7 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions workflow calls `POST /token` and then `PATCH /actions/update_pending_alias`.
-- Frequency: Daily at 21:00 UTC / 3:00 PM Costa Rica time, plus manual workflow dispatch.
+- Frequency: Daily at 20:30 UTC / 2:30 PM Costa Rica time, plus manual workflow dispatch.
 
 ## Systems Involved
 - `agm-api`
@@ -34,31 +34,34 @@ Populate missing IBKR account aliases for accounts that are still active and sho
    - Dedicated credentials are used for configured master accounts; any other
      nonblank identifier uses the default I6413690 credential set.
 7. Successful updates are collected into the response payload with old and new alias values.
-8. Failures are logged per account while the remaining accounts continue processing.
-9. GitHub Actions emails the list of updated aliases on success or a failure notice if the job fails.
+8. Failures are logged per account and returned in `failed_accounts` while the remaining accounts continue processing.
+9. After every eligible account is attempted, the API returns the complete counts and account lists with HTTP 200, including partial failures.
+10. GitHub Actions logs the summary and a warning when account errors occurred, then emails the completed run summary. A batch-level failure still fails the job and sends a failure notice.
 
 ## Outputs / Records Created
 - Updated aliases in IBKR
-- Response payload listing updated accounts and total count
-- Success or failure notification email from GitHub Actions
+- Response payload listing updated, failed, and skipped accounts with counts
+- Completed or failure notification email from GitHub Actions
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Expected IBKR validation or account-access rejection is retained as a failed-account entry and logged as a warning while processing continues. Unknown alias statuses, upstream server failures, and configuration failures remain reportable in API logs; the same propagated exception is logged once.
 - Token failure: workflow exits before calling the route.
 - Missing account identifiers: account is silently not updated because the required fields are incomplete.
-- IBKR update failure for one account: error is logged and processing continues for other pending accounts.
+- IBKR update failure for one account: error is logged and included in the completed run summary while processing continues for other pending accounts.
 - Master-account credential selection: unknown master-account identifiers are accepted and use the default I6413690 credentials; the fallback is logged.
-- Route failure: workflow sends failure email.
+- Report loading, authentication, or route failure before the batch completes: workflow fails and sends a failure email.
 
 ## Controls / Verification Points
 - Preventive control: excluded statuses are not updated.
 - Preventive control: alias generation uses a deterministic `Account ID + Title` pattern.
 - Detective control: per-account success and failure logs are generated.
-- Detective control: workflow success email includes the alias update list and total count.
+- Detective control: workflow completed email includes updated and failed account lists with their counts; Actions logs flag partial failures.
 
 ## Evidence to Retain
 - GitHub Actions run history for `update_aliases.yml`
 - API logs showing account-level update success and failure messages
-- Success email containing updated aliases
+- Completed email containing updated aliases and any account-level errors
 - IBKR-side alias values after update
 
 ## Related Code / Pages / Routes

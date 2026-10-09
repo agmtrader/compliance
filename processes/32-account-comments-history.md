@@ -21,7 +21,7 @@ Provide a centralized internal-notes history for an AGM account so authorized st
 - Existing AGM account id.
 - Signed-in Dashboard user id, display name, and email.
 - Comment body for a new or edited comment.
-- The `account_comments` table migration must be applied before the API is started with strict schema validation.
+- The `account_comments` table migration must be applied before the candidate-image deployment schema preflight. A missing or incompatible table blocks deployment; API workers use declared metadata rather than performing schema validation/creation at startup.
 
 ## Step-by-Step Workflow
 1. The user opens an account page and selects `Comments`.

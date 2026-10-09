@@ -73,6 +73,14 @@ The accrued-interest consumer may fall back from `OpenDateTime` to
 an IBKR issue-date prefix (`DMM/DD/YY`) must not have that date treated as the
 maturity date.
 
+## Reporting Consumer Freshness
+
+Clients and NAV report reads use an independent process-local cache in `agm-api`, with a default 30-second TTL, configurable through `REPORT_CACHE_TTL_SECONDS` (0 disables, maximum 300 seconds). ETL writes do not broadcast invalidation to Cloud Run instances; an updated report can remain unseen until a consumer cache expires. Expired entries are refreshed from Drive and are not served after refresh errors. Other ETL resources are outside this cache.
+
+## Dependency Initialization
+
+Drive and IBKR trading connectors are constructed on the first ETL operation that needs them, rather than during API startup. Their initialization failures remain within the existing ETL step/error handling. Schema compatibility is checked by the candidate-image deployment preflight before rollout; API startup no longer creates or reflects the entire database schema.
+
 ## Last Reviewed
 - Status: draft
 - Date: 2026-07-15

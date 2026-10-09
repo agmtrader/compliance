@@ -60,6 +60,8 @@ flowchart TD
 - External Treasury-bill transfer request and IBKR response
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Known IBKR validation and account-access failures return actionable structured 4xx responses. Expired trading sessions return 409 with reconnect guidance. Dashboard preserves these messages for its existing toast handlers without error-level logging. Unexpected upstream, service-credential, and configuration failures remain reportable; failed actions are not converted to successful empty results.
 - Missing internal banking-instruction record: internal route returns an empty or partial result set.
 - Missing `client_instruction_id` or `master_account`: IBKR instruction-status route returns a 400 error.
 - IBKR status responses with HTTP 208 are processed using the returned instruction-result payload.
