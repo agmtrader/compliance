@@ -101,3 +101,6 @@ date does not exist.
 - Status: draft
 - Date: 2026-06-16
 - Reviewer: Codex initial draft
+
+## Hub Proposal Failure Transport
+Risk questionnaire archetype reads, risk-profile creation and risk-proposal creation return controlled transport failures as serializable Server Action results. The client reconstructs the error for the existing toast, preserving API guidance, status/code and request ID without relying on thrown server-error messages. Failed calls remain failures; submission resets its busy state and does not display a proposal success. Unexpected programming exceptions still propagate. This control does not make profile creation and proposal creation atomic or authorize automatic retries of persisted submissions.
