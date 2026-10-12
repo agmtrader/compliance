@@ -112,3 +112,20 @@ Drive and IBKR trading connectors are constructed on the first ETL operation tha
 - Status: draft
 - Date: 2026-06-16
 - Reviewer: Codex initial draft
+
+## Downstream Proposal Rating Eligibility
+
+Proposal generation validates and normalizes bond ratings from transformed
+market-data resources before selection. Valid canonical S&P equivalents are
+preserved, including the report merge's `_x` column. When a canonical equivalent
+is unavailable, valid structured S&P/Moody's fields are preferred to free text;
+when both agencies provide ratings, the lower credit rating is retained, matching
+the transform's rating-level policy. Free-text parsing matches whole rating tokens
+and preserves modifiers rather than matching letters embedded in words.
+
+Only treasury, AAA/AA/A, BBB and BB bond categories are eligible for the configured
+proposal buckets. BB+/BB/BB- and Moody's Ba1/Ba2/Ba3 equivalents remain eligible.
+Lower-rated, missing, unrated and unrecognized candidates cannot fill a BB bucket.
+A requested bucket with no eligible assets returns HTTP 422 before persistence;
+existing saved proposals are not rewritten by this consumer control. The ETL
+trigger, resource outputs and transformation behavior are unchanged.
