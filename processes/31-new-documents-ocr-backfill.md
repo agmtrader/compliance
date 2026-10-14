@@ -4,8 +4,8 @@
 Backfill missing `document_processing` `text_extraction` rows for linked contact documents while preserving a resumable CSV trail of every OCR attempt. The workflow exists to improve shared OCR coverage for Dashboard and API consumers that read live `document_processing` text.
 
 ## Trigger / Frequency
-- Trigger: An authorized operator runs `new_documents_ocr.py` from `agm-api`.
-- Frequency: On demand.
+- Trigger: New contact uploads attempt OCR in the shared API; an authorized operator runs `new_documents_ocr.py` from `agm-api` for missing/failed extraction recovery.
+- Frequency: Event driven for new uploads; on demand for backfill.
 
 ## Systems Involved
 - `agm-api`
@@ -62,3 +62,12 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 - Status: draft
 - Date: 2026-07-21
 - Reviewer: Codex current-state implementation review
+
+## Contact Upload OCR and Content Reuse — October 14, 2026
+Dashboard Contact Documents, Accounts Audit uploads, Hub Contact Documents and Hub application uploads use the shared `POST /contacts/documents` API. The API verifies SHA-1 against decoded content and atomically reuses/creates the canonical raw `document`, reuses/creates one `contact_document` link per contact/file regardless of account context and claims one `document_processing` `text_extraction` attempt with status `pending`. A PostgreSQL transaction advisory lock by content serializes identical uploads across workers; raw bytes are compared before reuse so a matching checksum alone is insufficient. Existing review metadata and original account context are preserved on repeated upload; the response uses `link_reused=true` when no new contact link is created.
+
+After commit, PDFs and supported raster images run the existing Google Document AI Enterprise OCR provider explicitly; supported plain text uses the shared native text parser. OCR completion stores nonempty text and `completed`; provider/configuration/unsupported-file failures store `failed`. If processing-status persistence fails or the worker stops, the durable pending row remains for later recovery. Upload returns successful `id`/`document_id` once persistence succeeded, regardless of OCR outcome; no OCR warning/error is exposed to the client. Existing completed, failed or pending extraction attempts are reused rather than automatically repeated by upload. Recovery scheduling is outside this change; the existing backfill still selects documents without completed nonempty extraction.
+
+Duplicate responses include `duplicate=true`; interactive upload surfaces show a successful existing-file reuse message. Route authentication and stored caller scopes still authorize writes. Clients cannot select an existing raw document by arbitrary ID/hash: uploaded bytes must match canonical content. Edit/delete sends `contact_document_id` and changes only that selected link. Legacy document-only writes are permitted only when exactly one link exists; ambiguous shared documents return 409. Raw content and its processing rows are deleted only when the last link is removed. Existing broader document-write scope remains unchanged; this is not a new per-client capability system.
+
+Evidence: synthetic Flask/JWT upload and mutation tests, retained completed/failed/pending states, repeated and concurrent identical uploads, hash conflicts, atomic rollback and shared-document edit/delete isolation. Local tests use SQLite transaction serialization and mocked OCR; CI is configured with disposable local PostgreSQL for advisory-lock concurrency. No client documents/provider calls/production writes are used by tests. No schema changes or DDL migration are required.

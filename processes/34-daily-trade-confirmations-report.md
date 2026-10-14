@@ -18,7 +18,7 @@ Show daily executions and commissions across IBKR accounts without opening each 
 - Backup owner: To be confirmed
 
 ## Inputs / Prerequisites
-- An authenticated AGM user with access to the Reporting route.
+- An authenticated AGM administrator with server-verified `all` scope. Limited reporting users cannot read this all-account dataset.
 - A working IBKR Flex Query token and query `1215183` configured to include all intended accounts.
 - Execution rows with order, account, trade date, commission, amount, and currency fields.
 
@@ -26,9 +26,12 @@ Show daily executions and commissions across IBKR accounts without opening each 
 1. The user opens or refreshes the Dashboard Trade Confirmations report.
 2. The API requests fixed Flex Query `1215183` from IBKR on demand. The caller cannot select another query ID.
 3. The API validates required columns and numeric values, then retains `EXECUTION` rows.
-4. It groups rows by trade date, order ID, API-order flag, asset class, symbol, client account ID, account alias, advisor, order type, amount currency, and commission currency.
-5. Each group's commission is summed with its original sign. Each execution's `Amount` is converted to its absolute value before summing.
-6. The Dashboard displays source trade dates, execution count, currency-separated totals, grouped rows, and an export of those grouped rows.
+4. For executions without a query-supplied advisor, the API makes one bounded read joining account.advisor_code to advisor.code for the source account numbers. Query-supplied names take precedence; missing assignments stay unassigned, and a lookup failure is an explicit error. Current AGM ownership does not certify historical trade ownership. The API normalizes and validates source trade dates.
+5. It groups rows by trade date, order ID, API-order flag, asset class, symbol, client account ID, account alias, advisor, order type, amount currency, and commission currency.
+6. Each group's commission is summed with its original sign. Each execution's `Amount` is converted to its absolute value before summing.
+7. The Dashboard displays source trade dates and refresh time, linked search/date/advisor/asset/order/account/symbol/currency filters, commission breakdowns, order/execution counts, currency-separated totals and grouped CSV export. All selected-view totals, breakdowns and exports use the same filtered rows.
+8. Commission paid is the negative of IBKR signed commission, consistent with the positive-cost convention in Cris’s HTML example. Rebates reduce paid commission. Signed source values remain available in the table/export. Average paid commission is calculated per distinct date/account/order and commission currency. Rates are calculated only when the commission and gross traded amount share a currency; mixed-currency or zero-notional rates are unavailable.
+9. A refresh failure preserves the last successful report with a visible stale-result message. Only the dates actually supplied by the fixed query can be filtered; refreshing does not request arbitrary historical periods.
 
 ## Outputs / Records Created
 - Read-only report and optional CSV downloaded by the user.
@@ -38,9 +41,11 @@ Show daily executions and commissions across IBKR accounts without opening each 
 - Missing required columns or invalid numeric values cause an explicit API error; the page displays it.
 - An empty query result displays an empty state.
 - IBKR access or generation failures prevent report loading and are not replaced with zero totals.
-- `Advisor` is unavailable in the supplied 2026-10-01 query sample and is displayed as unavailable. No account-alias inference is made.
+- An account without a query or AGM advisor is shown as unassigned, with a review filter. No advisor is inferred from account aliases.
+- A failed refresh leaves the last successful figures visibly stale; it is not silently replaced by zero.
 
 ## Controls / Verification Points
+- Server-side verified administrator scope prevents cross-account disclosure to limited users.
 - Fixed query ID prevents a caller from retrieving arbitrary Flex Queries through this route.
 - Only execution rows enter the calculation.
 - Amount and commission totals remain separate by their respective currencies.
@@ -59,5 +64,5 @@ Show daily executions and commissions across IBKR accounts without opening each 
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-10-01
-- Reviewer: Codex implementation review; business owner review pending
+- Date: 2026-10-14
+- Reviewer: Codex local implementation, original HTML/workbook comparison and live source check; authenticated target acceptance and business owner review pending

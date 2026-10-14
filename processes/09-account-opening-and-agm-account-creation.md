@@ -50,7 +50,7 @@ In Advisor Hub > Advisor Details, the advisor can select `Copy application link`
 6. It extracts applicant contacts from the application payload and creates or links the contact records needed for the account.
 7. It creates or updates account-contact link records so downstream account and review pages can resolve the account holders.
 8. It uploads supporting documents, captures declared document language, and preserves document metadata linked to the proper contact context. The contact-document table presents category, type, language, issued date, and expiration date, hides internal ids, displays stored `en`/`es` language codes as `English`/`Spanish`, and formats stored timestamps as localized date-only values.
-9. Document uploads store the raw file and metadata without running text extraction or OCR in the API upload flow.
+9. Document uploads commit the raw file/contact association and an OCR attempt, then run Google OCR through the shared API. Upload success depends on saved records; OCR failure remains internal for later recovery.
 10. When the application is finalized, the Hub reads screening history for each linked contact and calls the contact-screening API only for contacts with no existing screening rows.
 11. The created account remains an internal AGM application until it is later submitted to IBKR.
 
@@ -113,3 +113,15 @@ flowchart TD
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Hub Multi-resource Read Batches
+Application financial ranges, occupations and agreement forms are fetched concurrently inside one fixed server batch. An in-flight reference prefetch is shared with the form fallback; completed responses are not cached. Document holders are deduplicated by stored contact ID before reads and only id/display name cross the browser boundary. Holder failures have explicit retry and stale/unmounted results are ignored. No generic public API proxy is introduced; existing service scopes, application persistence and submission controls are unchanged.
+
+## Contact Upload OCR and Content Reuse — October 14, 2026
+Dashboard Contact Documents, Accounts Audit uploads, Hub Contact Documents and Hub application uploads use the shared `POST /contacts/documents` API. The API verifies SHA-1 against decoded content and atomically reuses/creates the canonical raw `document`, reuses/creates one `contact_document` link per contact/file regardless of account context and claims one `document_processing` `text_extraction` attempt with status `pending`. A PostgreSQL transaction advisory lock by content serializes identical uploads across workers; raw bytes are compared before reuse so a matching checksum alone is insufficient. Existing review metadata and original account context are preserved on repeated upload; the response uses `link_reused=true` when no new contact link is created.
+
+After commit, PDFs and supported raster images run the existing Google Document AI Enterprise OCR provider explicitly; supported plain text uses the shared native text parser. OCR completion stores nonempty text and `completed`; provider/configuration/unsupported-file failures store `failed`. If processing-status persistence fails or the worker stops, the durable pending row remains for later recovery. Upload returns successful `id`/`document_id` once persistence succeeded, regardless of OCR outcome; no OCR warning/error is exposed to the client. Existing completed, failed or pending extraction attempts are reused rather than automatically repeated by upload. Recovery scheduling is outside this change; the existing backfill still selects documents without completed nonempty extraction.
+
+Duplicate responses include `duplicate=true`; interactive upload surfaces show a successful existing-file reuse message. Route authentication and stored caller scopes still authorize writes. Clients cannot select an existing raw document by arbitrary ID/hash: uploaded bytes must match canonical content. Edit/delete sends `contact_document_id` and changes only that selected link. Legacy document-only writes are permitted only when exactly one link exists; ambiguous shared documents return 409. Raw content and its processing rows are deleted only when the last link is removed. Existing broader document-write scope remains unchanged; this is not a new per-client capability system.
+
+Evidence: synthetic Flask/JWT upload and mutation tests, retained completed/failed/pending states, repeated and concurrent identical uploads, hash conflicts, atomic rollback and shared-document edit/delete isolation. Local tests use SQLite transaction serialization and mocked OCR; CI is configured with disposable local PostgreSQL for advisory-lock concurrency. No client documents/provider calls/production writes are used by tests. No schema changes or DDL migration are required.

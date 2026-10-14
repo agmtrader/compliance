@@ -39,7 +39,7 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 10. The weighted result is constrained to the range `1` through `10`. Scores are classified as Low when less than or equal to `3.5`, Medium when greater than `3.5` and less than or equal to `5.0`, and High when greater than `5.0`. Any exact OFAC, UK, or UN match raises the final score to at least `9`.
 11. FATF status is set to `Listed` when the resolved country matches a hardcoded FATF country code or normalized country name; otherwise it is stored as `null`.
 12. The API creates a `contact_screening` row containing the contact id, risk score, FATF status, OFAC results, UK results, UN results, and a compact timestamp.
-13. Account and application pages read screening history, sort it by the stored timestamp, and show counts, latest date, latest risk score, and source hit counts.
+13. Account, application, and contact detail pages read screening history, sort it by the stored timestamp, and show counts, latest date, latest risk score, and source hit counts.
 
 ## Outputs / Records Created
 - `contact_screening` database row for each completed screening
@@ -74,9 +74,22 @@ Create contact-level sanctions results and a weighted AML risk score during onbo
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-hub/src/components/hub/apply/IBKRApplicationForm.tsx`, `agm-api/src/app/clients/contacts.py`, `agm-api/src/app/tools/private/actions.py`
 - Supporting modules: `agm-api/src/components/clients/contacts.py`, `agm-api/src/components/tools/private/actions.py`
-- Downstream side effects: `agm-dashboard/src/components/dashboard/clients/screenings/ContactScreenings.tsx`, account and application detail pages
+- Downstream side effects: `agm-dashboard/src/components/dashboard/clients/contacts/ContactScreenings.tsx`, account and application detail pages
+
+## Contact Detail Review Surface
+- Contacts list View navigates to `/contacts/[contactId]`. The detail page reads contact information and supports the existing edit dialog.
+- Tabs load contact documents, dated screening history, risk profiles with answers and archetypes, saved investment proposals, and linked accounts on demand, independently with loading, failure, retry and empty states. Visited tabs remain mounted in memory while inactive and retain fetched data, table state, and document changes across switches; unvisited tabs do not fetch. The compact tab bar scrolls horizontally on narrow screens. Refresh clears and reloads mounted sections of the selected contact page.
+- Relationships use stored contact IDs and account links. Proposals include direct contact links and risk-profile links; explicit conflicting contact links are excluded. Profiles without a contact link are not matched by name or email.
+- Existing document management is reused. Uploads from this contact surface omit account context; the existing API supports contact-only uploads. Account-specific operations remain accessible through linked account pages.
+- This surface does not perform a screening automatically or record a reviewer disposition.
 
 ## Last Reviewed
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Contact List Read Recovery
+The Contacts list shows an explicit failure with Try again when its initial read fails, rather than leaving an endless spinner. Refresh failures preserve previously read rows with a visible error; stale/unmounted read results cannot replace current state. This recovery performs no automatic screening or data mutation.
+
+## Scoped Contact Read Payloads
+Contact detail risk/profile reads filter by the selected stored contact ID at the API instead of downloading unrelated answers. Contact-document OCR processing reads are restricted to the linked/requested document IDs and skipped for empty link populations. Required screening history, completed OCR outputs, document relationships and include-data safeguards remain intact; no schema or data mutation is required.

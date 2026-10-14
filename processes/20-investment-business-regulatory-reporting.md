@@ -69,3 +69,6 @@ Display a point-in-time set of investment-business metrics for open advisory and
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Shared Multi-resource Read Transport
+Dashboard browser calls to explicitly allowlisted read-only API paths use authenticated private/no-store GET transport, with at most four concurrent browser reads. Every request derives its API token from the current NextAuth session and retains backend scope/ownership enforcement; no completed response cache or cross-session deduplication is added. Mutations and session-affecting position reads retain Server Actions. Server-side report batches already run direct dependencies in parallel and retain their completeness gates. Cash, Accrued Interest and Investment Business list reads use application presence/type projections; Accounts Audit and regulatory forms retain full applications and cumulative screening history required by their calculations. Cash, Investment Business, Advisors and proposal-list initial failures show explicit retry instead of indefinite loading.

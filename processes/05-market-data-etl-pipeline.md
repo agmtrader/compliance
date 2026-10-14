@@ -56,7 +56,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Workflow notification email containing the overall result, extract/backup/transform stage statuses and counts, and any reported failures
 
 ## Exception Paths / Failure Handling
-- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Nested API functions propagate one ServiceError instance without reporting intermediate failures. Unexpected Python exceptions are normalized once to the generic API failure; final route/Flask or outermost direct-job boundaries handle that failure. The final exception excludes intermediate cause/context chains while retaining correlation IDs, operation/route template, status/code and frame locations without source text. Client-facing controlled errors retain their existing message/details; their final message remains in the diagnostic, while unexpected provider/cause messages are not copied into it. Query values, client IPs and error details remain excluded. This governs shared exception propagation; independent integration/audit logs retain their existing behavior.
 - An expired IBKR trading session or the known accounts-bootstrap prerequisite returns a structured 409 with reconnect guidance, without an exception report. Stage/symbol failure outcomes remain visible. IBKR service authentication, unknown upstream failures, and missing or duplicate reporting resources remain reportable.
 - Token failure: workflow exits before the route call.
 - Missing pipeline config: route fails immediately.
@@ -129,3 +129,22 @@ Lower-rated, missing, unrated and unrecognized candidates cannot fill a BB bucke
 A requested bucket with no eligible assets returns HTTP 422 before persistence;
 existing saved proposals are not rewritten by this consumer control. The ETL
 trigger, resource outputs and transformation behavior are unchanged.
+
+## Downstream Proposal Allocation Precision
+
+The risk archetypes in `agm-api/src/components/clients/risk_profiles.py` define
+the portfolio weights used by planner presets and generated risk proposals.
+Bond-level planner controls are percentages within the corporate-bond sleeve,
+not percentages of the whole portfolio. Preserve fractional defaults rather than
+rounding them to integers: Conservative B uses 22.5% AAA-A, 67.5% BBB and 10% BB
+within its 80% bond sleeve, yielding 18%, 54% and 8% of the whole portfolio,
+with 20% ETFs. Portfolio preview and generation recognize both legacy rounded
+presets and precise presets and resolve them to the canonical archetype. Edited
+custom allocations remain custom. Existing saved proposals are not rewritten.
+Validation compares every frontend preset to the source archetype weights and
+checks fractional edits, API preset compatibility, and custom-mix preservation.
+
+## Hub Proposal Failure Transport
+Risk questionnaire archetype reads, risk-profile creation and risk-proposal creation return controlled transport failures as serializable Server Action results. The client reconstructs the error for the existing toast, preserving API guidance, status/code and request ID without relying on thrown server-error messages. Failed calls remain failures; submission resets its busy state and does not display a proposal success. Unexpected programming exceptions still propagate. This control does not make profile creation and proposal creation atomic or authorize automatic retries of persisted submissions.
+
+Hub proposal risk display fetches profile score and archetype definitions in one server batch; only the score and required archetype reference data are returned, not unrelated profile answers or identifiers.

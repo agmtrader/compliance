@@ -95,6 +95,8 @@ Account type, status, application presence, contact state, NAV, advisor, SLS dev
 
 ## Individual Account Loading
 
+The individual Account page also supports operator-triggered holder profile edits. This is a separate broker-maintenance workflow, with fresh account/identity checks, a changed-field submission, and business-status verification. See [IBKR Account Holder Profile Maintenance](36-ibkr-account-holder-profile-maintenance.md); the account-list metadata review remains an on-demand read/analysis process.
+
 The individual account/application resolver uses one authenticated private/no-store GET to read the selected internal account and, for submitted accounts, current IBKR details. Unsubmitted applications resolve without an IBKR request. The Account page reuses that response instead of rereading the account during initial rendering; explicit refresh obtains fresh core data. After core rendering, private/no-store GET requests independently load client report data, advisors, financial ranges, primary-contact lookup and linked holder contacts/screenings, avoiding browser Server Action queuing. Contact IDs are deduplicated and contacts/screenings load concurrently on the server. Existing missing entity/external ID link reconciliation remains; links are reread only after an actual update, and contact/screening reads are reused. Account-navigation data is requested only when the search dropdown is opened, using accounts, links and contacts without a client report; responses omit application payloads and unrelated contact fields. A failed search shows a toast and can be retried by reopening the dropdown. Supplementary failure preserves the core page with an explicit warning. Request generations and resolver cleanup prevent late responses from replacing data after navigation or refresh.
 
 ## Implementation Boundary
@@ -111,3 +113,12 @@ API workers construct local table metadata from the declared models without live
 - Status: draft
 - Date: 2026-10-08
 - Reviewer: Codex current-state code review
+
+## API Account List Projection
+Accounts list, bounded preview and account-navigation reads request `view=list` from the existing authorized accounts reader. The database returns only application presence/customer type in application_json instead of full application bodies. Other account columns, query filters, pagination and sensitive-field removal remain unchanged. Full detail/default reads preserve the complete application. This is a read projection with no schema change or authorization cache.
+
+## IBKR Credential and Token Reuse
+Account Management connector calls serialize temporary credential switches with a per-instance reentrant lock. Cached OAuth tokens are isolated by provider URL, client ID, signing key ID and private-key fingerprint, with a refresh margin of10percent of lifetime capped at30seconds (59second lifetime →5.9second margin). Unsupported master accounts fail before credential or provider access. Connection-error invalidation removes the relevant cached token; existing operation retry policies are unchanged. No live financial response is cached. This boundary preserves credential isolation but does not provide parallel immutable clients or a shared distributed cache.
+
+## Shared Multi-resource Read Transport
+Dashboard browser calls to explicitly allowlisted read-only API paths use authenticated private/no-store GET transport, with at most four concurrent browser reads. Every request derives its API token from the current NextAuth session and retains backend scope/ownership enforcement; no completed response cache or cross-session deduplication is added. Mutations and session-affecting position reads retain Server Actions. Server-side report batches already run direct dependencies in parallel and retain their completeness gates. Cash, Accrued Interest and Investment Business list reads use application presence/type projections; Accounts Audit and regulatory forms retain full applications and cumulative screening history required by their calculations. Cash, Investment Business, Advisors and proposal-list initial failures show explicit retry instead of indefinite loading.

@@ -86,6 +86,11 @@ Drive and IBKR trading connectors are constructed on the first ETL operation tha
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
 
+## Open Position Quote Reporting
+Reporting can opt into snapshot bid/ask enrichment. Match a unique contract identifier, or an exact symbol with asset class and currency; ambiguous/unmatched instruments retain unknown prices. Preserve position rows and existing valuation fields. Advisor responses filter owned accounts before enrichment. Prices come from stored market snapshots, not a live brokerage session; source quote time and resource modified time are distinct metadata. Quote snapshots use the bounded reporting TTL (default30seconds) with no stale-on-error fallback. Missing/duplicate source files fail the requested quote report explicitly. Dashboard shows bid/ask, currency, timestamps, source and match status; Market Price uses MarkPrice rather than cost basis. No ETL, trading session or business records are changed by a report read.
+
+Administrative advisor views additionally filter the global report to selected account IDs before quote enrichment and browser transport; this optional filter does not grant access or replace route authorization. Empty selected populations avoid market-snapshot reads.
+
 ## Standalone clients runner (local implementation; deployment pending)
 
 `python -m src.jobs.clients_etl --output-dir <unique-run-directory>` invokes the existing extract, backup and transform functions without starting Flask/Gunicorn or making an HTTP request to AGM. It records an overview and exits nonzero for partial/failed outcomes. The account-details extractor now refreshes all eligible accounts, retains failed prior records as stale, and includes per-account outcomes in the pipeline overview; see process 13. `--local-details-only` tests the same refresh against live reads while writing only local JSON; `--limit` is allowed only in that mode and sampled outputs cannot be published.
