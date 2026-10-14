@@ -59,3 +59,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Accepted coverage and cloud execution
+
+Owner accepted current incomplete account coverage on 2026-10-14. The cloud runner compares failed account/error pairs with the 208-pair baseline from the full local validation. Accepted pairs preserve raw partial status and stale/absent evidence but may complete operationally when all other ETL stages and publication succeed. New gaps are failures, not silently accepted. The job retains final overviews in private GCS and companion details reports in Drive. Scheduled clients cutover and first scheduled-run acceptance are tracked in API #86/#94; account discovery and contact/user reconciliation are deferred to API #294. Market migration stays in #86.
