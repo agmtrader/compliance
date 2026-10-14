@@ -5,7 +5,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions workflow calls `POST /token` and then `GET /etl/market_data`.
-- Frequency: Daily at 10:00 UTC / 4:00 AM Costa Rica time, plus manual workflow dispatch.
+- Frequency: Daily at 01:00 UTC / 7:00 PM on the previous calendar day in Costa Rica, plus manual workflow dispatch. This is a schedule-timing test; GitHub Actions can still create the run late.
 
 ## Systems Involved
 - `agm-api`
@@ -23,12 +23,17 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Valid `market_data` ETL config
 - Access to configured market-data sources and Google Drive
 - Functional transform steps for market-data output
+- IBKR market-data session can be established, bootstrapped with a successful
+  `/iserver/accounts` response, and closed after extraction
 
 ## Step-by-Step Workflow
-1. The workflow requests an API token and calls `/etl/market_data`.
+1. The workflow requests an authenticated AGM user token and calls `/etl/market_data`.
 2. The API resolves the `market_data` ETL configuration.
 3. The ETL runner executes `extract`, `backup`, and `transform` stages in order.
 4. Extract pulls each configured market-data source into the batch area and summarizes step success, skip, or failure.
+   For IBKR sources, each extract opens one SSO/brokerage session, queries
+   `/iserver/accounts` before security or snapshot requests, and logs out in a
+   `finally` path after the source completes or fails.
 5. Backup renames batch files, moves them into the resource structure, and clears the batch folder.
 6. Transform converts the resource files into downstream market-data outputs consumed by reporting logic.
    When `DEV_MODE=true`, the extractor also runs the existing IBKR historical daily-bar
@@ -51,6 +56,8 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Workflow notification email containing the overall result, extract/backup/transform stage statuses and counts, and any reported failures
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- An expired IBKR trading session or the known accounts-bootstrap prerequisite returns a structured 409 with reconnect guidance, without an exception report. Stage/symbol failure outcomes remain visible. IBKR service authentication, unknown upstream failures, and missing or duplicate reporting resources remain reportable.
 - Token failure: workflow exits before the route call.
 - Missing pipeline config: route fails immediately.
 - Extract, backup, or transform failure: overview captures the failing step and workflow can terminate with failure.
@@ -97,7 +104,28 @@ maturity field. Descriptions marked ``Perpetual`` (or ``Perp``) intentionally
 have no maturity; their duration is left blank because a principal repayment
 date does not exist.
 
+## Dependency Initialization
+
+Drive and IBKR trading connectors are constructed on the first ETL operation that needs them, rather than during API startup. Their initialization failures remain within the existing ETL step/error handling. Schema compatibility is checked by the candidate-image deployment preflight before rollout; API startup no longer creates or reflects the entire database schema.
+
 ## Last Reviewed
 - Status: draft
 - Date: 2026-06-16
 - Reviewer: Codex initial draft
+
+## Downstream Proposal Rating Eligibility
+
+Proposal generation validates and normalizes bond ratings from transformed
+market-data resources before selection. Valid canonical S&P equivalents are
+preserved, including the report merge's `_x` column. When a canonical equivalent
+is unavailable, valid structured S&P/Moody's fields are preferred to free text;
+when both agencies provide ratings, the lower credit rating is retained, matching
+the transform's rating-level policy. Free-text parsing matches whole rating tokens
+and preserves modifiers rather than matching letters embedded in words.
+
+Only treasury, AAA/AA/A, BBB and BB bond categories are eligible for the configured
+proposal buckets. BB+/BB/BB- and Moody's Ba1/Ba2/Ba3 equivalents remain eligible.
+Lower-rated, missing, unrated and unrecognized candidates cannot fill a BB bucket.
+A requested bucket with no eligible assets returns HTTP 422 before persistence;
+existing saved proposals are not rewritten by this consumer control. The ETL
+trigger, resource outputs and transformation behavior are unchanged.

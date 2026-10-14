@@ -28,7 +28,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 - Advisors table with advisor-contact linkage
 
 ## Step-by-Step Workflow
-1. The scheduled workflow requests an API token and calls `/actions/send_unfunded_emails`.
+1. The scheduled workflow requests an authenticated AGM user token and calls `/actions/send_unfunded_emails`.
 2. The API loads NAV data, clients data, accounts data, contacts data, and advisors data.
 3. It excludes accounts without a real IBKR account number (blank or `-`) and identifies accounts whose NAV report `Total` is below `0.5` or whose NAV report row is missing. The threshold matches the Accounts page's whole-unit NAV display.
 4. Before contact lookup, it removes the account IDs in the explicit exclusion set: `U24289762`, `U26306704`, `U2421560`, `U27640959`, `U8458872`, `U20351921`, `U20405882`, `U20613112`, `U22335324`, `U7115856`, `U11438607`, `U12443091`, `U19565575`, `U2580655`, `U6170355`, `U26450466`, and `U26540841`. These accounts receive no funding reminder even if their NAV is zero or missing.
