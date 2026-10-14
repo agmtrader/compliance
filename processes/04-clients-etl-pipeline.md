@@ -4,7 +4,7 @@
 Refresh AGM client-related backup and reporting resources by extracting source files, backing them up into managed folders, and running the configured transform steps.
 
 ## Trigger / Frequency
-- Trigger: GitHub Actions workflow calls `POST /token` and then `GET /etl/clients`.
+- Trigger: GitHub Actions invokes `agm-clients-etl`, waits for terminal execution and reads its durable overview. The legacy `/etl/clients` HTTP path remains manual only; do not run it alongside the job.
 - Frequency: Daily at 10:00 UTC / 4:00 AM Costa Rica time, plus manual workflow dispatch.
 
 ## Systems Involved
@@ -20,20 +20,20 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Executive oversight: Hernan Castro
 
 ## Inputs / Prerequisites
-- API auth token
+- Existing GitHub Google Cloud credential with job execution/status and run-report read access
 - Valid ETL config for the `clients` pipeline
 - Access to Flex Query, Google Drive, and any other configured source systems
 - Working extract, backup, and transform step functions
 
 ## Step-by-Step Workflow
-1. The workflow requests an authenticated AGM user token and calls `/etl/clients`.
-2. The API resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
+1. The workflow authenticates to Google Cloud, starts the clients-only job and records its execution ID.
+2. The job verifies its immutable source bundle, acquires the generation-owned clients lock, initializes the database and resolves the existing clients ETL configuration.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
 4. During extract, each configured source file with an `extract_func` is fetched. Sources with no extractor are manually supplied batch inputs: if the configured raw batch filename is present at the initial batch-folder snapshot, the step is successful; if absent, the step is skipped.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
-7. The route returns an overview object containing per-stage status, summary counts, and step-level outcomes.
-8. GitHub Actions captures the overview, formats a summary, and sends a notification email. It treats any HTTP `200` as workflow success even when the returned pipeline status is `partial`.
+7. The job persists a final overview in private GCS with raw per-stage status, account coverage/freshness and operational outcome, then releases its owned lock.
+8. GitHub Actions waits for that specific execution to finish, retrieves its overview and preserves notifications. Only success or owner-accepted account gaps with all other stages successful count as completion; new failures are not hidden behind HTTP 200.
 
 ## Outputs / Records Created
 - Refreshed raw files in the batch and resources folders
@@ -45,8 +45,8 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Token failure: workflow exits before calling the route.
 - Extractor failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue. Manually supplied files are successful or skipped based only on their presence at ETL start; backup/transform report later missing or unusable files.
 - Backup or transform failure: route overview captures the failing step, but the route still returns HTTP `200` with a `partial` payload unless an uncaught service error escapes the pipeline wrapper.
-- Workflow retries: the GitHub workflow uses `wretry` with a long retry window before notifying failure.
-- Generic success notification: a `partial` API result still produces the success email because the workflow does not inspect the returned overall status before exiting.
+- Scheduled clients workflow and Cloud Run task retries are disabled; failures remain visible for operator review.
+- Accepted account gaps remain raw partial and explicit in notifications. A failed execution or missing/unacceptable durable overview fails the workflow. The legacy manual API route can still return partial HTTP 200.
 
 ## Controls / Verification Points
 - Preventive control: named pipeline config must exist or the route raises an error.
@@ -93,3 +93,7 @@ The clients-only `agm-clients-etl` Cloud Run Job is provisioned in agm-datalake/
 The job uses isolated clients staging (`1EIshGq22oFg-WJ9aHdS37Heh5KaqN2ct`). It copies only configured manual client inputs from the original shared batch folder; no original manual/market input is moved or deleted. Copy source IDs/modified times are retained in the overview. A GCS generation-conditional clients lock prevents overlapping job executions; a crash can leave a lock requiring operator verification of terminal execution state before conditional removal. The market ETL stays on the existing API path and schedule. Do not manually invoke the legacy API clients endpoint alongside the job because that endpoint is not covered by the job lock.
 
 The prepared clients GitHub schedule remains 10:00 UTC (04:00 Costa Rica), but invokes the job rather than HTTP ETL after cutover. It polls its specific execution and retrieves `runs/<execution>/overview.json` before deciding outcome; no whole-job retries or API fallback. The owner explicitly accepts the known incomplete account population. Only the 208 account/error pairs from the tested baseline may yield `completed_with_accepted_coverage_gaps`; raw partial status, freshness/stale counts and outcomes remain visible. New gaps or failures in other stages, publication or execution produce failure. First scheduled-run acceptance remains pending until the next actual 04:00 execution is reviewed.
+
+## Verified controlled cloud run and trigger cutover
+
+Execution `agm-clients-etl-2znn8` completed on 2026-10-14 in 10m31.81s with exit0. All 11 transforms succeeded; stable details independently verified as 636 unique accounts (616 fresh, 20 retained stale). Durable overview reports 824 outcomes and 208 explicitly accepted gaps; lock independently verified released. GitHub main cutover commit `ef34856` changes only the clients workflow and skips push-triggered API build. Manual workflow-chain acceptance is in progress; the first actual scheduled run is still due 2026-10-15 at 04:00 Costa Rica. API service revision and market workflow were not changed by cutover.

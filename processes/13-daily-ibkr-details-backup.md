@@ -39,7 +39,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Per-account refresh failure: retain prior details as explicitly stale; report an absent record when no prior data exists. Extract and overall pipeline become partial. Upload/report failure also prevents success.
 - Missing or stale backup file: downstream review pages may fail to load or may produce incomplete classifications.
 - Google Drive access failure: the reporting helper cannot provide the dataset.
-- A Clients ETL `partial` result can still produce a successful GitHub workflow notification.
+- Known owner-accepted account gaps can complete operationally while remaining raw partial/visible. New gaps or failures in other stages fail the new job/workflow. Legacy manual API behavior still differs.
 
 ## Controls / Verification Points
 - Detective control: Dashboard review workflows rely on the same backed-up source rather than ad hoc manual extraction.
@@ -67,3 +67,5 @@ Local tests do not establish production publication or scheduling. Before enabli
 ## Accepted coverage and cloud execution
 
 Owner accepted current incomplete account coverage on 2026-10-14. The cloud runner compares failed account/error pairs with the 208-pair baseline from the full local validation. Accepted pairs preserve raw partial status and stale/absent evidence but may complete operationally when all other ETL stages and publication succeed. New gaps are failures, not silently accepted. The job retains final overviews in private GCS and companion details reports in Drive. Scheduled clients cutover and first scheduled-run acceptance are tracked in API #86/#94; account discovery and contact/user reconciliation are deferred to API #294. Market migration stays in #86.
+
+Controlled cloud publication verified on 2026-10-14: execution agm-clients-etl-2znn8, all 11 transforms successful, final overview retained in GCS, 616 fresh/20 stale records independently read from the stable Drive resource. Clients workflow switched in API main commit ef34856; first actual scheduled-run acceptance remains pending until 2026-10-15 at 04:00 Costa Rica.
