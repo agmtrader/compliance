@@ -40,6 +40,8 @@ Load IBKR forms and enumeration datasets used to drive account-opening choices a
 - Agreement form content and metadata used during account opening
 
 ## Exception Paths / Failure Handling
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Dashboard preserves controlled API error messages across server-action boundaries for toast display. Product-country-bundle failures propagate to the caller instead of returning null. Reference-data permission/configuration failures remain reportable 502 responses; known request validation remains a structured 400/422.
 - IBKR reference-data failure: onboarding or servicing forms cannot render the affected selector set correctly.
 - Missing or malformed form numbers: forms response may be incomplete.
 - UI fetch failure: pages surface error toasts and the workflow remains blocked until retried.
