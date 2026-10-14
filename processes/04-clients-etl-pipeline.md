@@ -85,3 +85,9 @@ Drive and IBKR trading connectors are constructed on the first ETL operation tha
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Standalone clients runner (local implementation; deployment pending)
+
+`python -m src.jobs.clients_etl --output-dir <unique-run-directory>` invokes the existing extract, backup and transform functions without starting Flask/Gunicorn or making an HTTP request to AGM. It records an overview and exits nonzero for partial/failed outcomes. The account-details extractor now refreshes all eligible accounts, retains failed prior records as stale, and includes per-account outcomes in the pipeline overview; see process 13. `--local-details-only` tests the same refresh against live reads while writing only local JSON; `--limit` is allowed only in that mode and sampled outputs cannot be published.
+
+The API routes and existing GitHub schedule still invoke the pipeline synchronously until cutover. Separate compute must not overlap with the market ETL: both pipelines still share and clear the batch folder. Durable cross-pipeline exclusion, job overview retention, cloud identity/permissions, full publication testing and first scheduled execution are deployment gates. No database writes or client/contact reconciliation are introduced by the details refresh.

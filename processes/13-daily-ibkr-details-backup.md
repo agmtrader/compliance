@@ -22,13 +22,13 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Working Google Drive access
 
 ## Step-by-Step Workflow
-1. During Clients ETL extract, `extract_account_details_backup` reads the most recent file from the account-details backup folder.
-2. It compares the detail population with internal accounts that have IBKR account numbers and calls the IBKR details endpoint for missing accounts when a master account is available and the account is not in the hardcoded skip set.
-3. Per-account failures and missing master accounts are logged and skipped while other accounts continue.
-4. The enriched list is uploaded under a backup name based on the previous business-day date calculated when the API worker initialized.
-5. The transform stage selects the most recent backup and replaces the stable `ibkr_account_details.json` resource.
-6. The reporting helper `get_ibkr_details` reads the stable resource and exposes it through the reporting layer.
-7. Dashboard pages use the resource for account dates, financial information, applicant type, associated-person roles, fee templates, and other account context.
+1. During Clients ETL extract, `extract_account_details_backup` loads the most recent valid account-details JSON backup; companion refresh reports are excluded. An empty folder starts with an empty population; malformed backups fail explicitly.
+2. The refresh population is the union of normalized internal account numbers and prior-backup account IDs. Every eligible existing account is re-fetched, including prior-only accounts. Blank internal masters can use the master already recorded in that account's prior IBKR response. Conflicting or unsupported masters and invalid IDs produce explicit failure outcomes; no default credentials or silent skip list is used.
+3. Four worker requests use immutable bearer tokens, paced at five request starts per second globally, with 10-second connect and 45-second read timeouts. Tokens are obtained/refreshed outside worker requests. Requests are not automatically retried.
+4. Successful, identity/master-validated details replace the prior record and receive `_agm_refresh` freshness metadata. Failed accounts retain prior records as stale, with last-success time retained when known (legacy unknown times remain null). Failure without prior data is recorded in the companion report.
+5. Upload the refreshed backup before the companion `.refresh.json` report. Do not delete the prior backup before upload. The date-stamped name is evaluated for the current ETL run. Per-account failures yield `partial`, with account-level outcomes and counts in the extract overview.
+6. The existing transform publishes the details list to `ibkr_account_details.json`, excluding companion refresh reports. Existing downstream report consumers continue to read the details list.
+7. The standalone `python -m src.jobs.clients_etl` runner calls the existing clients pipeline directly and returns a nonzero exit code for partial/failed results. Local-details-only mode invokes the same extractor, reads live sources and saves private local JSON without remote writes. Cloud Job provisioning and trigger cutover remain pending.
 
 ## Outputs / Records Created
 - Daily backup dataset of IBKR details
@@ -36,7 +36,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Derived review rows on downstream pages
 
 ## Exception Paths / Failure Handling
-- Per-account enrichment failure: the remaining details are still saved and the failed account is absent from the refreshed result.
+- Per-account refresh failure: retain prior details as explicitly stale; report an absent record when no prior data exists. Extract and overall pipeline become partial. Upload/report failure also prevents success.
 - Missing or stale backup file: downstream review pages may fail to load or may produce incomplete classifications.
 - Google Drive access failure: the reporting helper cannot provide the dataset.
 - A Clients ETL `partial` result can still produce a successful GitHub workflow notification.
@@ -59,3 +59,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Runner acceptance and rollout gates
+
+Local tests do not establish production publication or scheduling. Before enabling the separate Cloud Run Job, verify durable overview publication, service permissions, shared batch-folder single-execution protection, full backup/transform writes, and the first scheduled run. Existing API/GitHub schedules are unchanged by local implementation. Brand-new IBKR account discovery, automatic account/contact persistence, and removal of clients.xls are outside this change. Existing screening caches are independent of this refresh and require separate freshness handling.
