@@ -85,3 +85,11 @@ Drive and IBKR trading connectors are constructed on the first ETL operation tha
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Clients Cloud Run cutover (2026-10-14)
+
+The clients-only `agm-clients-etl` Cloud Run Job is provisioned in agm-datalake/us-central1 with the existing service identity/VPC and immutable API runtime image, 1 CPU/2 GiB, one task, a 60-minute timeout and no automatic retries. Its Python bootstrap loads only an immutable generation-pinned SHA-256-verified source bundle from private `agm-datalake-etl-runs`; the main API service is not rebuilt or updated for this cutover.
+
+The job uses isolated clients staging (`1EIshGq22oFg-WJ9aHdS37Heh5KaqN2ct`). It copies only configured manual client inputs from the original shared batch folder; no original manual/market input is moved or deleted. Copy source IDs/modified times are retained in the overview. A GCS generation-conditional clients lock prevents overlapping job executions; a crash can leave a lock requiring operator verification of terminal execution state before conditional removal. The market ETL stays on the existing API path and schedule. Do not manually invoke the legacy API clients endpoint alongside the job because that endpoint is not covered by the job lock.
+
+The prepared clients GitHub schedule remains 10:00 UTC (04:00 Costa Rica), but invokes the job rather than HTTP ETL after cutover. It polls its specific execution and retrieves `runs/<execution>/overview.json` before deciding outcome; no whole-job retries or API fallback. The owner explicitly accepts the known incomplete account population. Only the 208 account/error pairs from the tested baseline may yield `completed_with_accepted_coverage_gaps`; raw partial status, freshness/stale counts and outcomes remain visible. New gaps or failures in other stages, publication or execution produce failure. First scheduled-run acceptance remains pending until the next actual 04:00 execution is reviewed.
