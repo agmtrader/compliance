@@ -12,6 +12,8 @@ Meet Cristian Ramírez's July 31, 2026 accounting request: preserve monthly orig
 - `agm-api`: Python/Flask, Google Drive API, deterministic CSV/XLS/XLSX adapters, Decimal arithmetic, PDFium text extraction, bounded local Tesseract OCR for scanned summaries, isolated PDF worker processes, and ZIP packaging.
 - `agm-dashboard`: Next.js, authenticated server-side API access, source inventory, progressive month analysis, exception review, uploads and downloads.
 - Google Drive originals under the two roots identified in the email. Original files are not rewritten or deleted by this workflow.
+  - [IBKR statement root](https://drive.google.com/drive/folders/1zj98lJaIKQoVIJY0ThexTUXRGI8vAeFY).
+  - [Bank statement root](https://drive.google.com/drive/folders/1HvteU_DbER4ERZVBpgDB_3Vz1CzBc5Pb).
 - Google Drive is the authorized accounting data store, as confirmed by the requester on October 14, 2026. Analysis is generated from source originals; separate SQL summary/transaction tables are not required. Account-register revisions and upload integrity receipts are preserved as separate JSON records in Drive.
 
 ## Roles / Owners
@@ -26,6 +28,16 @@ Meet Cristian Ramírez's July 31, 2026 accounting request: preserve monthly orig
 - The requester confirmed Truist account 1100026505060 on October 14, 2026. That number is used for account identity; the email's 110026505060 is retained as provenance and no longer blocks identity checks.
 - Original monthly PDF and CSV files. BAC XLS/XLSX exports are readable for transaction analysis, but do not satisfy the email's CSV-backup requirement. Conversions must not replace the bank's originals.
 - Institution formats must match a supported deterministic adapter. Unsupported or unreadable originals remain exceptions; no model infers balances or transactions.
+
+## Guía rápida para el operador
+1. Ingresar con una cuenta autorizada a [Accounting Statements](https://agm-dashboard-4jwqv6wr3a-uc.a.run.app/accounting-statements) y seleccionar año, institución y cuenta.
+2. Consultar los indicadores por separado: **All statements backed up** comprueba los respaldos PDF y CSV requeridos; **Data reconciled** comprueba los importes y la continuidad entre meses. Un mes puede conciliar y seguir pendiente de un respaldo CSV.
+3. Seleccionar un mes en la cuadrícula para ver saldos, créditos, débitos, movimientos, documentos y explicaciones de cualquier diferencia. Esperar a que terminen las comprobaciones antes de interpretar los totales como definitivos.
+4. Usar **Upload originals** para cargar un original faltante, seleccionando su cuenta y período. Usar **Account settings** para mantener el registro. No inventar fechas de cierre, movimientos ni referencias; las seis excepciones de fecha acordadas conservan su política aprobada.
+5. Si un PDF no cubre el mes completo, obtener el estado correcto de la institución. Si hay varios candidatos, revisar el contenido y conservar la selección autorizada. No sobrescribir ni eliminar los originales para conseguir un resultado positivo.
+6. Después de resolver un pendiente documental, usar **Refresh** y revisar nuevamente el mes afectado y su continuidad con los meses vecinos. Una diferencia que continúa debe investigarse contra los originales y escalarse al responsable técnico si el documento y la lectura no coinciden.
+7. Descargar archivos individuales desde el detalle o usar **Annual originals** para el año y filtros seleccionados. Conservar el ZIP junto con `manifest.json`; si el nombre termina en `-incomplete.zip`, revisar los pendientes indicados antes de entregar el paquete como completo.
+8. Registrar la revisión y cualquier resolución en el registro operativo habitual de AGM, indicando cuenta, período, originales revisados, resultado y responsable. La página no sustituye la aprobación del revisor ni envía automáticamente los estados de cuenta a auditores.
 
 ## Step-by-Step Workflow
 1. Authenticate the administrator and enforce API scope before any Drive access.
@@ -74,13 +86,21 @@ Meet Cristian Ramírez's July 31, 2026 accounting request: preserve monthly orig
 - The application does not currently certify a monthly reviewer disposition. Using the report is not proof an operational reviewer accepted every exception.
 
 ## Related Code / Pages / Routes
-- Dashboard: `/accounting-statements`.
+- Dashboard: [Accounting Statements](https://agm-dashboard-4jwqv6wr3a-uc.a.run.app/accounting-statements).
 - API: `GET /reporting/accounting_statements`, `GET /reporting/accounting_statements/detail`, `GET/POST /reporting/accounting_statements/accounts`, `POST /reporting/accounting_statements/upload`, `POST /reporting/accounting_statements/download`, `POST /reporting/accounting_statements/annual_download`.
 - Supporting modules: `agm-api/src/components/tools/public/accounting_statements.py`, `accounting_parsers.py`, `agm-api/src/config/accounting_accounts.json`, `agm-dashboard/src/components/dashboard/tools/private/reporting/accounting-statements/AccountingStatementsReport.tsx`.
 - Legacy IBKR summary route also now requires independent reported debit/credit totals before returning `cash_reconciled=true`.
 - Downstream side effects: original uploads and separate account/receipt records in the existing controlled Drive roots. No email is sent and no historical original is modified.
 
+## Validation and Release Evidence
+- The accounting implementation is committed and deployed: API report commit `a03ebe9` (included in main `5f48e1b`), Dashboard `086bf4d` / `d0304ed`. October 15 verification confirmed serving revisions `agm-api-01044-bs6` and `agm-dashboard-00664-txr`.
+- Final affected API validation passed 243 tests and 75 subtests; Dashboard TypeScript, production build and desktop/mobile checks passed during implementation. These checks do not imply that every historical source file exists.
+- October 15 fresh source/component checks covered all 63 completed 2026 months for the seven open accounts: 62 reconciled and 53 had validated PDF + CSV backups. Authenticated Dashboard results agreed. The full denominator additionally included 54 closed-account months under the approved omitted-cutoff policy. These counts are dated evidence, not permanent control parameters.
+- The October 14 authenticated annual download contained 18 Banesco originals; all 18 size/SHA-256 checks passed. October 15 fresh source hashes matched that manifest. This demonstrates the sampled download and recorded bytes, not historical immutability of all Drive files.
+- Remaining source-document exceptions, dates, owners and Drive links are recorded on [accounting issue #98](https://github.com/agmtrader/agm-api/issues/98#issuecomment-6195591358). The requester accepted coding completion and closed the development scope on October 15; missing originals are operational follow-up, not a reason to force reconciliation.
+- Production write/upload acceptance was not exercised during the read-only October 15 review. Do not represent the successful read/download checks as evidence of a production upload.
+
 ## Last Reviewed
-- Status: draft.
-- Date: 2026-10-14.
-- Reviewer: Codex implementation and source review; AGM operational metadata and target-environment acceptance remain pending.
+- Status: draft; procedure is complete and checked against deployed behavior, pending the designated Code Owner's document approval.
+- Date: 2026-10-15.
+- Reviewer: Codex source and authenticated deployment verification. This records technical verification, not a claim that Cristian or an auditor approved all account-month evidence.
