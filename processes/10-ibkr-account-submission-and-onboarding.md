@@ -29,12 +29,16 @@ Move an internally prepared AGM application into the IBKR onboarding process, th
 2. For pending applications, the user works from `ApplicationPage`, which now uses one Dashboard server-side loader to read the stored internal application payload, advisors, financial ranges, and account-contact plus screening summary before hydrating the client page. Its holder edit forms support individual, joint, and organization-associated holders; when employer business or occupation is `OTHER`, the operator must provide `employmentDetails.description` (up to 200 characters), while self-employed holders may provide the separate `businessDescription`. Its contact-document upload and edit forms allow an operator to select a known document type or replace the `Other` option with a required free-text type. The contact-document table shows category, the stored type, language, issued date, and expiration date, hides internal ids, displays stored `en`/`es` language codes as `English`/`Spanish`, and formats stored timestamps as date-only values.
 3. The application payload is validated and prepared for IBKR submission. `ApplicationPage` reads the stored files selected for IBKR, blocks submission with a warning that identifies any document larger than 2 MB, and embeds the remaining documents, including their file data and metadata, in `application.documents`. Submission is also blocked if required documents are missing or any prepared document lacks file data or metadata.
 4. The operator triggers `/accounts/send_to_ibkr`, passing the AGM account id, selected master account, and application payload.
-5. After submission, Dashboard can query `/accounts/ibkr/details`, `/accounts/ibkr/registration_tasks`, and `/accounts/ibkr/pending_tasks` to follow the onboarding state.
+5. After submission, Dashboard queries `/accounts/ibkr/details` and provides separate Pending Tasks, Registration Tasks, and Login Messages tabs. Each tab loads only when selected. `/accounts/ibkr/pending_tasks` reads IBKR `type=pending` (the approval-specific subset); `/accounts/ibkr/registration_tasks` reads `type=registration` (the full registration-task inventory, including completed and maintenance tasks). The registration read requires both the IBKR account number and master account and uses the existing authenticated API scope controls.
 6. Additional onboarding remediation can occur through IBKR document submission, fee template application, trading permissions, CLP capability, and other account-management flows.
 7. Before a live-account CLP capability request can be submitted from Dashboard, the account must already show `OPT` investment experience with at least 3 years trading and at least the `11-25` trades-per-year band.
 8. Once an IBKR account number exists, the record is treated as an account page rather than a pending application page.
 
 The contact-document upload and edit forms provide separate clear buttons for issue and expiry dates when a date is selected. Clearing resets the field; saving an edit sends null for an empty date to remove the stored value.
+
+Task cards retain the returned state, completion date, warnings, and person/reference identifiers when present. Unknown actions and historical tasks remain visible in Other Tasks and History; both `to send` and `to be sent` are displayed. The Registration Tasks tab uses the existing document-submission flow only for incomplete, non-declined `to sign` tasks with a numeric form number and no questionnaire question IDs, excluding tasks already received or under review. `to complete` tasks direct the operator to IBKR Portal. Completed tasks are never submitted again. Read failures display an error and an explicit Retry control rather than an empty inventory. The account tabs wrap on narrow screens.
+
+The Login Messages tab reads `/accounts/ibkr/login_messages`, which queries Account Management `/gw/api/v1/accounts/{accountId}/login-messages` using the selected account and master credentials. It shows each returned message description, type, state, username, assignment date, message/content IDs, and linked task IDs. It is read-only: outstanding requirements are completed in IBKR Portal. Missing identities, mismatched account responses, provider errors, and contradictory message envelopes fail explicitly with a Retry control; late responses from a previously selected account are ignored. The bulk cross-account login-message feed is not used by this account tab. These tabs do not establish full coverage of master-account compliance obligations or trading notifications. The Accounts Audit compliance indicators still use the separately documented static snapshot (process 22).
 
 ## Workflow Diagram
 ```mermaid
@@ -80,13 +84,13 @@ flowchart TD
 ## Evidence to Retain
 - Stored internal application payload on the AGM account
 - Submission results and IBKR identifiers
-- Registration-task and pending-task outputs
+- Registration-task, pending-task, and login-message outputs
 - Uploaded supporting documents and holder screening records
 
 ## Related Code / Pages / Routes
 - Entry surfaces: `agm-dashboard/src/components/dashboard/clients/accounts/AccountOrApplicationPage.tsx`, `agm-dashboard/src/components/dashboard/clients/applications/ApplicationPage.tsx`
 - Supporting modules: `agm-dashboard/src/components/dashboard/clients/documents/ContactDocuments.tsx`, `agm-dashboard/src/utils/clients/account.ts`, `agm-dashboard/src/utils/tools/account_pages.ts`
-- Downstream side effects: `/accounts/send_to_ibkr`, `/accounts/ibkr/details`, `/accounts/ibkr/registration_tasks`, `/accounts/ibkr/pending_tasks`
+- Downstream side effects: `/accounts/send_to_ibkr`, `/accounts/ibkr/details`, `/accounts/ibkr/registration_tasks`, `/accounts/ibkr/pending_tasks`, `/accounts/ibkr/login_messages`
 
 ## Last Reviewed
 - Status: draft
