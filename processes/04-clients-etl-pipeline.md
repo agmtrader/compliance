@@ -4,12 +4,13 @@
 Refresh AGM client-related backup and reporting resources by extracting source files, backing them up into managed folders, and running the configured transform steps.
 
 ## Trigger / Frequency
-- Trigger: GitHub Actions workflow calls `POST /token` and then `GET /etl/clients`.
+- Trigger: GitHub Actions launches the `agm-clients-etl` Cloud Run Job, polls that execution, and retrieves its durable terminal overview. The legacy authenticated `GET /etl/clients` route remains available but is not the scheduled trigger.
 - Frequency: Daily at 10:00 UTC / 4:00 AM Costa Rica time, plus manual workflow dispatch.
 
 ## Systems Involved
 - `agm-api`
 - GitHub Actions
+- Cloud Run Job and private GCS terminal-overview storage
 - Google Drive batch and resources folders
 - Flex Query sources and other configured client-source extracts
 - ETL transform logic in `private/etl.py`
@@ -20,50 +21,52 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Executive oversight: Hernan Castro
 
 ## Inputs / Prerequisites
-- API auth token
+- GitHub Google Cloud service-account authentication and job invocation/storage permissions
 - Valid ETL config for the `clients` pipeline
 - Access to Flex Query, Google Drive, and any other configured source systems
 - Working extract, backup, and transform step functions
 
 ## Step-by-Step Workflow
-1. The workflow requests an authenticated AGM user token and calls `/etl/clients`.
-2. The API resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
+1. The workflow launches the clients Cloud Run Job and polls its specific execution, with no automatic whole-job retry or API fallback.
+2. The runner acquires its generation-owned clients lock, copies configured manual inputs into isolated clients staging, and resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
 4. During extract, each configured source file with an `extract_func` is fetched. Sources with no extractor are manually supplied batch inputs: if the configured raw batch filename is present at the initial batch-folder snapshot, the step is successful; if absent, the step is skipped.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
-7. The route returns an overview object containing per-stage status, summary counts, and step-level outcomes.
-8. GitHub Actions captures the overview, formats a summary, and sends a notification email. It treats any HTTP `200` as workflow success even when the returned pipeline status is `partial`.
+7. The runner publishes a durable overview containing raw and operational status, per-stage summary counts, step-level outcomes and warnings. It releases its owned lock and exits according to the operational result.
+8. GitHub Actions retrieves that execution's overview and checks both Cloud Run terminal success and the accepted operational statuses. It formats the same detailed summary for Actions and the success/failure notification email.
 
 ## Outputs / Records Created
 - Refreshed raw files in the batch and resources folders
 - Updated transformed client resource files, including the stable OFAC, UK, and UN sanctions resource files when their report steps complete
-- ETL overview JSON returned by the API
-- Workflow notification email with stage summaries
+- Durable ETL overview JSON in private GCS, plus the overview returned by the legacy API route when used
+- Actions summary and notification email with workflow/execution identifiers, completion time in UTC, raw/operational status, stage counts, backup sub-step counts, failure details, IBKR freshness/staleness counts and fallback warnings
 
 ## Exception Paths / Failure Handling
-- Token failure: workflow exits before calling the route.
+- Cloud authentication, launch, polling or overview retrieval failure: workflow fails and the summary includes available execution evidence and the workflow-log link. Unavailable counts are not reported as zero.
 - Extractor failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue. Manually supplied files are successful or skipped based only on their presence at ETL start; backup/transform report later missing or unusable files.
-- Backup or transform failure: route overview captures the failing step, but the route still returns HTTP `200` with a `partial` payload unless an uncaught service error escapes the pipeline wrapper.
-- Workflow retries: the GitHub workflow uses `wretry` with a long retry window before notifying failure.
-- Generic success notification: a `partial` API result still produces the success email because the workflow does not inspect the returned overall status before exiting.
+- Only account/error pairs matching the explicit accepted coverage baseline can yield `completed_with_accepted_coverage_gaps`. Stale retained records remain labeled stale. Unexpected account failures fail the job.
+- Configured Flex reports returning IBKR error 1019 / statement generation in progress may use an existing named backup only when its matching transform and the backup/transform stages succeed. The warning identifies the missing new file, backup used and original error. Other source errors remain failures.
+- Backup, transform, publication, lock-release or other runner failures produce a failed execution/workflow. The summary shows stage, step and file errors, runner error fields and failed Cloud Run terminal conditions when available.
+- Legacy API callers still receive HTTP `200` for a captured `partial` pipeline result; this is not the scheduled workflow's acceptance rule. Do not invoke it concurrently with the clients job.
 
 ## Controls / Verification Points
 - Preventive control: named pipeline config must exist or the route raises an error.
-- Detective control: every ETL stage returns counts of total, successful, skipped, and failed steps.
-- Detective control: workflow summary includes stage-level status and selected backup-step counts.
-- Detective control: success/failure emails preserve the final ETL overview for review.
+- Detective control: extract reports total/successful/skipped/failed counts; transform reports total/successful/failed counts; backup reports rename/move counts and clear outcome.
+- Detective control: workflow summary and email include stage/step/file failure details and explicit `none` for empty error/warning sections. Missing evidence is labeled unknown/unavailable.
+- Detective control: IBKR account failures are grouped by exact error with counts and up to five account examples per group. A private GCS overview URI preserves access to complete account outcomes without expanding every failure into the email.
+- Detective control: accepted gaps, raw partial status, retained stale counts and Flex backup-use warnings remain visible independently of operational success.
 - Current limitation: the notification summary is aggregate and does not state the status, source date, row count, or version of each compliance reference list.
 
 ## Evidence to Retain
 - GitHub Actions run history for `etl_clients.yaml`
-- ETL overview JSON in workflow logs
+- Terminal ETL overview JSON in private GCS and its formatted Actions summary
 - Google Drive resource folder contents after the run
 - Notification email generated by the workflow
 
 ## Related Code / Pages / Routes
-- Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/app/tools/private/etl.py`
-- Supporting modules: `agm-api/src/components/tools/private/etl.py`
+- Entry surfaces: `agm-api/.github/workflows/etl_clients.yaml`, `agm-api/src/jobs/clients_etl.py`, legacy `agm-api/src/app/tools/private/etl.py`
+- Supporting modules: `agm-api/src/components/tools/private/etl.py`, `agm-api/.github/scripts/clients_etl_summary.py`
 - Downstream side effects: Google Drive connectors, Flex Query extraction helpers, transformed reporting resource files, and [Compliance Reference Data Refresh](15b-compliance-reference-data-refresh.md)
 
 ## Reporting Data-Quality Note
