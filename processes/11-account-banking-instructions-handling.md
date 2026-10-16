@@ -36,6 +36,8 @@ Maintain two related but distinct banking-instruction workflows: internal AGM ba
 7. IBKR instruction status is checked through `/accounts/ibkr/instructions` for an existing client instruction id and the account's master account.
 8. For an external Treasury-bill transfer, Dashboard derives the client instruction id, account, direction, quantity, and trading instrument from the selected account and positions, and asks for the required receiving-institution fields plus trade and settlement dates before submitting the signed transfer request.
 
+9. Dashboard displays all returned account positions; only BILL holdings with a positive quantity can be selected or have transfer quantities edited. Other positions remain visible with disabled controls. Selected, transferable and total counts are shown. Descriptive/example placeholders are omitted from receiving-account and contact text inputs.
+
 ## Workflow Diagram
 ```mermaid
 flowchart TD
