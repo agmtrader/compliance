@@ -4,12 +4,13 @@
 Refresh AGM market-data resource files used by reporting and analytics by running the configured extract, backup, and transform stages for the market-data pipeline.
 
 ## Trigger / Frequency
-- Trigger: GitHub Actions workflow calls `POST /token` and then `GET /etl/market_data`.
+- Trigger after cutover: GitHub Actions launches the `agm-market-etl` Cloud Run Job and polls its exact execution. The authenticated manual `GET`/`POST /etl/market_data` path dispatches the same job and returns HTTP 202; `GET /etl/market_data?operation=<id>` reads its operation status.
 - Frequency: Daily at 01:00 UTC / 7:00 PM on the previous calendar day in Costa Rica, plus manual workflow dispatch. This is a schedule-timing test; GitHub Actions can still create the run late.
 
 ## Systems Involved
 - `agm-api`
 - GitHub Actions
+- Cloud Run Job and private GCS terminal-overview storage
 - Google Drive batch and resources folders
 - External market-data source functions configured in the ETL pipeline
 
@@ -19,7 +20,9 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Executive oversight: Hernan Castro
 
 ## Inputs / Prerequisites
-- API auth token
+- GitHub Google Cloud identity with job invocation, execution read and private overview read permissions; the API runtime identity needs job invocation/operation-read access for manual dispatch
+- API auth token with existing `etl/market_data` scope for the manual route only
+- Dedicated empty market staging folder, distinct from clients staging and the legacy shared inputs
 - Valid `market_data` ETL config
 - Access to configured market-data sources and Google Drive
 - Functional transform steps for market-data output
@@ -27,8 +30,8 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
   `/iserver/accounts` response, and closed after extraction
 
 ## Step-by-Step Workflow
-1. The workflow requests an authenticated AGM user token and calls `/etl/market_data`.
-2. The API resolves the `market_data` ETL configuration.
+1. The workflow launches one market Cloud Run execution without automatic retry or API fallback, then polls that exact execution. Manual API callers receive an operation reference immediately; acceptance is not ETL completion.
+2. The job acquires a generation-owned market lock and verifies its dedicated staging folder is empty. Prior interrupted staging is retained for operator review, never blindly cleared on startup. It initializes the existing database connector and resolves the `market_data` configuration. The clients job and its coverage policy are unchanged.
 3. The ETL runner executes `extract`, `backup`, and `transform` stages in order.
 4. Extract pulls each configured market-data source into the batch area and summarizes step success, skip, or failure.
    For IBKR sources, each extract opens one SSO/brokerage session, queries
@@ -40,8 +43,8 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
    enrichment process. With `DEV_MODE=false` (the production path), it skips those
    requests and preserves the `Current Yield` column as empty so the parent request
    remains bounded.
-7. The route returns a stage overview with summary counts and step details.
-8. GitHub Actions persists the workflow output, formats the overview (including stage counts, backup sub-step counts, and failure details), and sends a success or failure email. If the API call fails before an overview is available, the email includes the captured request error or directs the reviewer to the workflow logs.
+7. The runner releases only its owned lock and publishes a durable `runs/<execution>/overview.json`, including lock-release failure and raw/operational outcomes. Publication failure exits nonzero. A killed process can leave a lock requiring verified terminal-state review before conditional operator removal.
+8. GitHub Actions requires both Cloud Run terminal success and a matching execution/pipeline overview. It validates all four configured market sources, all three stages, nonzero/consistent counts and exact extract-to-transform source IDs. Partial, missing, malformed, inconsistent or provenance-free results fail the workflow; clients accepted-gap/Flex fallback rules do not apply to market. An always-running step publishes a bounded aggregate summary. Unavailable evidence stays unavailable. No whole-operation retry is performed because an interrupted execution may already have published files.
 
 ## Outputs / Records Created
 - Refreshed raw market-data files in Google Drive
@@ -52,15 +55,15 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Per-symbol resolution, snapshot, and development-only history failures logged with
   ticker and conid; symbols with missing or invalid snapshot rows are omitted while
   valid symbols continue processing
-- ETL overview payload returned by the API
+- Durable private GCS terminal overview; manual API dispatch returns an operation/status URL rather than the completed ETL payload
 - Workflow notification email containing the overall result, extract/backup/transform stage statuses and counts, and any reported failures
 
 ## Exception Paths / Failure Handling
 - Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
-- An expired IBKR trading session or the known accounts-bootstrap prerequisite returns a structured 409 with reconnect guidance, without an exception report. Stage/symbol failure outcomes remain visible. IBKR service authentication, unknown upstream failures, and missing or duplicate reporting resources remain reportable.
-- Token failure: workflow exits before the route call.
-- Missing pipeline config: route fails immediately.
-- Extract, backup, or transform failure: overview captures the failing step and workflow can terminate with failure.
+- An expired IBKR trading session or the known accounts-bootstrap prerequisite remains a controlled provider error with reconnect guidance, without an exception report. In the job it becomes a failed stage/terminal outcome; the dispatch response cannot certify the later brokerage session. Stage/symbol failure outcomes remain visible. IBKR service authentication, unknown upstream failures, and missing or duplicate reporting resources remain reportable.
+- Cloud authentication, job launch, polling or overview retrieval failure: workflow fails with available execution references and unavailable metrics; no synchronous fallback. A dispatch timeout is uncertain, not permission to replay.
+- Missing/incomplete pipeline config, nonempty staging or lock acquisition failure: job fails before pipeline writes.
+- Extract, backup, or transform failure: the overview captures the failing step and the workflow fails. A market transform cannot fall back to a prior backup when its extractor failed.
 - Historical-yield enrichment is disabled when `DEV_MODE=false`; failures in the
   development-only enrichment must not change the production behavior.
 - A failed stock or ETF security lookup, snapshot response, or historical-yield
@@ -75,7 +78,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
   the remaining rows. Perpetual/non-maturing instruments are an expected
   exception: duration is not applicable, so the row remains blank and a warning
   is recorded without raising an error-group traceback.
-- Workflow retry behavior is short compared with the clients pipeline and should be reviewed if repeated source instability occurs.
+- No automatic whole-job or dispatch retry is performed; inspect execution, private overview, staging and lock state before any manual replay. API operation completion reports Cloud Run completion only; the private overview is authoritative for pipeline/stage results.
 
 ## Controls / Verification Points
 - Preventive control: pipeline name must map to a defined config.
@@ -85,12 +88,12 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 
 ## Evidence to Retain
 - GitHub Actions run history for `etl_market_data.yaml`
-- ETL overview JSON in workflow logs
+- Terminal ETL overview JSON in private GCS, Cloud Run execution outcome and bounded Actions summary
 - Resource folder outputs after the run
 - Success or failure notification email
 
 ## Related Code / Pages / Routes
-- Entry surfaces: `agm-api/.github/workflows/etl_market_data.yaml`, `agm-api/src/app/tools/private/etl.py`
+- Entry surfaces: `agm-api/.github/workflows/etl_market_data.yaml`, `agm-api/src/jobs/market_etl.py`, `.github/scripts/market_etl_summary.py`, `agm-api/src/app/tools/private/etl.py`
 - Supporting modules: `agm-api/src/components/tools/private/etl.py`
 - Downstream side effects: reporting resource files and market-data-derived outputs
 
@@ -129,3 +132,15 @@ Lower-rated, missing, unrated and unrecognized candidates cannot fill a BB bucke
 A requested bucket with no eligible assets returns HTTP 422 before persistence;
 existing saved proposals are not rewritten by this consumer control. The ETL
 trigger, resource outputs and transformation behavior are unchanged.
+
+## Extractor and publication controls — October 20, 2026
+
+Extractor data and execution metadata are separate: DataFrames contribute row counts, structured outcomes retain their status, and a market source must record the Drive ID returned by its upload. Only that exact source can feed the corresponding transform in the same request. A newer unrelated backup or stale prior-run file cannot substitute. Runtime config copies discard provenance left in templates.
+
+Final resources use verified staging: upload under a noncanonical pending name, check Drive byte length and MD5, then update the existing stable file ID or promote the verified stage when no stable resource exists. Verify the canonical result before cleaning the stage. Never delete the stable file before upload. Duplicate canonical resources fail closed; ambiguous interrupted writes are not automatically replayed. Pending files after an uncertain failure require inspection. This is not a distributed lock or a multi-file transaction.
+
+Regression acceptance covers DataFrame return handling, exact source selection, preservation under upload/checksum/update failures, original exceptions and Actions shell outcomes. Local fixtures do not establish hosted Drive acceptance.
+
+## Async market cutover — October 20, 2026
+
+Implementation uses the working clients architecture with a separate market job, staging folder and generation-owned lock. Job runtime is the current immutable API image plus an exact allowlisted, generation-pinned SHA-256 source overlay; no clients runner/baseline is changed. Job timeout is 60 minutes, one task, one CPU/2 GiB and no automatic retries. The existing 01:00 UTC schedule and notification recipients are preserved. Deployment commands, environment and actual acceptance evidence are recorded in `agm-api/docs/market-etl-runner.md` and API #86. API main commit 4d078ff publishes the job-based workflow and dispatch source; normal CI/API deployment remains separately observable. Controlled cloud execution agm-market-etl-vb9g8 completed successfully at 18:26:28 UTC on October 20 (12:26 Costa Rica), with all four extracts and transforms successful, successful backup, durable overview, lock HTTP404 and empty staging. All four canonical outputs were independently checked for unique names, nonzero sizes/MD5 and current-execution modification times. First scheduled invocation and authenticated hosted manual-route acceptance remain separate observations.
