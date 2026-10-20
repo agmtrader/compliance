@@ -5,7 +5,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 
 ## Trigger / Frequency
 - Trigger after cutover: GitHub Actions launches the `agm-market-etl` Cloud Run Job and polls its exact execution. The authenticated manual `GET`/`POST /etl/market_data` path dispatches the same job and returns HTTP 202; `GET /etl/market_data?operation=<id>` reads its operation status.
-- Frequency: Daily at 01:00 UTC / 7:00 PM on the previous calendar day in Costa Rica, plus manual workflow dispatch. This is a schedule-timing test; GitHub Actions can still create the run late.
+- Frequency: Daily at 12:00 UTC / 6:00 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch. GitHub Actions can still create the run late.
 
 ## Systems Involved
 - `agm-api`
@@ -143,4 +143,11 @@ Regression acceptance covers DataFrame return handling, exact source selection, 
 
 ## Async market cutover — October 20, 2026
 
-Implementation uses the working clients architecture with a separate market job, staging folder and generation-owned lock. Job runtime is the current immutable API image plus an exact allowlisted, generation-pinned SHA-256 source overlay; no clients runner/baseline is changed. Job timeout is 60 minutes, one task, one CPU/2 GiB and no automatic retries. The existing 01:00 UTC schedule and notification recipients are preserved. Deployment commands, environment and actual acceptance evidence are recorded in `agm-api/docs/market-etl-runner.md` and API #86. API main commit 4d078ff publishes the job-based workflow and dispatch source; normal CI/API deployment remains separately observable. Controlled cloud execution agm-market-etl-vb9g8 completed successfully at 18:26:28 UTC on October 20 (12:26 Costa Rica), with all four extracts and transforms successful, successful backup, durable overview, lock HTTP404 and empty staging. All four canonical outputs were independently checked for unique names, nonzero sizes/MD5 and current-execution modification times. First scheduled invocation and authenticated hosted manual-route acceptance remain separate observations.
+Implementation uses the working clients architecture with a separate market job, staging folder and generation-owned lock. Job runtime is the current immutable API image plus an exact allowlisted, generation-pinned SHA-256 source overlay; no clients runner/baseline is changed. Job timeout is 60 minutes, one task, one CPU/2 GiB and no automatic retries. The schedule is revised to 12:00 UTC / 06:00 CST (Costa Rica) alongside clients ETL; notification recipients are preserved. Deployment commands, environment and actual acceptance evidence are recorded in `agm-api/docs/market-etl-runner.md` and API #86. API main commit 4d078ff publishes the job-based workflow and dispatch source; normal CI/API deployment remains separately observable. Controlled cloud execution agm-market-etl-vb9g8 completed successfully at 18:26:28 UTC on October 20 (12:26 Costa Rica), with all four extracts and transforms successful, successful backup, durable overview, lock HTTP404 and empty staging. All four canonical outputs were independently checked for unique names, nonzero sizes/MD5 and current-execution modification times. First scheduled invocation and authenticated hosted manual-route acceptance remain separate observations.
+
+## Shared scheduled start — October 20, 2026
+
+Owner requested both clients and market ETLs at 06:00 CST / 12:00 UTC daily.
+This supersedes earlier schedule times retained in historical cutover evidence.
+Each pipeline keeps its own job, staging folder and execution lock. Scheduled
+start time is a GitHub Actions target, not a guarantee of exact execution time.
