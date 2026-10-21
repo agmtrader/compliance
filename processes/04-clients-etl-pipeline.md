@@ -5,7 +5,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions launches the `agm-clients-etl` Cloud Run Job, polls that execution, and retrieves its durable terminal overview. The legacy authenticated `GET /etl/clients` route remains available but is not the scheduled trigger.
-- Frequency: Daily at 12:00 UTC / 6:00 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch.
+- Frequency: Daily at 13:37 UTC / 7:37 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch.
 
 ## Systems Involved
 - `agm-api`
@@ -97,9 +97,9 @@ The job uses isolated clients staging (`1EIshGq22oFg-WJ9aHdS37Heh5KaqN2ct`). It 
 
 The prepared clients GitHub schedule remains 10:00 UTC (04:00 Costa Rica), but invokes the job rather than HTTP ETL after cutover. It polls its specific execution and retrieves `runs/<execution>/overview.json` before deciding outcome; no whole-job retries or API fallback. The owner explicitly accepts the known incomplete account population. Only the 208 account/error pairs from the tested baseline may yield `completed_with_accepted_coverage_gaps`; raw partial status, freshness/stale counts and outcomes remain visible. New gaps or failures in other stages, publication or execution produce failure. First scheduled-run acceptance remains pending until the next actual 04:00 execution is reviewed.
 
-## Shared scheduled start — October 20, 2026
+## Shared scheduled start — October 21, 2026
 
-Owner requested both clients and market ETLs at 06:00 CST / 12:00 UTC daily.
+Owner requested both clients and market ETLs at 07:37 CST / 13:37 UTC daily.
 This supersedes earlier schedule times retained in historical cutover evidence.
 Each pipeline keeps its own job, staging folder and execution lock. Scheduled
 start time is a GitHub Actions target, not a guarantee of exact execution time.
