@@ -5,7 +5,7 @@ Produce an Improsa Excel workbook from selected broker executions, using the
 original Improsa email, XLS template and Vestima PDF as the reference.
 
 ## Trigger / Frequency
-- Trigger: authorized operator selects executions in an Improsa or ACOBO trade ticket.
+- Trigger: authorized operator selects executions in an Improsa trade ticket.
 - Frequency: on demand; no scheduled export or delivery.
 
 ## Systems Involved
@@ -23,28 +23,38 @@ original Improsa email, XLS template and Vestima PDF as the reference.
   substituted. Any ticket the caller is authorized to read may be used for review.
 
 ## Step-by-Step Workflow
-1. Open the saved Improsa or ACOBO ticket and select executions.
-2. In Improsa request Generate Excel File; in ACOBO use the separate Download
-   Improsa Excel (.xls) button. ACOBO retains its existing review/email flow.
+1. Open Trade Tickets. The labeled shadcn Select automatically selects Improsa
+   when available, otherwise the first saved ticket, and loads its executions. The selector remains above
+   the table for switching between authorized tickets; a direct ticket link
+   selects that ticket. Switching tickets clears the prior execution selection.
+   Use the Asset type and Order type (All orders / Buy / Sell) shadcn Select
+   filters above the table, then select the executions to export. Asset type
+   choices come from the loaded executions. Both filters apply together and
+   changing either clears the execution selection.
+2. In Improsa, request Generate Excel File, the only action below its execution
+   table. The button requires a selection and is disabled while generating.
+   ACOBO instead exposes only Generate Trade Ticket for text preview and a
+   separate email send within the review dialog (PROC-036); it has no Excel action.
 3. API checks query ownership, re-reads source executions and resolves selected
    IDs in order. Client-provided replacement trade values are not used.
-4. Validate required fields, finite values and approved mappings. ACOBO requests
-   review_sample=true; the server enforces query ownership/scopes, with no
-   ticket-name or single-assignment restriction. Only review mode permits a blank
-   contract cell. Shared queries may have multiple authorized assignment rows.
+4. Validate required fields, finite values and approved mappings. Improsa uses
+   normal XLS mode with strict contract validation. The API's existing
+   review_sample=true capability remains available separately, with ownership/
+   scope checks and no ticket-name or single-assignment restriction. Only review
+   mode permits a blank contract cell; ACOBO no longer invokes it from the UI.
 5. Generate a real XLS using the original 28-column formatting profile, including
    highlights/fills, fonts, widths, date formats and contract merge. Display the
    original quoted price in column K with four decimal places.
 6. Download locally. Owner reviews and handles any recipient delivery separately.
 
 ## Outputs / Records Created
-- Formatted XLS workbook; ACOBO review uses improsa-review-sample.xls so it is
-  distinguishable from the normal improsa-trade-ticket.xls. No CSV output.
+- Formatted improsa-trade-ticket.xls workbook. The separate API review mode
+  retains improsa-review-sample.xls; it is not exposed by the ACOBO UI. No CSV output.
 - No database write, trade submission or email from downloading.
 
 ## Exception Paths / Failure Handling
 - Missing selection/required fields and unsupported mappings fail visibly.
-  Missing contract fails normal XLS but remains blank in ACOBO review XLS.
+  Missing contract fails normal XLS but remains blank in API review mode.
 - CSV requests remain rejected. The blank-contract review behavior is carried
   forward to the replacement ACOBO XLS review path on 2026-10-15.
 - Unauthorized query access fails before reading Flex data.
@@ -79,8 +89,9 @@ original Improsa email, XLS template and Vestima PDF as the reference.
   cash/accrual values with ACOBO, superseding clean principal in column N. Local
   XLS/Flask acceptance covers that implementation; check a newly generated actual
   application download against matching source executions before final acceptance.
-- Dashboard #17: ACOBO now has the same styled XLS exporter via a separate
-  download button. Backend mapping and representative workbook acceptance remain
+- Dashboard #17: one action per ticket restored: ACOBO Generate Trade Ticket
+  opens text preview/email review; Improsa Generate Excel File downloads selected
+  executions. Both retain the table, filters and centered loader. Backend mapping and representative workbook acceptance remain
   in API #87; clicking the button does not relax validation or send email.
 - Verify representative rendered Excel highlights/formats and recipient feedback.
 

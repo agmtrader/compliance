@@ -7,11 +7,17 @@ review before a separate, explicit email action.
 ## Trigger / Frequency
 On demand: the operator selects executions and clicks Generate Trade Ticket.
 
+ACOBO exposes one action below the execution table: Generate Trade Ticket.
+It opens the text preview with Send to Client in the review dialog. ACOBO has
+no Excel action; Improsa exposes only Generate Excel File (PROC-035).
+
 ## Systems / Owner
 AGM Dashboard and API; operator and technical owner: Andres Aguilar.
 
 ## Workflow and Controls
-1. The authenticated Dashboard submits selected source rows and indices to
+1. Open Trade Tickets and choose ACOBO in the persistent labeled ticket Select.
+   Improsa loads automatically when available, otherwise the first saved ticket; switching tickets
+   clears the prior execution selection. The authenticated Dashboard submits selected source rows and indices to
    POST /trade_tickets/generate. This existing generation path uses submitted
    rows; it does not use the separate ownership-checked export re-read workflow.
 2. The API extracts coupon and maturity and preserves the existing aggregation
