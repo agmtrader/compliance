@@ -208,3 +208,10 @@ VWRA is removed from the configured ETF source list at the owner's request.
 Subsequent extracts request 60 ETFs, and the next successful market publication
 omits VWRA from the canonical ETF resource. Historical backups are retained.
 The 60/61 coverage in the acceptance record above predates this exclusion.
+
+The exclusion deployed in GitHub Action
+[39852428335](https://github.com/agmtrader/agm-api/actions/runs/39852428335).
+Independent report checks confirmed 60 ETF rows, 60 populated historical returns,
+no VWRA, preserved canonical ID and matching source/checksum. The full workflow
+failed on persistent IBKR session errors in the Treasury and stock extracts;
+their previous reports were preserved. This is not full-pipeline acceptance.
