@@ -103,3 +103,9 @@ Owner requested both clients and market ETLs at 07:37 CST / 13:37 UTC daily.
 This supersedes earlier schedule times retained in historical cutover evidence.
 Each pipeline keeps its own job, staging folder and execution lock. Scheduled
 start time is a GitHub Actions target, not a guarantee of exact execution time.
+
+## Automatic source synchronization — October 22, 2026
+
+After successful API deployment and before every Clients workflow dispatch, the workflow refreshes the Clients job from the exact committed source using `dev/sync_clients_job.py`. The immutable overlay is uploaded and byte-verified, the existing job is updated with an etag concurrency guard, and the resulting configuration is read back before dispatch. A synchronization failure stops dispatch. The runtime uses the immutable image of the API revision serving 100% traffic. The deployment workflow checks out the triggering compile commit rather than a newer default-branch head.
+
+The accepted coverage baseline is copied byte-for-byte from the previous verified bundle; new account failures cannot silently become accepted gaps. Existing staging, service identity, networking, limits, timeout, retry policy and unrelated environment settings are preserved. The job source commit is labeled for evidence. Synchronization itself never executes the ETL. Ordinary-run acceptance remains separate.
