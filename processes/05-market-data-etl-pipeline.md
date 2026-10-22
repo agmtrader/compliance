@@ -170,6 +170,10 @@ a fresh SSO session and repeats initialization/account bootstrap; the exact know
 500 accounts prerequisite repeats account bootstrap. Only the failed read is
 repeated. Recovery history requests retain pacing. Other authorization/provider
 errors do not qualify. Order and other mutation endpoints cannot use this path.
+Initial and recovered brokerage initialization waits the documented two seconds
+before account bootstrap. Known session errors retain sanitized provider details
+and authentication flags in private `session_failures`, including errors after
+the recovery limit; unavailable diagnostic reads never replace the source error.
 Every recovery is logged and retained in extract `session_recoveries`; a nonzero
 count appears in the workflow summary. Persistent session failure aborts symbol
 resolution/history extraction rather than silently omitting tickers or yields.
