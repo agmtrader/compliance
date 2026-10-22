@@ -33,7 +33,8 @@ original Improsa email, XLS template and Vestima PDF as the reference.
    ticket-name or single-assignment restriction. Only review mode permits a blank
    contract cell. Shared queries may have multiple authorized assignment rows.
 5. Generate a real XLS using the original 28-column formatting profile, including
-   highlights/fills, fonts, widths, number/date formats and contract merge.
+   highlights/fills, fonts, widths, date formats and contract merge. Display the
+   original quoted price in column K with four decimal places.
 6. Download locally. Owner reviews and handles any recipient delivery separately.
 
 ## Outputs / Records Created
@@ -53,19 +54,31 @@ original Improsa email, XLS template and Vestima PDF as the reference.
 - API authentication, route scopes, query ownership and ExecID selection.
 - Original email and attachments are authoritative; do not substitute historical
   sample identifiers for a new execution or infer mappings from similar numbers.
-- Preserve the independent original-format regression fingerprints.
+- Preserve the independent original-format regression fingerprints except the
+  owner-approved four-decimal quoted-price format in column K.
 - USD maps to dolares; GBP remains GBP as approved; no silent FX conversion.
-- Current gross-value code uses abs(quantity * price). The mutual-fund reference
-  does not establish bond percentage-price scaling or accrued/fee treatment;
-  resolve that gap in API #87 before approving a bond sample.
+- For IBKR AssetClass BOND/BILL, column M uses abs(AccruedInterest) and column N
+  uses ACOBO's established TotalAmount calculation:
+  round(abs(NetCash) + abs(AccruedInterest), 2). Both paths share the same total
+  helper. NetCash and AccruedInterest must be present and finite; explicit zero
+  is valid. Never replace missing cash with a price-derived principal.
+- Commission fields remain informational in column AB and are not added again
+  to column N. NetCash supplies the existing ACOBO cash/fee treatment. Matching
+  source execution reconciliation and recipient acceptance remain separate gates.
+- Other asset classes retain abs(quantity * price) in column N and optional
+  accrued-interest handling. AssetClass is required. Preserve the original
+  quoted price value in column K while displaying four decimals.
 - Recipient acceptance is separate from successful local download/testing.
 
 ## Remaining XLS Work
 - API #87: authoritative contract/source mapping for the ACOBO sample; explicit
   policy for production contract values. ACOBO review may leave missing values
   blank; production Improsa XLS remains strict.
-- API #87: bond trade amount versus settlement amount, accrued interest and fees,
-  supported asset-class pricing units and meaningful amount regressions.
+- API #87: the owner's October 22 bond workbook confirmed the earlier percentage
+  scaling. The owner then authorized four price decimals and alignment of bond
+  cash/accrual values with ACOBO, superseding clean principal in column N. Local
+  XLS/Flask acceptance covers that implementation; check a newly generated actual
+  application download against matching source executions before final acceptance.
 - Dashboard #17: ACOBO now has the same styled XLS exporter via a separate
   download button. Backend mapping and representative workbook acceptance remain
   in API #87; clicking the button does not relax validation or send email.
@@ -82,6 +95,7 @@ original Improsa email, XLS template and Vestima PDF as the reference.
 - API #87 and Dashboard #17.
 
 ## Last Reviewed
-- Status: draft; existing XLS retained, remaining mapping/acceptance work open.
-- Date: 2026-10-15.
+- Status: draft; four-decimal quote and ACOBO bond cash convention implemented locally;
+  actual application download and contract/recipient acceptance remain pending.
+- Date: 2026-10-22.
 - Reviewer: Codex; owner retains manual delivery/acceptance.

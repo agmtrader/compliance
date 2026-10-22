@@ -32,33 +32,25 @@ Run the recurring sanctions-screening job for account-linked contacts after chec
 2. The API compares today’s sanctions backup files against the previous calendar day through `compare_all_sanctions_today_vs_yesterday`. A snapshot is considered present when a backup filename starts with the expected list name and `YYYYMMDD` date. ETL backup names are generated at the start of each pipeline request in Costa Rica time; they must not be derived from module-import time.
 3. If one or more sanctions files are unavailable, the process logs the gap and includes the unavailable-list detail in the returned summary. Without a confirmed positive delta, it exits with a controlled skip instead of screening on incomplete comparison evidence.
 4. If all three sanctions lists are available and unchanged, the process exits early and returns a compact “skipped” result.
-5. If a confirmed list delta exists, the API loads accounts, IBKR details backup data, account-contact links, contacts, and existing contact screenings.
-6. For each account, the workflow attempts to match linked contacts to IBKR associated persons by `entity_id` or normalized name. It reads the associated-person roles but does not use them to exclude trusted contacts.
-7. Every account-linked contact with a nonblank contact id and name is added to the candidate population. Contacts appearing under more than one account are deduplicated by contact id, keeping the first account context encountered.
-8. The process determines whether the deduplicated contact population is fully covered by screening records dated for the current server date.
-9. If every targeted contact already has a screening for today, the process exits with a skipped result.
-10. When execution proceeds, the API builds all planned screening payloads in memory, checks OFAC / UK / UN exact normalized-name matches, evaluates the holder residence country against the FATF listed-jurisdiction country set, and inserts the successful payloads as a batch.
-11. If only some planned contacts already have a screening dated today, the current implementation still rebuilds and inserts screening rows for the full planned population rather than only the missing contacts.
-12. GitHub Actions sends a success or failure email summarizing the run, including coverage counts, contacts with and without sanctions-list matches, per-list match counts, contact ids associated with screening errors, and sanctions-availability warnings from the API response when present.
+5. With a confirmed list delta, read account-contact links and screening history, deduplicate linked contact IDs, and remove contacts with a screening already dated today.
+6. Record planned/targeted contacts and pre-run historical coverage. Account counts refer to linked accounts represented in the remaining targets; no-history and partial-history counts are measured before this run's inserts.
+7. Load contact/account/IBKR context and one set of sanctions indexes through the batch builder. Build the normal screening payload for each target; continue independent targets when one payload fails. Insert the successfully built payloads in bulk.
+8. Derive sanctions match counts from those payloads only after the full built batch is confirmed inserted. A per-list count is the number of newly screened contacts with at least one hit in that list, not the number of underlying source rows. With-match and without-match contact counts must sum to inserted screenings. Do not substitute zeros for unavailable metrics.
+9. Return actual planned/executed/error counts, coverage, match counts and success/partial/failed status. A zero-target same-day run returns an explicit skipped outcome without inserts. A preview does not claim persistence.
+10. The workflow validates the response schema, count invariants and error list. Any screening error, incomplete insert, missing required execution metric or malformed/non-200 response fails the workflow. Controlled skips retain unavailable population/match metrics. The terminal summary is published even on failure; the operation is not automatically replayed.
+11. The displayed overview uses readable sentence-case labels for every metric, preserving OFAC / UK / UN capitalization (for example, “Screenings executed”, “Contacts targeted”, and “OFAC matches”), and omits `total_screenings_planned`, `accounts_with_no_screenings_at_all`, `accounts_with_some_contacts_no_screenings`, `screenings_with_list_matches`, and `screenings_without_list_matches`. These metrics remain in the API response and workflow validation; only their display in logs, the step summary and success email is suppressed.
 
 ## Workflow Diagram
 ```mermaid
 flowchart TD
-    A["Scheduled or manual workflow"] --> B["Request API token"]
-    B --> C["Call /actions/run_screening_process"]
-    C --> D["Compare sanctions files versus previous calendar day"]
-    D --> E{"All source files available?"}
-    E -- "No" --> F["Continue and flag unavailable lists in summary"]
-    E -- "Yes" --> G{"Any sanctions delta?"}
-    G -- "No" --> H["Skip run"]
-    G -- "Yes" --> I["Load accounts, IBKR details, contacts, links, existing screenings"]
-    F --> I
-    I --> J["Deduplicate linked contacts by contact id"]
-    J --> K{"Targets remain?"}
-    K -- "No" --> L["Skip run"]
-    K -- "Yes" --> M["Create contact screening records"]
-    M --> N["Return summary counts"]
-    N --> O["Send workflow success or failure email"]
+    A[Scheduled or manual request] --> B[Compare dated sanctions snapshots]
+    B --> C{Confirmed delta?}
+    C -- No --> D[Return controlled skip and comparison evidence]
+    C -- Yes --> E[Deduplicate linked contacts and remove screened-today contacts]
+    E --> F[Build and insert successful payloads; retain errors]
+    F --> G[Return actual coverage and match counts]
+    G --> H[Validate metrics and terminal status]
+    H --> I[Publish success or failure summary]
 ```
 
 ## Outputs / Records Created
@@ -71,7 +63,7 @@ flowchart TD
 - Sanctions file unavailable: process logs the missing list, includes the unavailable-list detail in the response summary, and skips unless another list has a confirmed positive delta.
 - Stale ETL worker date: runtime configuration refreshes date-stamped backup names at pipeline start so long-lived workers cannot reuse an earlier import-time date.
 - Token generation failure: GitHub workflow exits before calling the screening route.
-- Contact-level screening failure: API increments `screening_errors` and continues processing remaining planned contacts.
+- Contact-level screening failure: the API retains the error and continues remaining contacts; the final partial/failed result makes the workflow fail even when HTTP is 200.
 - No sanctions changes or all targets already screened today: process exits with a skipped result instead of writing new screenings.
 
 ## Controls / Verification Points

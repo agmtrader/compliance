@@ -1,5 +1,100 @@
 # Contact Deduplication and Dependency Merge
 
+## Identity-aware script update — October 22, 2026
+
+The owner keeps the offline evidence/plan review followed by separately approved
+execution; a Dashboard conflict-resolution screen is not required. The current
+`contact_consolidation.py` now supports all eleven contact-reference tables,
+including `contact_identity` and `contact_identity_document`. Export both full
+identity-row snapshots and dependency manifests/totals in the same read-only
+transaction as the original backup. The generated `identity_snapshot_sql` adjunct
+is documented in `agm-api/docs/contact-consolidation.md`; explicit empty arrays
+are mandatory. Earlier nine-table backups/version-1 plans are refused.
+
+Only `contact_id` is changed on identity rows; government-ID row IDs, leading
+zeroes, type/country, source-account provenance, verification status and timestamps
+are preserved. Conflicting birthdays or competing same-type/country IDs on
+different contacts block planning. Multiple birthday rows also block even when
+the dates agree: the one-row-per-contact key cannot preserve both provenance rows
+on one survivor, so a separate reviewed resolution is required. No personal
+identity can be assigned to a company. No child identity row is deleted or
+deduplicated by this update.
+
+Generated SQL takes the same identity advisory lock as application matching plus
+bounded contact/reference-table locks, checks full identity evidence and all
+manifests, and rolls back on drift, unexpected foreign keys/triggers or loss of
+identity/provenance. It still defaults to a transactional rollback rehearsal.
+Six prior planner checks and sixteen synthetic local PostgreSQL checks passed;
+this tooling update performed no production merge, rehearsal or identity repair.
+The separate broad duplicate-review scope remains API #111.
+
+## Applied owner-approved consolidation — October 21, 2026
+
+The owner reviewed same/different-contact pairs and explicitly authorized
+consolidation retaining the most complete contact and all dependencies. The new
+offline `agm-api/contact_consolidation.py` module planned 27 connected groups from
+55 contacts, chose survivors by populated business fields/reference counts/name
+completeness, filled missing fields from approved members, and retained field
+alternatives privately. Its executable procedure is documented in
+`agm-api/docs/contact-consolidation.md`; the older scripts below remain unavailable.
+
+A real transactional rehearsal was rolled back, then the same fingerprinted plan
+was committed through connected Supabase. Serializable/advisory/row locking and
+exact snapshot/manifests guarded the scope. All child rows were preserved by ID;
+only contact references were repointed across all nine discovered FK tables.
+Account/document links and screenings were not collapsed or deleted. Independent
+post-commit checks verified 28 redundant contacts removed, 880 remaining contacts,
+unchanged child populations and raw documents, and no references to removed IDs.
+The changed-field recovery backup, survivor mapping and verification remain private
+in ignored `agm-api/tmp/contact-consolidation-20261021/`.
+
+This applied result supersedes the earlier waiting-for-survivor-selection status
+below. It does not authorize new/unreviewed merges, and it does not establish
+current IBKR identity coverage beyond the separately supplied historical backup.
+
+## Current executable scope — October 20, 2026
+
+The legacy planner/apply/manual-review scripts named below are absent from the
+current checkout. Their historical merge procedure is retained as design context,
+not a currently executable or validated merge workflow. No contact merge is
+authorized by running the current detector.
+
+Read-only candidate review is now available in `agm-api/contact_duplicates.py`;
+the input export, command, controls and limitations are documented in
+`agm-api/docs/contact-duplicate-review.md`. Use a repeatable-read/read-only export
+of `contact`, `account` and `account_contact`, plus an explicitly selected existing
+IBKR details backup. The detector resolves associated persons using the stored
+account/master and linked entity/external IDs, reports name/email/phone leads,
+government-ID/birthday agreement and conflicts, and records incomplete coverage.
+Name-only holder resolution never supplies identity corroboration. Old backups
+cannot qualify as current evidence based on their stored `fresh` label alone.
+October 21 refinement: resolved IBKR `entityId` is also compared across accounts
+as person-identity candidate evidence; external codes remain account-scoped.
+Shared IDs do not override company/person conflicts or authorize merging a
+company with its representative.
+Owner clarification on October 21: company contacts are account relationships,
+not IBKR associated persons. The detector preserves their account links but
+does not enrich them with representative identity, birthday or government IDs.
+Company links carrying person entity IDs are explicit data-quality findings.
+Review filtering was tightened after owner feedback: shared phone, email,
+birthday or account membership cannot generate candidate pairs. Candidate
+discovery requires matching person/government identity or a credible multi-token
+name match; differing first names cannot qualify through shared surnames alone.
+Contact details remain supporting evidence. Explicit same/different-person
+decisions are recorded against stable contact IDs in the private review evidence.
+An explicitly authorized correction cleared the person `entity_id` from eleven
+named companies' links, retained every company and all company/person account
+links, and preserved other link fields. Evidence and pre/post snapshots remain
+private under the API ignored review folder. Two person-pair confirmations are
+recorded for later review; no person merge or survivor selection was performed.
+
+The output is a private, fingerprinted JSON report of independent candidate pairs
+and coverage gaps. It has no apply mode, does not choose survivors, and cannot
+update, delete, merge or repoint records. Review each candidate and its source
+age before any separately authorized remediation. First real validation used a
+current database snapshot and an October 14 IBKR backup; no current provider
+coverage, merge readiness or duplicate elimination is claimed.
+
 ## Business Purpose
 Identify duplicate contact records conservatively and merge only high-confidence duplicates while preserving account links, documents, screenings, review assignments, user/advisor references, and IBKR holder identity.
 
@@ -84,5 +179,5 @@ Identify duplicate contact records conservatively and merge only high-confidence
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-13
-- Reviewer: Codex implementation review
+- Date: 2026-10-22
+- Reviewer: Codex identity-aware consolidation script verification

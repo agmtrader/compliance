@@ -39,20 +39,27 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
    `finally` path after the source completes or fails.
 5. Backup renames batch files, moves them into the resource structure, and clears the batch folder.
 6. Transform converts the resource files into downstream market-data outputs consumed by reporting logic.
-   When `DEV_MODE=true`, the extractor also runs the existing IBKR historical daily-bar
-   enrichment process. With `DEV_MODE=false` (the production path), it skips those
-   requests and preserves the `Current Yield` column as empty so the parent request
-   remains bounded.
+   The background market runner enables historical daily-bar enrichment through
+   per-run `historical_yields: true` for stocks and ETFs while retaining
+   `DEV_MODE=false`. Direct development extracts also retain enrichment through
+   `DEV_MODE=true`; foreground production extracts skip it by default.
+   `Current Yield` is the existing arithmetic mean of five annual price returns
+   in percentage points, using six annual close anchors. It is not dividend,
+   distribution or total return. Requests, including the older daily-bar page,
+   are sequential and wait 1.25 seconds before each history call.
 7. The runner releases only its owned lock and publishes a durable `runs/<execution>/overview.json`, including lock-release failure and raw/operational outcomes. Publication failure exits nonzero. A killed process can leave a lock requiring verified terminal-state review before conditional operator removal.
 8. GitHub Actions requires both Cloud Run terminal success and a matching execution/pipeline overview. It validates all four configured market sources, all three stages, nonzero/consistent counts and exact extract-to-transform source IDs. Partial, missing, malformed, inconsistent or provenance-free results fail the workflow; clients accepted-gap/Flex fallback rules do not apply to market. An always-running step publishes a bounded aggregate summary. Unavailable evidence stays unavailable. No whole-operation retry is performed because an interrupted execution may already have published files.
 
 ## Outputs / Records Created
 - Refreshed raw market-data files in Google Drive
 - Updated transformed market-data resources
-- ETF and stock resource rows with populated `Current Yield` when `DEV_MODE=true` and
-  five years of bars are available
-- ETF and stock resource rows with an empty `Current Yield` when `DEV_MODE=false`
-- Per-symbol resolution, snapshot, and development-only history failures logged with
+- ETF and stock resource rows with populated `Current Yield` in the background
+  job when five years of usable price history are available
+- An empty `Current Yield` for unavailable/invalid/insufficient history, with
+  per-extract requested, populated and unavailable counts in the terminal overview;
+  zero and negative calculated returns are preserved
+- Foreground production snapshots retain an empty `Current Yield` by default
+- Per-symbol resolution, snapshot, and history failures logged with
   ticker and conid; symbols with missing or invalid snapshot rows are omitted while
   valid symbols continue processing
 - Durable private GCS terminal overview; manual API dispatch returns an operation/status URL rather than the completed ETL payload
@@ -64,8 +71,10 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 - Cloud authentication, job launch, polling or overview retrieval failure: workflow fails with available execution references and unavailable metrics; no synchronous fallback. A dispatch timeout is uncertain, not permission to replay.
 - Missing/incomplete pipeline config, nonempty staging or lock acquisition failure: job fails before pipeline writes.
 - Extract, backup, or transform failure: the overview captures the failing step and the workflow fails. A market transform cannot fall back to a prior backup when its extractor failed.
-- Historical-yield enrichment is disabled when `DEV_MODE=false`; failures in the
-  development-only enrichment must not change the production behavior.
+- Historical-yield enrichment is enabled independently of `DEV_MODE` in the
+  background market runner. Missing/invalid history leaves the symbol's yield
+  blank and does not abort the other symbols. Pipeline success alone does not
+  certify complete historical-yield coverage; inspect terminal overview counts.
 - A failed stock or ETF security lookup, snapshot response, or historical-yield
   request is logged with `MARKET_DATA_SYMBOL_FAILED` and the symbol/conid when
   available. Missing snapshot rows are excluded from that output; they do not abort
@@ -151,3 +160,23 @@ Owner requested both clients and market ETLs at 07:37 CST / 13:37 UTC daily.
 This supersedes earlier schedule times retained in historical cutover evidence.
 Each pipeline keeps its own job, staging folder and execution lock. Scheduled
 start time is a GitHub Actions target, not a guarantee of exact execution time.
+
+
+## Proposal selection and count controls
+
+Risk-questionnaire proposal generation targets exactly 20 eligible securities. The
+portfolio planner passes a user-selected total to the same selection function for
+both preview and save. Money allocation percentages remain independent of security
+counts: each active sleeve retains its assigned capital weight, split equally among
+its selected securities. Within screened candidate pools, selection maximizes the
+allocation-weighted mean of stored return estimates across feasible sleeve counts.
+Existing rating, yield validity, outlier and issuer-exclusion controls apply. This
+objective is a model based on source estimates, not a guarantee of future return.
+Missing eligible sleeves or an infeasible exact count fail before persistence; no
+silent underfilled proposal is created. Custom proposals retain the user's positive
+asset weights and omit zero-weight holdings. Custom preview and save build from
+the same explicitly selected holdings and source-yield interpretation; the custom
+return card does not use an automatically selected portfolio estimate. Presentation and return calculations
+use money weights and exclude zero-weight classes in views and exports. Existing
+saved proposals are not regenerated by these code changes; historical missing
+weights remain a separate reconciliation requirement.

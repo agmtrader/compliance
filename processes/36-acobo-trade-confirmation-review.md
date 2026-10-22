@@ -15,7 +15,12 @@ AGM Dashboard and API; operator and technical owner: Andres Aguilar.
    POST /trade_tickets/generate. This existing generation path uses submitted
    rows; it does not use the separate ownership-checked export re-read workflow.
 2. The API extracts coupon and maturity and preserves the existing aggregation
-   of broker interest, quantity and cash. Generation itself sends no email.
+   of broker interest, quantity and cash. AccruedInterest and NetCash are shown as
+   positive magnitudes. Amount is abs(NetCash); TotalAmount is
+   round(abs(NetCash) + abs(AccruedInterest), 2), with no separate commission
+   addition. The TotalAmount helper is shared with the BOND/BILL Improsa export;
+   this does not change ACOBO's existing single/consolidated results. Generation
+   itself sends no email.
 3. For ISIN XS1046593908, the verified issuer terms specify annual March 19
    coupons and Actual/Actual. Count calendar days from the preceding scheduled
    March 19 through settlement, including leap days. Settlement on March 19
@@ -39,8 +44,8 @@ values; successful generation does not establish email delivery or settlement.
 - [Issuer final terms](https://www.sec.gov/Archives/edgar/data/101368/000119312514095596/d692806dfwp.htm).
 - API components/tools/public/bond_accrual.py and trade_tickets.py.
 - Dashboard AcoboEmailAction.tsx; API issue #295.
-- PROC-035 documents the separate Improsa XLS/CSV download workflow.
+- PROC-035 documents the separate Improsa XLS download workflow.
 
 ## Last Reviewed
-2026-10-15; draft. Formal ITGC transaction register is absent from this workspace;
+2026-10-22; draft. Formal ITGC transaction register is absent from this workspace;
 PROC-036 is recorded in the existing working process register.

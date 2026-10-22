@@ -54,7 +54,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Preventive control: named pipeline config must exist or the route raises an error.
 - Detective control: extract reports total/successful/skipped/failed counts; transform reports total/successful/failed counts; backup reports rename/move counts and clear outcome.
 - Detective control: workflow summary and email include stage/step/file failure details and explicit `none` for empty error/warning sections. Missing evidence is labeled unknown/unavailable.
-- Detective control: IBKR account failures are grouped by exact error with counts and up to five account examples per group. A private GCS overview URI preserves access to complete account outcomes without expanding every failure into the email.
+- Detective control: IBKR account failures are grouped by safe reason/status category with counts; account identifiers stay in the private overview. A private GCS overview URI preserves access to complete account outcomes without expanding every failure into the email.
 - Detective control: accepted gaps, raw partial status, retained stale counts and Flex backup-use warnings remain visible independently of operational success.
 - Current limitation: the notification summary is aggregate and does not state the status, source date, row count, or version of each compliance reference list.
 
@@ -97,6 +97,12 @@ The job uses isolated clients staging (`1EIshGq22oFg-WJ9aHdS37Heh5KaqN2ct`). It 
 
 The prepared clients GitHub schedule remains 10:00 UTC (04:00 Costa Rica), but invokes the job rather than HTTP ETL after cutover. It polls its specific execution and retrieves `runs/<execution>/overview.json` before deciding outcome; no whole-job retries or API fallback. The owner explicitly accepts the known incomplete account population. Only the 208 account/error pairs from the tested baseline may yield `completed_with_accepted_coverage_gaps`; raw partial status, freshness/stale counts and outcomes remain visible. New gaps or failures in other stages, publication or execution produce failure. First scheduled-run acceptance remains pending until the next actual 04:00 execution is reviewed.
 
+## Safe report publication and notification summaries — October 20, 2026
+
+NAV and other ETL final resources stage and verify uploaded byte length/MD5 before updating the stable resource in place. The existing file is not deleted; upload or staging-verification failure leaves it intact. The original publication exception/traceback is retained in runtime evidence instead of being replaced by a string containing the entire configuration. Verified staging cleanup is separate from publication; uncertain writes require inspection rather than automatic replay.
+
+Actions outputs and email carry bounded aggregate counts, report names and approved reason/status categories. Raw exception/provider/configuration strings and account examples are omitted to prevent secret-like values from suppressing the cross-job summary. The private overview and runtime logs retain investigation detail. Account-refresh mappings, permissions and accepted-gap policy are unchanged by this maintenance.
+
 ## Shared scheduled start — October 21, 2026
 
 Owner requested both clients and market ETLs at 07:37 CST / 13:37 UTC daily.
@@ -109,3 +115,23 @@ start time is a GitHub Actions target, not a guarantee of exact execution time.
 After successful API deployment and before every Clients workflow dispatch, the workflow refreshes the Clients job from the exact committed source using `dev/sync_clients_job.py`. The immutable overlay is uploaded and byte-verified, the existing job is updated with an etag concurrency guard, and the resulting configuration is read back before dispatch. A synchronization failure stops dispatch. The runtime uses the immutable image of the API revision serving 100% traffic. The deployment workflow checks out the triggering compile commit rather than a newer default-branch head.
 
 The accepted coverage baseline is copied byte-for-byte from the previous verified bundle; new account failures cannot silently become accepted gaps. Existing staging, service identity, networking, limits, timeout, retry policy and unrelated environment settings are preserved. The job source commit is labeled for evidence. Synchronization itself never executes the ETL. Ordinary-run acceptance remains separate.
+
+## Open-position publication and delinked accounts — October 22, 2026
+
+The full-position companion `ibkr_open_positions_all.csv` uses verified staging
+and an in-place update, preserving the stable resource's ID and permissions.
+There is no pre-delete. The full report and the bond/LOT template are individually
+verified; failure of either keeps the transform failed. A successful full report
+can coexist with the previous template if the later template update fails.
+Uncertain publication is not automatically retried.
+
+IBKR can return a delinking tombstone: HTTP 200, the exact requested account ID,
+no master account, and a valid nonfuture `dateDelinked`. The refresh records this
+as `skipped / account_delinked`, separately from fresh details and failed coverage.
+Previous details remain historical/stale, with the previous successful-fetch time
+and explicit delinking reason/date; no previous record means no fresh substitute
+is created. The private overview retains account-level evidence; Actions/email
+show the aggregate delinked count. This does not alter database account/master
+records or expand the accepted failure baseline. Wrong identities, explicit
+master conflicts, unexplained absent masters, invalid/future dates and arbitrary
+skips remain failures. Release and actual-run verification remain separate gates.

@@ -31,16 +31,16 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 1. The scheduled workflow requests an authenticated AGM user token and calls `/actions/send_unfunded_emails`.
 2. The API loads NAV data, clients data, accounts data, contacts data, and advisors data.
 3. It excludes accounts without a real IBKR account number (blank or `-`) and identifies accounts whose NAV report `Total` is below `0.5` or whose NAV report row is missing. The threshold matches the Accounts page's whole-unit NAV display.
-4. Before contact lookup, it removes the account IDs in the explicit exclusion set: `U24289762`, `U26306704`, `U2421560`, `U27640959`, `U8458872`, `U20351921`, `U20405882`, `U20613112`, `U22335324`, `U7115856`, `U11438607`, `U12443091`, `U19565575`, `U2580655`, `U6170355`, `U26450466`, and `U26540841`. These accounts receive no funding reminder even if their NAV is zero or missing.
+4. Before contact lookup, it removes the account IDs in the explicit exclusion set: `U24289762`, `U26306704`, `U2421560`, `U27640959`, `U8458872`, `U20351921`, `U20405882`, `U20613112`, `U22335324`, `U7115856`, `U11438607`, `U12443091`, `U19565575`, `U2580655`, `U6170355`, `U26450466`, `U26540841`, and `U27090911`. These accounts receive no funding reminder even if their NAV is zero or missing.
 5. It filters the remaining candidates to accounts whose client status is `Open`, after trimming whitespace and ignoring case.
 6. It merges each candidate account with the clients report `Date Opened`.
 7. It calculates business days since the account opened and derives a `notice_number` using five-business-day intervals.
 8. It maps each account’s advisor code to an advisor email address by joining advisors to contacts.
-9. It merges the candidate accounts to the client contact record to obtain the destination email.
+9. It merges candidate accounts to the selected contact record. For the explicitly requested joint account `U28420921` only, when that contact has no valid email, it resolves the second holder's stored application external/entity ID to exactly one linked contact with a valid email. A trusted or unrelated linked contact cannot become the fallback. A valid selected email is preserved. No unrelated contact/address or advisor email substitutes for a holder; ambiguous alternatives remain skipped. One reminder is attempted per account.
 10. It skips records whose client email is missing or blank.
 11. It excludes the following opt-out addresses from the outreach batch, matching case-insensitively after trimming whitespace: `ramirezfumero1995@gmail.com`, `andrealeon.aluz@gmail.com`, `paulbernavidesr@gmail.com`, and `esquivelyrodriguez358@gmail.com`.
 12. For each remaining contact, it sends a funding notification email in Spanish, optionally copying the advisor.
-13. The route returns the merged contact list used for the outreach batch, excluding account IDs and opt-out addresses.
+13. The route returns actual sent/failed/skipped/total counts and per-recipient outcomes; explicit account exclusions are removed before contact selection, while email opt-outs and missing-email recipients remain labelled skipped.
 
 ## Outputs / Records Created
 - Funding notification emails to qualifying clients
@@ -53,7 +53,7 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 - Missing or blank client email: account is logged and skipped instead of failing the full batch.
 - Explicit opt-out email: account is logged and excluded from the batch without sending.
 - Missing advisor email: client email still sends with blank CC.
-- Email-send failure: the API logs the full recipient context and exception, then fails the route so the workflow cannot report a false success.
+- Email-send failure: record one failure and uncertain delivery, then continue independent recipients without retrying the failed send. Return partial/failed status and actual outcomes. The workflow gives an explicit partial notification; all-failed or fatal runs fail. Sent means the Gmail helper returned successfully, not verified inbox delivery.
 
 ## Controls / Verification Points
 - Preventive control: only accounts with `Open` status are eligible.
@@ -77,5 +77,5 @@ Identify open accounts that remain unfunded and send a funding reminder email to
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-10-01
+- Date: 2026-10-20
 - Reviewer: Codex, aligned with the current code and requested account exclusions
