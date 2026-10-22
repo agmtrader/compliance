@@ -201,3 +201,10 @@ delivery was not separately verified. Earlier candidate failure and read-only
 diagnosis are retained separately; this run does not establish the cause of the
 earlier IBKR session invalidation. Broader automatic-run/manual dispatch acceptance
 remains tracked in API #86. This procedure remains subject to code-owner review.
+
+## Owner-requested ETF exclusion — October 22, 2026
+
+VWRA is removed from the configured ETF source list at the owner's request.
+Subsequent extracts request 60 ETFs, and the next successful market publication
+omits VWRA from the canonical ETF resource. Historical backups are retained.
+The 60/61 coverage in the acceptance record above predates this exclusion.
