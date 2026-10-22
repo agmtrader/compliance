@@ -188,3 +188,16 @@ market lock blocks the update. Failed synchronization prevents dispatch. The
 legacy deployment helper's existing-job path uses this same source synchronizer,
 without the unsupported Jobs.patch updateMask parameter. Runtime tests and actual
 GitHub/Cloud Run acceptance are recorded separately in API #86 and runner docs.
+
+The requested recovery acceptance passed in GitHub Action
+[39843963070](https://github.com/agmtrader/agm-api/actions/runs/39843963070) on
+October 22, 2026. All four extracts and transforms succeeded, with successful
+backup. Independent downloaded-file checks confirmed current sources, preserved
+canonical IDs, row counts and checksums, and stock/ETF values matched the exact
+sources. The lock was released and staging was empty. Stock return coverage was
+99/99; ETF coverage was 60/61 with one unavailable history left blank. No recovery
+was needed in this accepted run. The success-email action passed; recipient
+delivery was not separately verified. Earlier candidate failure and read-only
+diagnosis are retained separately; this run does not establish the cause of the
+earlier IBKR session invalidation. Broader automatic-run/manual dispatch acceptance
+remains tracked in API #86. This procedure remains subject to code-owner review.
