@@ -53,7 +53,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 ## Controls / Verification Points
 - Preventive control: named pipeline config must exist or the route raises an error.
 - Detective control: extract reports total/successful/skipped/failed counts; transform reports total/successful/failed counts; backup reports rename/move counts and clear outcome.
-- Detective control: workflow summary and email include stage/step/file failure details and explicit `none` for empty error/warning sections. Missing evidence is labeled unknown/unavailable.
+- Detective control: workflow summary and email include stage/step/file failure details when present and omit empty failure/warning/runner-error sections. Blank lines separate categories. Missing evidence remains labeled unknown/unavailable; a reported failure count without detailed outcomes is explicitly identified.
 - Detective control: IBKR account failures are grouped by safe reason/status category with counts; account identifiers stay in the private overview. A private GCS overview URI preserves access to complete account outcomes without expanding every failure into the email.
 - Detective control: accepted gaps, raw partial status, retained stale counts and Flex backup-use warnings remain visible independently of operational success.
 - Current limitation: the notification summary is aggregate and does not state the status, source date, row count, or version of each compliance reference list.
