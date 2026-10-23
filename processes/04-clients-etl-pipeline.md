@@ -5,7 +5,7 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 
 ## Trigger / Frequency
 - Trigger: GitHub Actions launches the `agm-clients-etl` Cloud Run Job, polls that execution, and retrieves its durable terminal overview. The legacy authenticated `GET /etl/clients` route remains available but is not the scheduled trigger.
-- Frequency: Daily at 13:37 UTC / 7:37 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch.
+- Frequency: Daily at 09:07 UTC / 3:07 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch.
 
 ## Systems Involved
 - `agm-api`
@@ -135,3 +135,10 @@ show the aggregate delinked count. This does not alter database account/master
 records or expand the accepted failure baseline. Wrong identities, explicit
 master conflicts, unexplained absent masters, invalid/future dates and arbitrary
 skips remain failures. Release and actual-run verification remain separate gates.
+
+## Shared scheduled start revised — October 23, 2026
+
+Owner requested both clients and market ETLs daily at 03:07 CST (Costa Rica,
+UTC-6) / 09:07 UTC (`7 9 * * *`). This supersedes earlier schedule times retained
+in historical evidence. Each pipeline keeps its separate job, staging folder and
+execution lock. GitHub Actions may start scheduled workflows late.
