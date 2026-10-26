@@ -164,11 +164,15 @@ start time is a GitHub Actions target, not a guarantee of exact execution time.
 
 ## Proposal selection and count controls
 
-Risk-questionnaire proposal generation uses the October 26 archetype counts: 25, 29,
-32, 33, 35, 36, 37 and 33 positions from Conservative A through Aggressive C,
-with a maximum 4.5% per position. The
-portfolio planner passes a user-selected total to the same selection function for
-both preview and save. Money allocation percentages remain independent of security
+The owner's final October 26 count revision requires exactly 20 assets for every
+new risk-questionnaire proposal across all archetypes. This supersedes the earlier
+25–37 position counts and removes the incompatible 4.5% per-position cap: 20
+holdings cannot total 100% under that cap. Archetype count metadata now reports
+20 and the former position limit is null. The portfolio planner passes a
+user-selected positive integer to the same selection function for both preview
+and save, defaulting to 20 when omitted, null or blank. Selecting a profile or
+preset preserves the user's selected count. Invalid supplied counts still fail
+validation. Money allocation percentages remain independent of security
 counts: each active sleeve retains its assigned capital weight, split equally among
 its selected securities. Within screened bond candidate pools, selection retains
 the allocation-weighted return objective. ETF selection uses the breadth and
