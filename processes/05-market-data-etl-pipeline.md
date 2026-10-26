@@ -5,7 +5,7 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
 
 ## Trigger / Frequency
 - Trigger after cutover: GitHub Actions launches the `agm-market-etl` Cloud Run Job and polls its exact execution. The authenticated manual `GET`/`POST /etl/market_data` path dispatches the same job and returns HTTP 202; `GET /etl/market_data?operation=<id>` reads its operation status.
-- Frequency: Daily at 09:07 UTC / 3:07 AM CST (Costa Rica, UTC-6), plus manual workflow dispatch. GitHub Actions can still create the run late.
+- Frequency: Daily at 06:00 UTC / 12:00 AM CST (midnight Costa Rica, UTC-6), plus manual workflow dispatch. GitHub Actions can still create the run late.
 
 ## Systems Involved
 - `agm-api`
@@ -187,3 +187,10 @@ Owner requested both clients and market ETLs daily at 03:07 CST (Costa Rica,
 UTC-6) / 09:07 UTC (`7 9 * * *`). This supersedes earlier schedule times retained
 in historical evidence. Each pipeline keeps its separate job, staging folder and
 execution lock. GitHub Actions may start scheduled workflows late.
+
+## Shared scheduled start revised — October 26, 2026
+
+Owner requested both clients and market ETLs daily at 06:00 UTC / 00:00 CST
+(midnight Costa Rica, UTC-6), using `0 6 * * *`. This supersedes earlier schedule
+times retained in historical evidence. GitHub Actions may start scheduled workflows
+late; the configured time is a target.
