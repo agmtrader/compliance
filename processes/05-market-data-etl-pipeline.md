@@ -173,7 +173,7 @@ counts: each active sleeve retains its assigned capital weight, split equally am
 its selected securities. Within screened candidate pools, selection maximizes the
 allocation-weighted mean of stored return estimates across feasible sleeve counts.
 Corporate bond rating, yield validity, outlier and issuer-exclusion controls apply.
-Treasury uniqueness is by instrument. Equity ETF and GLD historical returns retain
+Treasury uniqueness is by instrument. Equity ETF historical returns retain
 source percentage-point values, including zero or negative returns. This
 objective is a model based on source estimates, not a guarantee of future return.
 Missing eligible sleeves or an infeasible exact count fail before persistence; no
@@ -206,10 +206,10 @@ late; the configured time is a target.
 ## Proposal allocation categories — October 26, 2026
 
 Risk generation, the Dashboard portfolio planner and custom proposal editor use
-five separate classes: Treasuries, Investment grade (AAA–BBB), High yield (BB),
-Equity (classified equity ETFs) and Gold (GLD). Individual stocks, bond ETFs and
-other commodity ETFs cannot enter new proposals. Gold never consumes equity
-weight. Planner payloads carry the five direct percentages totaling 100%; no
+four separate classes: Treasuries, Investment grade (AAA–BBB), High yield (BB),
+and Equity (classified equity ETFs). Individual stocks, bond ETFs and commodity
+ETFs cannot enter new proposals. Planner payloads carry the four direct
+percentages totaling 100%; no
 separate credit suballocation or cash sleeve is accepted. Matching archetype
 presets retain the archetype position count and 4.5% cap. Edited plans retain
 their requested weights and count and fail explicitly when infeasible.
@@ -218,11 +218,51 @@ Custom preview and save validate each security against its selected category and
 market feed; duplicate holdings and misclassified bonds or ETFs fail before save.
 Custom capital weights are editable independently of archetype counts and caps.
 The editor splits each class across its selected holdings. Saved proposals,
-Dashboard/Hub charts, summaries and exports keep investment grade and Gold
-separate for every source type. Newly saved records store those buckets directly.
-Existing holdings and metadata are preserved on read; this follow-up performs no
-additional data rewrite. The 13 risk-profile proposals were regenerated on October
-26 under the separate authorized operation tracked in API issue #304.
+Dashboard/Hub charts, summaries and exports use the same four classes. Newly
+saved records store those buckets directly.
+
+The owner subsequently removed Gold from all portfolio calculations and selected
+proportional redistribution of its former 4% across the other classes. Archetype
+weights now preserve the remaining relative allocations and total 100%. Planner
+and Custom presets use matching two-decimal percentages with largest-remainder
+rounding, and allocation edits preserve exact totals in hundredths of a percent.
+Gold (GLD and IAU) is removed from the ETF extraction universe. Existing snapshots
+are not rewritten by this source change; new proposals cannot select those funds.
+
+On read, legacy Gold buckets and GLD/IAU holdings are excluded. Fully weighted
+remaining holdings are scaled proportionally to 100%; metadata is retained and
+list counts omit retired holdings. Historical unweighted records keep their
+existing fallback and reconciliation limits. This read view does not regenerate
+securities, restore archetype position counts, reapply the per-position cap, or
+rewrite stored rows. The earlier 13 risk-proposal regeneration recorded in API
+issue #304 predates this removal. The owner subsequently authorized regeneration
+of all existing proposals, including using linked profiles for the two planner
+records with missing saved weights.
+
+All 22 saved proposals were replaced atomically in AGM Database on October 26
+at 20:33:51 UTC / 14:33:51 Costa Rica. The 13 risk-based records use the new
+gold-free archetypes (446 positions); four weighted planner records retain
+their saved class weights and requested counts, and two previously unweighted
+planner records use their linked risk archetypes (six planner records, 147
+positions). The three custom records retain their selected securities, saved
+weights and saved return inputs, with canonical investment-grade grouping
+(55 positions). Their legacy return inputs were not refreshed or replaced.
+
+The operation preserved IDs, ownership links, source types, creation metadata
+and starting amounts, and changed only assets and update timestamps. All-row
+and linked-profile comparison guards preceded writes. The first transaction
+rolled back on a metadata-check expression error; independent readback confirmed
+all 22 original rows unchanged before the corrected transaction. Independent
+post-commit readback verified all replacement assets, preserved metadata, 648
+canonical positions, no Gold/GLD/IAU, and weights totaling 100% in every record.
+Risk-derived replacements also satisfy their archetype position counts and
+4.5% position cap. Before-images remain in the operation tool record.
+
+Regeneration used stored market snapshots read from Drive: bond, Treasury and
+ETF resources last modified October 25, and open-position exclusions from
+October 26. No market ETL, broker transaction, or application deployment was
+performed. Deployment and manual application/export acceptance of the source
+removal remain separate from the completed saved-data regeneration.
 
 Manual UI and export acceptance belongs to the owner, who requested stopping
 automated application tests. Type checking and source review do not establish
