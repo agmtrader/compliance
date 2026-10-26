@@ -170,8 +170,10 @@ with a maximum 4.5% per position. The
 portfolio planner passes a user-selected total to the same selection function for
 both preview and save. Money allocation percentages remain independent of security
 counts: each active sleeve retains its assigned capital weight, split equally among
-its selected securities. Within screened candidate pools, selection maximizes the
-allocation-weighted mean of stored return estimates across feasible sleeve counts.
+its selected securities. Within screened bond candidate pools, selection retains
+the allocation-weighted return objective. ETF selection uses the breadth and
+concentration policy described below; the count optimizer consumes that policy
+score, so a later optimization cannot restore return-only ETF ranking.
 Corporate bond rating, yield validity, outlier and issuer-exclusion controls apply.
 Treasury uniqueness is by instrument. Equity ETF historical returns retain
 source percentage-point values, including zero or negative returns. This
@@ -267,3 +269,90 @@ removal remain separate from the completed saved-data regeneration.
 Manual UI and export acceptance belongs to the owner, who requested stopping
 automated application tests. Type checking and source review do not establish
 that acceptance.
+
+
+## ETF selection preference revised — October 26, 2026
+
+The owner requested quality before growth and clarified that 8–12% is a planning
+range, not a ceiling, a per-fund exclusion, or assured future performance. New
+automatic risk and planner generation uses explicit ETF breadth/concentration
+preferences in `EQUITY_ETF_SELECTION_POLICY`. Broad global, U.S. and international
+market exposure receives priority over narrow sectors and innovation themes.
+Nasdaq growth exposure remains eligible. Similar index wrappers share an exposure
+family and receive a repeat-exposure penalty; this is a classification proxy, not
+a holdings-level overlap calculation.
+
+The base selection score gives 80% weight to the reviewed breadth preference and
+20% to a smooth return-fit score around 10%. There is no hard return band, clipping
+or substitution: all displayed portfolio and ETF returns still use the selected
+funds' actual stored source values. Missing or nonfinite per-fund returns exclude
+automatic candidates instead of receiving a shared median return. Explicit custom
+security choices retain their existing behavior. Bond sorting, requested position
+counts, capital allocations, uniqueness and applicable position caps are retained.
+
+These preferences are engineering policy weights, not agency ratings or measured
+fund quality scores. The current reporting snapshot lacks expense ratio, fund
+assets and liquidity fields; this change does not claim to assess those factors.
+It does not underwrite an 8–12% future outcome. High required ETF counts can still
+require lower-priority sector or thematic funds after broader exposures.
+
+Source references for the breadth/concentration distinction:
+
+- [Investor.gov: Asset Allocation and Diversification](https://www.investor.gov/introduction-investing/getting-started/asset-allocation): narrowly focused ETFs and overlapping funds do not necessarily diversify a portfolio.
+- [Vanguard: VTI](https://advisors.vanguard.com/investments/products/vti/vanguard-total-stock-market-etf): broad U.S. equity-market exposure.
+- [Invesco: QQQM](https://www.invesco.com/us/en/financial-products/etfs/invesco-nasdaq-100-etf.html): Nasdaq-100 growth exposure.
+- [VanEck: SMH fact sheet](https://www.vaneck.com/us/en/investments/semiconductor-etf-smh-fact-sheet.pdf): semiconductor-sector exposure.
+
+No-write generation using the actual stored snapshots reproduced every existing
+automatically generated proposal's requested count and capital allocation under
+the new policy. For Moderate C, 35 positions and the existing allocation produce
+a 14-ETF sleeve averaging 9.1528357% in source-return terms and a portfolio estimate
+of 8.1213867%, versus the earlier 16.66% ETF sleeve and 12.81% portfolio estimate.
+Source returns were independently checked unchanged. The 13 risk-based proposal
+previews span roughly 8.30–9.15% ETF source-return averages, including the 33-ETF
+Aggressive C case at 8.74%. These are snapshot-based generation results, not
+future-return assurances or manual UI/export acceptance.
+
+
+The owner-authorized saved-proposal follow-up completed at 20:52:50 UTC /
+14:52:50 Costa Rica on October 26: all 19 automatic records (13 risk-based and
+6 planner) were regenerated with the new ETF preference. The three custom rows
+remain exactly unchanged, including their update timestamps. All-row guards and
+linked-profile locks preceded a single transaction. Independent post-commit
+readback verified every replacement asset, original IDs/ownership/source/creation
+metadata/starting amounts, required counts and weights totaling 100%. Risk-derived
+replacements retain the 4.5% cap. No Gold was reintroduced. Before-images remain
+in the operation tool record.
+
+The owner subsequently requested commit and deployment. API source commit
+`9d2d6cef869e89fb84d8887eb57a09392f25f3ba` is published on `main`;
+production release verification is recorded below when complete. No automated application/browser/export tests
+were run; the saved-data operation and real-snapshot generation checks do not
+establish owner UI acceptance. GitHub issue posting remains blocked by the
+earlier automatic approval rejection; no alternative posting route was used.
+
+
+### ETF-selection production release — October 26, 2026
+
+API commit `9d2d6cef869e89fb84d8887eb57a09392f25f3ba` is published on
+`main` and deployed as `agm-api-01066-hxh`. Fresh Cloud Run readback at
+21:08:45 UTC / 15:08:45 Costa Rica confirms this revision receives 100% of
+production traffic, is the latest ready revision, and uses the verified image
+`sha256:a65d6ddd8a3674d41008e00e75b21e1b714e90362d2d7dc459a514fe611c3ef2`.
+The previous serving revision `agm-api-propedit261026-4f74edb3` and its tag
+remain available for rollback. Existing risk-profile tags were preserved.
+
+Release evidence:
+
+- [Compile Check 40400235194](https://github.com/agmtrader/agm-api/actions/runs/40400235194): success, including required repository checks.
+- [Release workflow 40400671229](https://github.com/agmtrader/agm-api/actions/runs/40400671229): success.
+- [Cloud Build da542f3e-afb4-4869-afc6-9688b971a1e0](https://console.cloud.google.com/cloud-build/builds/da542f3e-afb4-4869-afc6-9688b971a1e0?project=571127175324): success for the exact commit image.
+- Exact-image schema preflight `agm-api-schema-tmp-ldwnual2yr-6ds68` passed at 21:06:00 UTC in 23.621 seconds and exited zero. The pipeline cleaned up the temporary job; the success receipt remains in Cloud Logging.
+- The candidate tag `etf-quality-20261026` activated the new revision at zero production traffic. Revision readiness and candidate HTTP 200 were verified before the explicit promotion to 100%.
+- The main production API URL independently returned HTTP 200 after promotion.
+
+No frontend release was required. No additional saved-data rewrite or broker/ETL
+execution was initiated during this release; the existing 19 automatic proposal
+replacements remain the prior verified operation. Production image identity,
+startup and routing are verified; authenticated proposal creation and manual
+UI/export acceptance are not claimed by the HTTP health checks.
