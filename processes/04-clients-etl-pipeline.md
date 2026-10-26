@@ -78,7 +78,7 @@ maturity date.
 
 ## Reporting Consumer Freshness
 
-Clients and NAV report reads use an independent process-local cache in `agm-api`, with a default 30-second TTL, configurable through `REPORT_CACHE_TTL_SECONDS` (0 disables, maximum 300 seconds). ETL writes do not broadcast invalidation to Cloud Run instances; an updated report can remain unseen until a consumer cache expires. Expired entries are refreshed from Drive and are not served after refresh errors. Other ETL resources are outside this cache.
+Clients, NAV, client-fee and open-position snapshot reads use independent entries in a process-local cache in `agm-api`, with a default 30-second TTL, configurable through `REPORT_CACHE_TTL_SECONDS` (0 disables, maximum 300 seconds). ETL writes do not broadcast invalidation to Cloud Run instances; an updated report can remain unseen until a consumer cache expires. Expired entries are refreshed from Drive and are not served after refresh errors. Market bond, Treasury, stock and ETF snapshots share the same bounded policy in separate entries. Live provider, banking and transaction-write responses are outside this cache. Ownership/account filters and optional quote enrichment run after retrieving a copied base snapshot, so cached rows are not filtered or enriched in place.
 
 ## Dependency Initialization
 
@@ -142,6 +142,10 @@ Owner requested both clients and market ETLs daily at 03:07 CST (Costa Rica,
 UTC-6) / 09:07 UTC (`7 9 * * *`). This supersedes earlier schedule times retained
 in historical evidence. Each pipeline keeps its separate job, staging folder and
 execution lock. GitHub Actions may start scheduled workflows late.
+
+## Revenue screen loading — October 23, 2026
+
+The Dashboard Revenue MTD view requests client fees without waiting for or downloading historical statement balances. The first Monthly/Yearly visit or explicit debug export requests those balances; the page reuses that request/result for later tab switches. Export still includes the full fee and balance payloads after both are available. Individual source failures remain visible with retry controls; no partial historical financial totals are presented as complete.
 
 ## Shared scheduled start revised — October 26, 2026
 

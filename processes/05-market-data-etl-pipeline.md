@@ -164,13 +164,17 @@ start time is a GitHub Actions target, not a guarantee of exact execution time.
 
 ## Proposal selection and count controls
 
-Risk-questionnaire proposal generation targets exactly 20 eligible securities. The
+Risk-questionnaire proposal generation uses the October 26 archetype counts: 25, 29,
+32, 33, 35, 36, 37 and 33 positions from Conservative A through Aggressive C,
+with a maximum 4.5% per position. The
 portfolio planner passes a user-selected total to the same selection function for
 both preview and save. Money allocation percentages remain independent of security
 counts: each active sleeve retains its assigned capital weight, split equally among
 its selected securities. Within screened candidate pools, selection maximizes the
 allocation-weighted mean of stored return estimates across feasible sleeve counts.
-Existing rating, yield validity, outlier and issuer-exclusion controls apply. This
+Corporate bond rating, yield validity, outlier and issuer-exclusion controls apply.
+Treasury uniqueness is by instrument. Equity ETF and GLD historical returns retain
+source percentage-point values, including zero or negative returns. This
 objective is a model based on source estimates, not a guarantee of future return.
 Missing eligible sleeves or an infeasible exact count fail before persistence; no
 silent underfilled proposal is created. Custom proposals retain the user's positive
@@ -188,9 +192,38 @@ UTC-6) / 09:07 UTC (`7 9 * * *`). This supersedes earlier schedule times retaine
 in historical evidence. Each pipeline keeps its separate job, staging folder and
 execution lock. GitHub Actions may start scheduled workflows late.
 
+## Dashboard snapshot reads — October 23, 2026
+
+Parsed bond, Treasury, stock and ETF reporting snapshots use separate entries in the API's process-local report cache. The default TTL is 30 seconds (`REPORT_CACHE_TTL_SECONDS`, 0 disables, maximum 300 seconds). Concurrent misses share one load; callers receive independent copies. Source errors are not cached, and expired values are never served as fallback. ETL publication does not broadcast invalidation, so consumers can observe the prior snapshot until the configured TTL expires. This applies to stored reporting snapshots, not live IBKR responses or orders.
+
 ## Shared scheduled start revised — October 26, 2026
 
 Owner requested both clients and market ETLs daily at 06:00 UTC / 00:00 CST
 (midnight Costa Rica, UTC-6), using `0 6 * * *`. This supersedes earlier schedule
 times retained in historical evidence. GitHub Actions may start scheduled workflows
 late; the configured time is a target.
+
+## Proposal allocation categories — October 26, 2026
+
+Risk generation, the Dashboard portfolio planner and custom proposal editor use
+five separate classes: Treasuries, Investment grade (AAA–BBB), High yield (BB),
+Equity (classified equity ETFs) and Gold (GLD). Individual stocks, bond ETFs and
+other commodity ETFs cannot enter new proposals. Gold never consumes equity
+weight. Planner payloads carry the five direct percentages totaling 100%; no
+separate credit suballocation or cash sleeve is accepted. Matching archetype
+presets retain the archetype position count and 4.5% cap. Edited plans retain
+their requested weights and count and fail explicitly when infeasible.
+
+Custom preview and save validate each security against its selected category and
+market feed; duplicate holdings and misclassified bonds or ETFs fail before save.
+Custom capital weights are editable independently of archetype counts and caps.
+The editor splits each class across its selected holdings. Saved proposals,
+Dashboard/Hub charts, summaries and exports keep investment grade and Gold
+separate for every source type. Newly saved records store those buckets directly.
+Existing holdings and metadata are preserved on read; this follow-up performs no
+additional data rewrite. The 13 risk-profile proposals were regenerated on October
+26 under the separate authorized operation tracked in API issue #304.
+
+Manual UI and export acceptance belongs to the owner, who requested stopping
+automated application tests. Type checking and source review do not establish
+that acceptance.

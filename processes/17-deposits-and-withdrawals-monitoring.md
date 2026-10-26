@@ -88,3 +88,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 - Status: draft
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
+
+## Read reuse — October 23, 2026
+
+The initial metadata load requests document metadata and processing context once, reusing the same contact-document links for Source-of-Wealth grouping rather than fetching overlapping processing metadata a second time. Full account/application data, document output text, financial comparisons, flag rules and comment persistence remain unchanged.

@@ -198,7 +198,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - No persisted overall audit run, filters used, population count, reviewer certification, exception disposition, or completion record
 
 ## Exception Paths / Failure Handling
-- Initial load failure: an error toast appears and both populations become empty arrays; empty results therefore require confirmation that the load succeeded.
+- Initial load failure: an explicit error and retry action appear instead of an empty audit population. A failed refresh preserves the previously loaded populations with an error; request generations ignore late responses after navigation or a newer refresh.
 - Assignment metadata failure: a separate error toast appears and responsible/comment/email-history context may be unavailable.
 - Upload, clipboard, or email failure: the action shows an error toast; email attempts can remain available as failed evidence when attempt creation succeeded, while a clipboard failure creates no outreach record.
 - Missing/incorrect account-contact links can omit Contact Focus rows or incorrectly share contact-level documents across linked account rows.
@@ -243,3 +243,9 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Status: draft
 - Date: 2026-07-21
 - Reviewer: Codex current-state code review and process-owner clarification
+
+## Compact audit loading — October 23, 2026
+
+The authenticated private/no-store Dashboard GET `/api/accounts/audit` obtains the existing full audit inputs and summarizes contact-screening history on the server before returning data to the browser. For each contact it retains total screening count, cumulative FATF/OFAC/UK/UN hits, latest screening date and maximum historical risk score using the existing parsing rules. Older hits remain included even when the latest screening is clear. This replaces the browser's repeated per-contact history scans; it does not replace history with the latest row. Individual contact/account screening tabs continue to load original evidence only when requested. Full application and OCR inputs remain available where required for audit comparisons. The API-to-Dashboard screening read remains a full-history read; database-side aggregation is not part of this milestone.
+
+The compact loader also removes the prior browser/global residence-debug payload and its console serialization; this adds no audit evidence or persistent review record.
