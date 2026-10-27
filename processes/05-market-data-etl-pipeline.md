@@ -227,6 +227,26 @@ The editor splits each class across its selected holdings. Saved proposals,
 Dashboard/Hub charts, summaries and exports use the same four classes. Newly
 saved records store those buckets directly.
 
+### Custom proposal bases — October 27, 2026
+
+The Dashboard custom editor can load an existing saved proposal as an editable
+base. The picker reads compact summaries; only the selected proposal's full
+holdings are fetched when the user selects **Use as base**. Loading replaces the
+draft holdings, class allocations and saved starting amount, while retaining the
+target contact and risk profile. No source proposal is changed. Saving continues
+to create a new custom record through the existing validated assets endpoint.
+
+Complete positive saved weights are retained at the editor's two-decimal
+percentage precision, with remainder rounding keeping the total at 100%.
+Allocation edits scale the imported holdings proportionally within each class;
+adding a holding splits that class equally. Fresh selections retain equal splits.
+Missing or invalid weights, duplicate symbols, unsupported cash/stocks, empty
+proposals and holdings unavailable in their current market category prevent
+loading and leave the draft intact. Errors have an explicit retry action, and
+stale reads are ignored. Current market data supplies display and preview values;
+the existing preview/save eligibility checks remain authoritative. Browser
+acceptance and release evidence must be recorded separately from source changes.
+
 The owner subsequently removed Gold from all portfolio calculations and selected
 proportional redistribution of its former 4% across the other classes. Archetype
 weights now preserve the remaining relative allocations and total 100%. Planner

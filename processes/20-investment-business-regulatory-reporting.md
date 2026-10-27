@@ -26,7 +26,7 @@ Display a point-in-time set of investment-business metrics for open advisory and
 - Trades reports for every month of 2025
 
 ## Step-by-Step Workflow
-1. The page loads accounts, NAV, contacts, account-contact links, clients report, IBKR details, and all twelve 2025 trade months in parallel.
+1. The page starts compact account/Clients/NAV reads, contacts, account-contact links and the daily IBKR details snapshot in parallel. All twelve 2025 trade months load independently alongside them. Account/NAV/category/country content appears when its required sources are ready; historical trades do not hold that content behind the page spinner. Trade cards explicitly show Loading until their complete response arrives.
 2. It identifies open IBKR account numbers from the Clients report and filters internal accounts and trades to that population.
 3. It classifies open accounts as advisory when `master_account` is `F10740574` and brokerage when it is `I6413690`. Other master accounts are not included in either category.
 4. Country is taken from the first IBKR associated person when available, otherwise from the first linked contact, otherwise it defaults to `Costa Rica`.
@@ -35,7 +35,8 @@ Display a point-in-time set of investment-business metrics for open advisory and
 7. Trade metrics keep rows whose `LevelOfDetail` is `EXECUTION`. Total trade money sums all execution rows.
 8. Unique orders use `IBOrderID` when nonzero and fall back to `IBExecID`; rows sharing an order key are combined.
 9. Average trades per client is based on unique orders for accounts represented in those orders. Average trade amount is based on combined unique orders.
-10. The page displays debug counts for source rows, execution rows, unique orders, and unique accounts.
+10. A private authenticated Dashboard GET reads the complete 2025 trades and compact Clients snapshot, applies the same open-client filter and trade formulas server-side, and returns only the seven displayed counts/totals. The legacy full-trades route stays available. Full historical rows remain upstream of the browser; this does not remove the Drive source-read latency.
+11. The page displays debug counts for source rows, execution rows, unique orders, and unique accounts.
 
 ## Outputs / Records Created
 - Read-only investment-business metrics and country table
@@ -43,7 +44,9 @@ Display a point-in-time set of investment-business metrics for open advisory and
 - No database record, certified report file, review decision, or submission record
 
 ## Exception Paths / Failure Handling
-- The parallel data load has no explicit error handling; a rejected request can leave the page loading or surface through client error handling.
+- Account/reference failures show a retry state. Trade failures preserve loaded account/NAV/country content, label trade metrics Unavailable and offer a trade-only retry. Stale responses after unmount/retry are ignored; incomplete trades are never displayed as zero activity.
+- Private reporting responses retain complete row arrays and negotiate lossless gzip. Authentication/dependency errors preserve HTTP status and are reported rather than parsed as empty activity.
+- Cold full-year Drive trade reads can still take minutes; progressive rendering does not establish improved source latency.
 - Missing NAV values become zero.
 - Missing country values become `Costa Rica`, so the separate `Unknown Country` population cannot identify those missing values.
 - Accounts outside the two hardcoded master accounts are excluded from advisory/brokerage totals.
@@ -67,5 +70,5 @@ Display a point-in-time set of investment-business metrics for open advisory and
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-15
-- Reviewer: Codex current-state code review
+- Date: 2026-10-27
+- Reviewer: Codex local real-data loading review; no filing or production acceptance implied

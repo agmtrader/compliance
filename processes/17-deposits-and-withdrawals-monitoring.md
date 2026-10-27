@@ -92,3 +92,9 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 ## Read reuse — October 23, 2026
 
 The initial metadata load requests document metadata and processing context once, reusing the same contact-document links for Source-of-Wealth grouping rather than fetching overlapping processing metadata a second time. Full account/application data, document output text, financial comparisons, flag rules and comment persistence remain unchanged.
+
+October 27: that document read now supplies the optional `category=Source of Wealth` filter. The API applies the same trimmed, case-insensitive exact category match already used by this page, before loading linked document metadata and OCR output. All SOW evidence and links are retained; unrelated document categories are excluded from this consumer's transfer. Other document readers retain their unfiltered default, and selected original-document retrieval is unchanged.
+
+## Read transport and recovery — October 27, 2026
+
+Monthly deposit/withdrawal reads retain their complete successful row array and inclusive date filters. The private Dashboard route uses the shared authenticated API transport, propagates dependency/authentication HTTP status and structured errors, negotiates lossless gzip, and remains private/no-store. A malformed or failed report response is rejected rather than treated as a valid transaction array. Initial metadata/report failures show an explicit error with retry; retry reloads both required sources. Late results after a date change, retry or unmount cannot replace the current report. Successful-load financial calculations and comment-save handlers are unchanged. Missing-source conditions that the API itself returns as an empty successful array remain the existing backend limitation described above.

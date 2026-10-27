@@ -142,3 +142,7 @@ IBKR can return HTTP 200 with text/plain containing a JSON business-error messag
 ## Dashboard report loading — October 23, 2026
 
 The Fee Template Review consumer uses concurrent authenticated GET sections and the existing compact account-list projection, retaining application presence/customer type and the complete population needed for filters/export. Overview consumers can request compact Clients/NAV summaries at the API boundary; currency-level cash reports retain full NAV responses. Daily snapshot cache scope is described in processes 04 and 05; live account/provider details remain outside it.
+
+October 27 transport follow-up: shared private read routes negotiate lossless gzip for larger JSON responses when the browser accepts it. The decoded records, structured errors, HTTP status and per-request authentication remain the same; clients without gzip receive ordinary JSON. Responses remain private/no-store and vary by Cookie and Accept-Encoding. This is transport compression, not a new report cache or a reduction in financial/export records.
+
+Legacy monthly NAV, trade and monthly deposit/withdrawal read routes now use the same authenticated no-store transport and compression. Successful responses retain the complete plain row-array contract. Authentication/dependency failures retain their actual HTTP status and structured error instead of a generic server response or a successful-looking non-array payload; report readers reject malformed/non-array success responses.

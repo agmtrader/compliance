@@ -78,7 +78,7 @@ maturity date.
 
 ## Reporting Consumer Freshness
 
-Clients, NAV, client-fee and open-position snapshot reads use independent entries in a process-local cache in `agm-api`, with a default 30-second TTL, configurable through `REPORT_CACHE_TTL_SECONDS` (0 disables, maximum 300 seconds). ETL writes do not broadcast invalidation to Cloud Run instances; an updated report can remain unseen until a consumer cache expires. Expired entries are refreshed from Drive and are not served after refresh errors. Market bond, Treasury, stock and ETF snapshots share the same bounded policy in separate entries. Live provider, banking and transaction-write responses are outside this cache. Ownership/account filters and optional quote enrichment run after retrieving a copied base snapshot, so cached rows are not filtered or enriched in place.
+Clients, NAV, client-fee, open-position and daily IBKR-details reporting snapshot reads use independent entries in a process-local cache in `agm-api`, with a default 30-second TTL, configurable through `REPORT_CACHE_TTL_SECONDS` (0 disables, maximum 300 seconds). The IBKR-details entry is the file in Drive, not the live `/accounts/ibkr/details` provider response. ETL writes do not broadcast invalidation to Cloud Run instances; an updated report can remain unseen until a consumer cache expires. Expired entries are refreshed from Drive and are not served after refresh errors. Market bond, Treasury, stock and ETF snapshots share the same bounded policy in separate entries. Live provider, banking and transaction-write responses are outside this cache. Ownership/account filters and optional quote enrichment run after retrieving a copied base snapshot, so cached rows are not filtered or enriched in place.
 
 ## Dependency Initialization
 
