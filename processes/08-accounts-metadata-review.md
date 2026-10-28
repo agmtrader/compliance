@@ -106,9 +106,11 @@ cannot be resolved remain explicit Missing data rows.
 
 The default view is **Matches**, as requested by the owner. **Differs**,
 **Missing data**, and **All** remain available. Comparison trims surrounding
-spaces and ignores letter case. Blank, null, and `-` email values are missing,
-never confirmed matches. These views describe stored-value comparisons, not
-confirmed broker email changes or persisted review/completion states.
+spaces and ignores letter case. Blank, null, non-string, and `-` email values are
+missing, never confirmed matches. Numeric advisor codes from the API are
+formatted as text for display and advisor lookup. These views describe
+stored-value comparisons, not confirmed broker email changes or persisted
+review/completion states.
 
 Accounts, links, and contacts load concurrently through the existing
 authenticated Accounts section GET route; comparisons wait for all three.
