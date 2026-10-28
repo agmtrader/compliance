@@ -28,13 +28,13 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 
 ## Step-by-Step Workflow
 1. The workflow launches the clients Cloud Run Job and polls its specific execution, with no automatic whole-job retry or API fallback.
-2. The runner acquires its generation-owned clients lock, copies configured manual inputs into isolated clients staging, and resolves the `clients` ETL configuration from `_get_etl_config_by_name`.
+2. The runner acquires its generation-owned clients lock, copies configured manual inputs into isolated clients staging, and resolves the `clients` ETL configuration from `_get_etl_config_by_name`. Individual copy failures are recorded and do not prevent later copies or pipeline execution.
 3. The ETL runner executes three stages in order: `extract`, `backup`, and `transform`.
 4. During extract, each configured source file with an `extract_func` is fetched. Sources with no extractor are manually supplied batch inputs: if the configured raw batch filename is present at the initial batch-folder snapshot, the step is successful; if absent, the step is skipped.
 5. During backup, batch files are renamed, sorted into the resource structure, and the batch folder is cleared.
 6. During transform, configured transforms convert the extracted source data into reporting-ready resource files.
-7. The runner publishes a durable overview containing raw and operational status, per-stage summary counts, step-level outcomes and warnings. It releases its owned lock and exits according to the operational result.
-8. GitHub Actions retrieves that execution's overview and checks both Cloud Run terminal success and the accepted operational statuses. It formats the same detailed summary for Actions and the success/failure notification email.
+7. After all three stages have been attempted, the runner publishes a durable overview containing raw and operational status, per-stage summary counts, step-level outcomes and warnings. Captured processing errors produce `completed_with_errors` and exit zero; a clean run produces `success`. The runner releases its owned lock. Fatal runner, overview-publication or lock-release errors still produce a failed execution.
+8. GitHub Actions retrieves that execution's overview and checks both Cloud Run terminal success and the completed operational statuses. It formats the same detailed summary for Actions and email, with a `COMPLETED WITH ERRORS` subject when processing errors occurred. The earlier `completed_with_accepted_coverage_gaps` status remains readable for compatibility.
 
 ## Outputs / Records Created
 - Refreshed raw files in the batch and resources folders
@@ -45,17 +45,17 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 ## Exception Paths / Failure Handling
 - Cloud authentication, launch, polling or overview retrieval failure: workflow fails and the summary includes available execution evidence and the workflow-log link. Unavailable counts are not reported as zero.
 - Extractor failure: stage status becomes `partial` and the failure is included in the overview, but later stages continue. Manually supplied files are successful or skipped based only on their presence at ETL start; backup/transform report later missing or unusable files.
-- Only account/error pairs matching the explicit accepted coverage baseline can yield `completed_with_accepted_coverage_gaps`. Stale retained records remain labeled stale. Unexpected account failures fail the job.
-- Configured Flex reports returning IBKR error 1019 / statement generation in progress may use an existing named backup only when its matching transform and the backup/transform stages succeed. The warning identifies the missing new file, backup used and original error. Other source errors remain failures.
-- Backup, transform, publication, lock-release or other runner failures produce a failed execution/workflow. The summary shows stage, step and file errors, runner error fields and failed Cloud Run terminal conditions when available.
-- Legacy API callers still receive HTTP `200` for a captured `partial` pipeline result; this is not the scheduled workflow's acceptance rule. Do not invoke it concurrently with the clients job.
+- Account and file errors remain failed outcomes in the raw overview but do not fail a completed batch. The accepted account/error baseline is no longer a completion gate and is not expanded. Stale retained records remain labeled stale; account identity/master validation is preserved.
+- Configured Flex reports returning IBKR error 1019 / statement generation in progress retain a warning when the matching transform successfully publishes a named existing backup. The warning identifies the missing new file, backup used and original error. Other source errors also remain visible without preventing batch completion.
+- Captured extract, backup or transform errors do not stop later stages and yield `completed_with_errors` after all stages are attempted. Startup, lock acquisition, uncaught runner, overview-publication, lock-release, missing terminal evidence or Cloud Run execution failures still fail the execution/workflow. The summary shows stage, step and file errors and available runner/Cloud Run conditions.
+- Legacy API callers still receive HTTP `200` for a captured `partial` pipeline result. Do not invoke the route concurrently with the clients job.
 
 ## Controls / Verification Points
 - Preventive control: named pipeline config must exist or the route raises an error.
 - Detective control: extract reports total/successful/skipped/failed counts; transform reports total/successful/failed counts; backup reports rename/move counts and clear outcome.
 - Detective control: workflow summary and email include stage/step/file failure details when present and omit empty failure/warning/runner-error sections. Blank lines separate categories. Missing evidence remains labeled unknown/unavailable; a reported failure count without detailed outcomes is explicitly identified.
 - Detective control: IBKR account failures are grouped by safe reason/status category with counts; account identifiers stay in the private overview. A private GCS overview URI preserves access to complete account outcomes without expanding every failure into the email.
-- Detective control: accepted gaps, raw partial status, retained stale counts and Flex backup-use warnings remain visible independently of operational success.
+- Detective control: completed-with-errors status, raw partial status, retained stale counts, manual-copy errors and Flex backup-use warnings remain visible independently of operational completion. Completion does not certify that every source refreshed or every report published successfully.
 - Current limitation: the notification summary is aggregate and does not state the status, source date, row count, or version of each compliance reference list.
 
 ## Evidence to Retain
