@@ -93,6 +93,41 @@ Account type, status, application presence, contact state, NAV, advisor, SLS dev
 - Data client: `agm-dashboard/src/utils/clients/account.ts`
 - Current compliance audit: [Accounts Audit Review](22-accounts-audit-review.md)
 
+## Email Change Review
+
+The admin-only Compliance page `/email-change-review` provides a separate,
+read-only comparison of each linked contact's `email` with its account's
+`temporal_email`. Unlike the existing Accounts email filter, it does not compare
+against the Clients report email or infer contact relationships from names or
+email addresses. It resolves only explicit `account_contact` links by contact ID.
+Duplicate links to the same account/contact are collapsed; multiple linked
+contacts retain separate rows. Accounts with no links and links whose contact
+cannot be resolved remain explicit Missing data rows.
+
+The default view is **Matches**, as requested by the owner. **Differs**,
+**Missing data**, and **All** remain available. Comparison trims surrounding
+spaces and ignores letter case. Blank, null, and `-` email values are missing,
+never confirmed matches. These views describe stored-value comparisons, not
+confirmed broker email changes or persisted review/completion states.
+
+Accounts, links, and contacts load concurrently through the existing
+authenticated Accounts section GET route; comparisons wait for all three.
+Required-read failures show an error and Retry instead of an empty review queue.
+Clients status and advisor context load independently and do not block the
+comparison; pending/failed context is labeled Loading/Unavailable. No NAV or
+IBKR-details report is needed. Late results are ignored after leaving/retrying.
+
+Rows show account number, contact name, contact email, temporal email,
+comparison, account status, advisor, and a direct account/application link.
+Counts distinguish review rows from distinct accounts and are labeled before
+table search. The shared table provides search and `email-change-review.csv`
+export of the selected view/search after context succeeds. Retain that export
+with review date and selected view if review evidence is required. The page
+does not update contacts/accounts, send email, or save reviewer/disposition data.
+
+Source: `agm-dashboard/src/components/dashboard/tools/private/reporting/email-change-review/EmailChangeReview.tsx`
+and `agm-dashboard/src/utils/tools/email-change-review.ts`.
+
 ## Individual Account Loading
 
 The individual account/application resolver uses one authenticated private/no-store GET to read the selected internal account and, for submitted accounts, current IBKR details. Unsubmitted applications resolve without an IBKR request. The Account page reuses that response instead of rereading the account during initial rendering; explicit refresh obtains fresh core data. Its Overview shows NAV (IBKR equity) directly from accountDetails.account.equity with two-decimal number formatting. True zero and negative equity are preserved; missing, blank or invalid equity is shown as unknown. This is the provider-reported account-details equity, with no real-time valuation or assumed-currency claim and no additional report request. The Accounts list retains its separately sourced NAV report. All associated individuals start collapsed behind named holder disclosures; operators can expand one, expand all holders or collapse all. Expanded content retains the complete holder fields and existing profile editor. Account changes and full account refresh reset holder disclosures to collapsed; disclosure toggles add no data requests. After core rendering, private/no-store GET requests independently load client report data, advisors, financial ranges, primary-contact lookup and linked holder contacts, avoiding browser Server Action queuing. Linked contact IDs are deduplicated and resolved in filtered bulk reads of at most 100 IDs. Screening history is excluded from initial holder loading; opening the Screenings tab requests histories in bulk for only the account-linked contact IDs. Completed histories are retained across tab switches; refresh/navigation clear them. The tab uses one table row per contact, showing total screenings, cumulative per-list and total hits, latest date and highest historical risk; repeated matches count on each screening, while contacts without history are explicitly marked Not screened. Holder and screening failures show separate explicit retry controls, preserve the core account page, and never appear as an empty contact population. Existing missing entity/external ID link reconciliation remains; links are reread only after an actual update, and contact reads are reused. Account-navigation data is requested only when the search dropdown is opened, using accounts, links and contacts without a client report; responses omit application payloads and unrelated contact fields. A failed search shows a toast and can be retried by reopening the dropdown. Supplementary failure preserves the core page with an explicit warning. Request generations and resolver cleanup prevent late responses from replacing data after navigation or refresh.
