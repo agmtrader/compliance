@@ -26,6 +26,26 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Access to Flex Query, Google Drive, and any other configured source systems
 - Working extract, backup, and transform step functions
 
+## Daily task CSV resources — October 30, 2026
+
+The Clients ETL publishes three separate stable task CSV resources:
+
+| Resource | Collection |
+| --- | --- |
+| `ibkr_compliance_tasks.csv` | Latest manually provided Portal `compliance_tasks.csv`; validated, then republished without pretending the export was captured today. |
+| `ibkr_pending_tasks.csv` | Daily per-account Account Management `tasks?type=pending` GETs. |
+| `ibkr_registration_tasks.csv` | Daily per-account Account Management `tasks?type=registration` GETs, including completed history. |
+
+The two API feeds run as independent extract steps alongside account details. Each refreshes the internal IBKR account population plus prior-only details/snapshot accounts. A missing master may use the exact prior details account's master, matching the details refresh policy; stored master conflicts are not overwritten. Unsupported/missing/conflicting masters remain explicit failed coverage. Four workers and four request starts per second are the defaults; each GET has a 10-second connection/45-second read timeout. Clients remain bound to their credential context. As with the current details refresher, HTTP 403 permits one recorded read using the other configured credential context; there are no transport retries or broker writes.
+
+Each API CSV has `record_type=account` coverage rows and `record_type=task` requirement rows. Coverage distinguishes confirmed zero tasks from unreadable accounts, captures attempts/context, last successful read, refresh time and retained-stale status. Original task JSON preserves person/task IDs, flags, warnings and questionnaires; secret-bearing URL/token values are redacted. Explicit `pendingTaskPresent=false` with an omitted inventory is a valid empty result. Missing arrays without that evidence, account mismatches, contradictory flags and provider errors fail. Registration forms are never merged with newer pending instances by form number.
+
+On a failed account/source refresh, retain its previous tasks and mark them stale; first-read failure has unknown task count, not zero. A successful empty inventory replaces previous requirements with confirmed zero coverage. Partial account coverage publishes a truthful partial snapshot and remains partial in the extract overview. Fatal population/serialization/backup errors preserve the prior stable resource. Each dated CSV backup is byte/MD5 verified before transform, and transform accepts only the exact newly extracted source from that run. Each stable resource is independently staged/verified and updated in place; the three publications are not an atomic multi-file transaction.
+
+Staff reporting reads use `GET /reporting/pending_tasks` and `/reporting/registration_tasks`. JSON supports `account_id`, `status=all|pending|completed`, `offset` and `limit` (default 500, maximum 2000), returns coverage/freshness and paginated task rows, and performs no IBKR reads. `format=csv` downloads the full selected-account CSV, including coverage; it cannot be combined with status/pagination filters. Report reads use separate bounded version-aware cache entries and private/no-store responses. The existing Compliance JSON endpoint remains compatible for AccountPage and Accounts Audit; its CSV is the new primary file resource.
+
+The Clients source overlay/allowlist includes the task refresher and accepts the two known predecessor layouts while preserving the existing accepted-coverage baseline. A release/source synchronization is required for scheduled execution of new code; local or scoped resource publication alone does not update the scheduled job. AccountPage retains its selected-account live reads. Login-message snapshots and callbacks remain outside collection scope. The owner-approved [Tasks Review](38-tasks-review.md) reads these saved sources through a staff-only paginated projection, including coverage gaps and exact-instance links without discarding observations. The historical subaccount CSV remains a separate baseline.
+
 ## Step-by-Step Workflow
 1. The workflow launches the clients Cloud Run Job and polls its specific execution, with no automatic whole-job retry or API fallback.
 2. The runner acquires its generation-owned clients lock, copies configured manual inputs into isolated clients staging, and resolves the `clients` ETL configuration from `_get_etl_config_by_name`. Individual copy failures are recorded and do not prevent later copies or pipeline execution.
