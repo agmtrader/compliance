@@ -63,3 +63,13 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 ## Accepted coverage and cloud execution
 
 Owner accepted current incomplete account coverage on 2026-10-14. The cloud runner compares failed account/error pairs with the 208-pair baseline from the full local validation. Accepted pairs preserve raw partial status and stale/absent evidence but may complete operationally when all other ETL stages and publication succeed. New gaps are failures, not silently accepted. The job retains final overviews in private GCS and companion details reports in Drive. Scheduled clients cutover and first scheduled-run acceptance are tracked in API #86/#94; account discovery and contact/user reconciliation are deferred to API #294. Market migration stays in #86.
+
+## Owner-directed refresh exclusions — November 3, 2026
+
+Supersedes the earlier missing/unsupported-master failure classification. Accounts without a usable master (including no master in prior broker details) and unsupported parent mappings, including the two known nested-STL cases, are skipped before broker requests. Reasons and counts remain visible separately from failures/freshness; they are not classified as closed or successfully refreshed. Unsupported mappings remain deferred pending IBKR guidance and no parent mapping is rewritten. Conflicting mappings and malformed identities remain failures.
+
+Previously broker-confirmed delinked accounts are skipped before repeat reads only when the prior refresh metadata retains the account_delinked reason and a valid nonfuture delinking date. New exact-identity delinking tombstones retain the existing validation. Historical details remain stale with last-success and delinking evidence; no deletion occurs. HTTP403 accounts remain eligible each ordinary run, trying the mapped credential then one alternate credential. Root-master response validation is unchanged and remains a separate unresolved case. This policy change is local pending release and ordinary-run verification.
+
+### Root master exclusion — November 3, 2026
+
+Owner additionally excludes the FD master account itself, I6413690. Skip its details request as root_master_account, report the count separately and retain any historical record as stale. This supersedes the earlier unresolved-root-validation gate for this account; it does not accept a parentless response as fresh or relax exact identity/parent validation for subaccounts. The other38HTTP403 accounts remain eligible with one alternate credential attempt. For the observed824-account population, expected classification is622fresh,38failed and164skipped; release and ordinary-run verification remain pending.
