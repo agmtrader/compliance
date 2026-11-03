@@ -135,3 +135,13 @@ show the aggregate delinked count. This does not alter database account/master
 records or expand the accepted failure baseline. Wrong identities, explicit
 master conflicts, unexplained absent masters, invalid/future dates and arbitrary
 skips remain failures. Release and actual-run verification remain separate gates.
+
+## Owner-directed refresh exclusions — November 3, 2026
+
+Supersedes the earlier missing/unsupported-master failure classification. Accounts without a usable master (including no master in prior broker details) and unsupported parent mappings, including the two known nested-STL cases, are skipped before broker requests. Reasons and counts remain visible separately from failures/freshness; they are not classified as closed or successfully refreshed. Unsupported mappings remain deferred pending IBKR guidance and no parent mapping is rewritten. Conflicting mappings and malformed identities remain failures.
+
+Previously broker-confirmed delinked accounts are skipped before repeat reads only when the prior refresh metadata retains the account_delinked reason and a valid nonfuture delinking date. New exact-identity delinking tombstones retain the existing validation. Historical details remain stale with last-success and delinking evidence; no deletion occurs. HTTP403 accounts remain eligible each ordinary run, trying the mapped credential then one alternate credential. Root-master response validation is unchanged and remains a separate unresolved case. This policy change is local pending release and ordinary-run verification.
+
+### Root master exclusion — November 3, 2026
+
+Owner additionally excludes the FD master account itself, I6413690. Skip its details request as root_master_account, report the count separately and retain any historical record as stale. This supersedes the earlier unresolved-root-validation gate for this account; it does not accept a parentless response as fresh or relax exact identity/parent validation for subaccounts. The other38HTTP403 accounts remain eligible with one alternate credential attempt. For the observed824-account population, expected classification is622fresh,38failed and164skipped; release and ordinary-run verification remain pending.
