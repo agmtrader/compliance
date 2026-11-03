@@ -407,3 +407,15 @@ release startup/schema checks passed. The owner retains manual acceptance of
 new risk proposals containing 20 assets and Planner explicit/cleared counts,
 profile/preset changes, and preview/save agreement. API #304 and Dashboard #41
 remain open for their recorded acceptance and broader scope.
+
+## Corporate Bond Analysis reads — October 28, 2026
+
+Corporate Bond Analysis starts without downloading the RTD universe. After a debounced search/filter/selection, a private Dashboard GET reads an additive RTD analysis projection and applies the existing parsing, rating, maturity, yield and similarity rules on the server. It returns at most eight suggestions and the selected 5/10/20 results. Browser timestamp, UTC offset and IANA time zone preserve maturity time context, including daylight-saving transitions for local maturity timestamps. Source snapshots and the existing API freshness policy remain unchanged; no live executable quotes or market writes are added. Failures show an explicit retry state rather than an empty universe. Stale search responses are ignored. Full RTD consumers retain their legacy payload. The maturity cell renders the source maturity value rather than interpreting the separate numeric sorting value as milliseconds since epoch.
+
+## Media read dependency recovery — October 28, 2026
+
+Google Drive media-read failures retain bounded provider status/reason diagnostics without file IDs or request URLs. The existing three-attempt read budget now covers transient upstream HTTP 408/429/500/502/503/504 as well as existing connection/quota cases. The opt-in applies only to download_file; mutation retry policies are unchanged. Exhaustion remains an explicit 503 dependency failure; no empty or partial report is substituted.
+
+## Version-validated daily snapshots — October 28, 2026
+
+Nine existing daily snapshot cache consumers revalidate the Drive file catalog after the existing TTL expires. When the file ID/version counter/modification time/size/MIME type match and Drive still confirms download capability, the existing parsed value is copied and reused; a changed file downloads/parses again. Missing version/capability evidence forces a full read. Missing/duplicated sources, denied download capability, metadata errors and exhausted media failures remain failures and clear the cached entry; no stale fallback is added. The cache keeps its existing bounded keys, single-flight reads, data-copy behavior, 0-disable and 300-second cap. No extra retained full dataset, persistent cache, cross-worker store or TTL increase is introduced. Live account/provider data is excluded.

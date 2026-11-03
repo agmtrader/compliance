@@ -25,6 +25,16 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Valid ETL config for the `clients` pipeline
 - Access to Flex Query, Google Drive, and any other configured source systems
 - Working extract, backup, and transform step functions
+- Download IBKR Portal **Compliance Tasks** as `compliance_tasks.csv` and place it in the existing manual Clients batch folder, distinct from `tasks_for_subaccounts.csv`. The job copies configured manual inputs into isolated staging.
+
+## Compliance task report — October 28, 2026
+
+- The manual CSV uses the existing subaccount-task backup folder with a separate `compliance_tasks_<run timestamp>.csv` name. Same-day cleanup is scoped to each report's own prefix, so one report cannot delete the other.
+- The staging copy preserves the original manual input's Drive modification time in `manual_source_modified_at`; the legacy path records it before renaming. Reprocessing an old upload does not advance its source time. IBKR supplies no export timestamp, so actual capture time remains unknown.
+- The transform reads raw UTF-8 CSV, validates the original export columns, account/task identities, statuses, numeric fields and dates, and rejects duplicate task IDs or malformed rows. Task IDs stay strings; no bad row is dropped silently. A valid header-only export represents an empty inventory.
+- Verified staging and in-place publication produce the original validated `ibkr_compliance_tasks.csv` and the compatible `ibkr_compliance_tasks.json` report with normalized rows, source/backup identity, original upload time, SHA-256 and publication time. Invalid or missing backups do not replace a good report. A missing manual upload may reuse the latest valid backup, retaining its original source age.
+- Authenticated staff read `GET /reporting/compliance_tasks`, optionally `?account_id=U...`. Its independent bounded report cache uses `REPORT_CACHE_TTL_SECONDS` (default 30 seconds); account filtering follows a copied shared snapshot. Missing or duplicate resources fail explicitly. Responses are private/no-store. Unknown, future or older-than-24-hour upload times are flagged as stale; fresh upload does not establish fresh IBKR capture.
+- AccountPage combines this snapshot with live per-account pending, registration and login API reads. This change does not add daily bulk API extraction or complete/sign broker tasks. The historical subaccount export remains a separate reconciliation baseline.
 
 ## Daily task CSV resources — October 30, 2026
 
@@ -173,6 +183,24 @@ Owner requested both clients and market ETLs daily at 06:00 UTC / 00:00 CST
 (midnight Costa Rica, UTC-6), using `0 6 * * *`. This supersedes earlier schedule
 times retained in historical evidence. GitHub Actions may start scheduled workflows
 late; the configured time is a target.
+
+## Historical report reads — October 28, 2026
+
+Revenue's ending-balance report keeps its source-ID/modified-time file cache and duplicate/missing-source checks. Cold statement downloads/parses now use the shared three-worker reporting read pool; results are accumulated in the same source order and the cache is replaced only after all selected files succeed. This is bounded in-process concurrency, not durable or cross-worker caching. No new storage or freshness TTL is introduced.
+
+The Cash consumer requests a dedicated NAV projection retaining every source row and its account ID, alias, Cash, Cash percentage, Total and report date. Display calculations, filters and column-based CSV remain unchanged; the existing full NAV response remains available.
+
+## Media read dependency recovery — October 28, 2026
+
+Google Drive media-read failures retain bounded provider status/reason diagnostics without file IDs or request URLs. The existing three-attempt read budget now covers transient upstream HTTP 408/429/500/502/503/504 as well as existing connection/quota cases. The opt-in applies only to download_file; mutation retry policies are unchanged. Exhaustion remains an explicit 503 dependency failure; no empty or partial report is substituted.
+
+## Version-validated daily snapshots — October 28, 2026
+
+Nine existing daily snapshot cache consumers revalidate the Drive file catalog after the existing TTL expires. When the file ID/version counter/modification time/size/MIME type match and Drive still confirms download capability, the existing parsed value is copied and reused; a changed file downloads/parses again. Missing version/capability evidence forces a full read. Missing/duplicated sources, denied download capability, metadata errors and exhausted media failures remain failures and clear the cached entry; no stale fallback is added. The cache keeps its existing bounded keys, single-flight reads, data-copy behavior, 0-disable and 300-second cap. No extra retained full dataset, persistent cache, cross-worker store or TTL increase is introduced. Live account/provider data is excluded.
+
+## Details credential fallback — October 29, 2026
+
+For supported-master account-details reads only, HTTP 403 permits one additional request using the other configured credential set. Apply the same pacing/timeouts and exact account/original-parent checks; record both credential/status attempts privately. Other HTTP, transport, authentication and validation failures do not cause fallback. Missing/unsupported masters remain explicit failures; no account/master mappings are rewritten. Nested-STL access remains a separate IBKR support question. Release and scheduled-run acceptance remain pending.
 
 ## Owner-directed refresh exclusions — November 3, 2026
 

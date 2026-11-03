@@ -179,8 +179,16 @@ IBKR can return HTTP 200 with text/plain containing a JSON business-error messag
 
 ## Dashboard report loading — October 23, 2026
 
-The Fee Template Review consumer uses concurrent authenticated GET sections and the existing compact account-list projection, retaining application presence/customer type and the complete population needed for filters/export. Overview consumers can request compact Clients/NAV summaries at the API boundary; currency-level cash reports retain full NAV responses. Daily snapshot cache scope is described in processes 04 and 05; live account/provider details remain outside it.
+The Fee Template Review consumer uses the server-built list/selected-detail projection documented below, retaining application presence/customer type and the complete population needed for filters/export. Overview consumers can request compact Clients/NAV summaries; Cash uses its own projection retaining all cash calculations. Daily snapshot cache scope is described in processes 04 and 05; live account/provider details remain outside it.
 
 October 27 transport follow-up: shared private read routes negotiate lossless gzip for larger JSON responses when the browser accepts it. The decoded records, structured errors, HTTP status and per-request authentication remain the same; clients without gzip receive ordinary JSON. Responses remain private/no-store and vary by Cookie and Accept-Encoding. This is transport compression, not a new report cache or a reduction in financial/export records.
 
 Legacy monthly NAV, trade and monthly deposit/withdrawal read routes now use the same authenticated no-store transport and compression. Successful responses retain the complete plain row-array contract. Authentication/dependency failures retain their actual HTTP status and structured error instead of a generic server response or a successful-looking non-array payload; report readers reject malformed/non-array success responses.
+
+## Consumer projections and deferred fee/position detail — October 28, 2026
+
+Fee Template Review uses a private authenticated Dashboard GET that builds the existing complete review rows on the server. The DB-backed reference reads use one lane while reporting reads run alongside them. All existing row fields, normalization, joins, filter population, sorting and column CSV values are retained. Repeated raw IBKR envelopes and fee objects do not cross into the initial list; flattened fee search values preserve general search. Opening a fee-template dialog requests the selected account's original fee object; loading/errors are explicit and close/reopen retries. A failed list read has an explicit retry.
+
+Advisor overview requests an ownership-filtered position count without quote enrichment. Complete rows and stored-market quote enrichment are requested only on opening Open Positions, then retained for tab revisits. Count and detail both require the same account ownership and nonblank OpenDateTime rule. Empty account selections perform no global position read. Detail failures have retry and never appear as zero positions; stale responses after navigation are ignored.
+
+The fee list transmits repeated long primitive fee values once in a string dictionary, then reconstructs the complete search/row values before display. The on-demand dialog uses a filtered internal account summary and an additive daily-snapshot fee-only API view; it does not fetch all internal accounts or unrelated holder/financial details. Default full IBKR snapshot reads are unchanged.

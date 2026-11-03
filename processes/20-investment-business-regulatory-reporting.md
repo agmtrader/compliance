@@ -72,3 +72,9 @@ Display a point-in-time set of investment-business metrics for open advisory and
 - Status: draft
 - Date: 2026-10-27
 - Reviewer: Codex local real-data loading review; no filing or production acceptance implied
+
+## Bounded historical downloads — October 28, 2026
+
+Selected monthly trade files download/parse through the shared three-worker reporting pool, which reuses thread-local Drive transports and preserves source/result order. Financial row filtering, order grouping, sorting and arithmetic are unchanged. A root/year listing or selected-file download/parse failure now propagates rather than being logged and omitted from a successful partial-period response. Existing missing-year/file selection behavior remains a separate coverage limitation. No durable/shared summary cache, new schema or changed source selection is introduced by this step.
+
+The country breakdown requests the additive IBKR `countries` view, retaining each account ID and the first associated person residence country in source order. Existing first-nonempty country choice and contact/default fallback, population and NAV calculations are unchanged. Default IBKR consumers still receive the full snapshot.

@@ -48,7 +48,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 - `Specific Flag` requires the selected code: `over_10k`, `income_mismatch`, `liquid_mismatch`, or `net_worth_mismatch`. The dropdown contains only flag types present somewhere in the currently loaded report before the other filters are applied.
 - Search, flag view, and specific flag combine with logical AND.
 - Summary totals are recalculated from the filtered population: total transactions, signed amounts above USD 10,000, any financial-range mismatch, any flag, and flagged rows with a nonblank saved comment.
-- The table uses infinite scroll and has no built-in CSV export in the current component.
+- The table uses infinite scroll. Once all review metadata loads successfully, Download CSV exports the complete currently filtered transaction population, including calculated flag labels, the SOW/profile assessment and saved comments. Export remains unavailable while review metadata is loading or has failed.
 
 ## Outputs / Records Created
 - On-screen transaction flags and summary counts calculated in the browser
@@ -74,7 +74,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 
 ## Evidence to Retain
 - Selected date range and latest monthly source files used by the report
-- Screenshot or separately produced evidence of the reviewed population and exact date/filter criteria; this page has no built-in CSV export
+- The downloaded `deposits-withdrawals-YYYY-MM-DD.csv`, with a separate record of the exact reviewed date range and filter criteria; those criteria are not persisted by exporting the rows
 - `flagged_deposit` comment rows
 - Relevant Source-of-Wealth documents and processing output
 - API and browser logs for load or save failures
@@ -98,3 +98,9 @@ October 27: that document read now supplies the optional `category=Source of Wea
 ## Read transport and recovery — October 27, 2026
 
 Monthly deposit/withdrawal reads retain their complete successful row array and inclusive date filters. The private Dashboard route uses the shared authenticated API transport, propagates dependency/authentication HTTP status and structured errors, negotiates lossless gzip, and remains private/no-store. A malformed or failed report response is rejected rather than treated as a valid transaction array. Initial metadata/report failures show an explicit error with retry; retry reloads both required sources. Late results after a date change, retry or unmount cannot replace the current report. Successful-load financial calculations and comment-save handlers are unchanged. Missing-source conditions that the API itself returns as an empty successful array remain the existing backend limitation described above.
+
+## Progressive transaction visibility — October 28, 2026
+
+The date-filtered transaction table appears when its report completes, while review metadata/OCR continues loading. Until all review evidence succeeds, financial/SOW/comment cells explicitly show loading or unavailable; metadata-dependent filters, review actions and CSV export are gated. Transaction amounts/dates and independent high-value counts remain visible. A metadata failure preserves the transaction view with a retry. Completed evidence uses the same financial comparisons, flags, source-document selection and comment handlers.
+
+Financial review now requests the additive IBKR `financial_review` view: complete financialInformation and sourcesOfWealth plus accountId/riskScore/equity (including the existing NAV fallback), retaining source values and row order. Unrelated fee schedules, trading permissions and holder bodies are omitted from this page only; full IBKR reads remain the default.

@@ -11,9 +11,9 @@ Provide the current on-demand compliance review of account completeness, applica
 ## Systems Involved
 - `agm-dashboard`
 - `agm-api`
-- Internal accounts, contacts, account-contact links, advisors, contact documents, users, review assignments, and email-attempt records
+- Internal accounts, contacts, account-contact links, advisors, contact documents, users, review assignments, email-attempt records, and manual WhatsApp send records
 - Latest available IBKR details reporting resource and IBKR financial ranges
-- Static Dashboard IBKR compliance-task snapshot
+- Clients ETL Compliance CSV report (`ibkr_compliance_tasks.json`)
 - Browser clipboard, reviewer-selected messaging channel, Gmail send path, and public AGM Hub compliance-document upload page
 
 ## Roles / Owners
@@ -29,7 +29,7 @@ Provide the current on-demand compliance review of account completeness, applica
 - Contact-document metadata; file bodies are excluded from the initial load
 - Raw document bodies may be requested only for explicitly supplied document ids. The API rejects `include_data=true` without a `document_id`, and the database manager rejects unfiltered reads that include `document.data`.
 - Advisors and advisor-linked contacts
-- `document_review_responsible` and `document_review_email` records
+- `document_review_responsible`, `document_review_email`, and `document_review_message` records
 - Dashboard users whose email ends in `@agmtechnology.com`
 - `contact_document` metadata and `document_processing` `text_extraction` rows must be available for OCR-backed Account Focus support analysis.
 
@@ -37,7 +37,7 @@ Provide the current on-demand compliance review of account completeness, applica
 
 ### Shared source loading
 
-1. The page uses the authenticated private/no-store GET `/api/accounts/audit`. Database-backed inputs (accounts, contacts, account-contact links, document metadata/OCR processing, advisors, screening groups, and sent review emails) load in one sequential lane to avoid exhausting the API's small connection pool. Independent IBKR-details reporting and financial-range reads run alongside that lane. A failed required source remains an explicit retryable error rather than an empty audit population.
+1. The page uses the authenticated private/no-store GET `/api/accounts/audit`. Database-backed inputs (accounts, contacts, account-contact links, document metadata/OCR processing, advisors, screening groups, and sent review emails) load in one sequential lane to avoid exhausting the API's small connection pool. Independent IBKR-details reporting, financial-range and Compliance report reads run alongside that lane. The Compliance response is shared by both contact views, with source freshness displayed before task indicators. A failed required source remains an explicit retryable error rather than an empty audit population.
 2. Nested `ibkrdetails` arrays are flattened. IBKR details are indexed by `account.accountId`; a later duplicate account id replaces an earlier map entry.
 3. Contacts are indexed by contact id. Advisors are indexed by normalized advisor code.
 4. Account-contact links are grouped by account id and also used to identify all accounts associated with a contact.
@@ -144,7 +144,7 @@ Different Contact Focus filters combine with logical AND. Within the Status, Mis
 | Status | Multi-select dynamic normalized IBKR statuses. A row is included when its status matches any selected value. Rows without IBKR status appear under the normalized missing value. |
 | Contact role | All contacts; account holders only excludes trusted contacts; trusted contacts only includes only trusted contacts. |
 | Date closed | All; closed within 1 through 10 years; or without a closed date. It uses the same elapsed-days/365.25 calculation as account age. A future close date is age zero. |
-| IBKR tasks | All or `IBKR flagged only`. A static task maps to address when form number is 8002 or its name contains `proof of address`; to the primary document when form number is 8001/8137 or its name contains `proof of identity`, `identity verification`, or `proof of existence`; and to Source of Wealth when form number is 2150/8553 or its name contains `source of wealth` or `proof of sow`. Any mapped task on the account includes the row. Duplicate indicators with the same form number and name are suppressed. |
+| IBKR tasks | All or `IBKR flagged only`. An outstanding task in the imported Compliance report maps to address when form number is 8002 or its name contains `proof of address`; to the primary document when form number is 8001/8137 or its name contains `proof of identity`, `identity verification`, or `proof of existence`; and to Source of Wealth when form number is 2150/8553 or its name contains `source of wealth` or `proof of sow`. Any mapped task on the account includes the row. Duplicate indicators with the same form number and name are suppressed. |
 | Missing documents | Multi-select missing any; missing POI only for person rows; missing POE only for company rows; missing POA; or missing SOW. A row is included when it matches any selected state. |
 | Responsible | Multi-select unassigned when no current user id is stored and Dashboard user ids. A row is included when it matches any selected responsible value. The selectable user list is limited to `@agmtechnology.com`. |
 | Account age | All; opened within 1 through 10 years; or missing open date. |
@@ -159,12 +159,12 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 2. In Account Focus, review population exceptions: missing application JSON, financial mismatches, no linked contacts, and IBKR holders missing a matched database contact.
 3. Apply the exact filters above and retain the filter combination used for any review evidence.
 4. Switch to Contact Focus; remember the default population excludes trusted contacts.
-5. Review document stages and specific missing categories. IBKR task warning icons are supporting indicators from a static snapshot, not live task confirmation.
+5. Review document stages and specific missing categories. IBKR task warning icons use the latest imported Compliance CSV. Review the displayed upload age; actual IBKR capture time is unknown.
 6. Assign a responsible user or edit the review comment. Saving upserts the current account/contact record; it does not create immutable assignment/comment history.
 7. Upload a document when needed. The action requires a selected row, file, category, and language; only the first selected file is sent. The browser calculates SHA-1 and sends filename, size, MIME type, base64 file data, category, type, language, dates, and comment.
    Viewing an uploaded file requests its raw body by that file's explicit document id; the API does not load all raw document bodies.
-8. Open `Missing Docs Outreach` and verify the missing categories, greeting, language, and company name where applicable. Either copy the generated plain-text message for a reviewer-selected messaging channel or verify the primary recipient and CC list before sending the email.
-9. Review the email-attempt history and use `View Account` for account-level follow-up.
+8. Open `Missing Docs Outreach` and verify the missing categories, greeting, language, and company name where applicable. Verify the primary recipient and CC list before sending email. This popup has no WhatsApp action. Open the separate table `WhatsApp / History` action for WhatsApp outreach; review the greeting contact, phone, history, missing-category summary, outreach type and language. Copy the generated plain text, paste and send it manually in WhatsApp, then click `Sent` to retain the send record.
+9. Review email-attempt and WhatsApp history independently and use `View Account` for account-level follow-up.
 10. Export the filtered Account Focus or Contact Focus population and retain it with the filter criteria and review date.
 
 ## Outreach Rules
@@ -173,8 +173,13 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 - Email language defaults to Spanish when the action opens.
 - Greeting and recipient candidates combine linked database contacts and IBKR associated persons for the same account, excluding trusted contacts.
 - A person row always requests POI/POA and requests SOW only when the linked IBKR employment type is `Employed` or `Self-Employed`; a company row requests POE/POA/SOW. The public upload link includes `contact_id` and required form numbers.
-- `Copy Message` generates a bilingual plain-text version from the same selected greeting, contact type, company name, missing-document descriptions, accepted types, and upload link used by the email. Channel-specific wording refers to the link and replying to the message instead of an email button or email reply.
-- Copying uses the browser clipboard only. It does not send the message, select a destination, or create/update review-email evidence; the reviewer is responsible for pasting it into the intended messaging channel and retaining any required delivery evidence there.
+- WhatsApp outreach uses the same fixed Spanish/English body, subject, company/person wording, accepted-document descriptions and sign-off as the existing missing-document email. Initial-request (#1) and follow-up (#2) classify the send record; both use the same email body. The copied plain-text version writes out the upload URLs and uses plain list markers; there is no rendered email preview or message editor. The separate WhatsApp popup uses the same compact form sections as the email popup. Spanish is the default. With known history, follow-up is suggested after an earlier recorded WhatsApp send; the reviewer can select either template. There is no automatic follow-up schedule.
+- The recipient is selected separately from the document owner among non-trusted contacts linked to the same account. The phone uses that recipient's IBKR phone, falling back to their stored contact phone, and must be reviewed/entered with country code. A known secondary-holder row defaults to the primary recipient when available, while requested documents and the upload link continue to refer to the secondary document owner. The selected recipient supplies the email-style greeting. Holder scenario is retained as metadata, without a separate wording editor. Unknown roles are not inferred as secondary by the new workflow. Corporate wording retains the company document owner.
+- Requested WhatsApp categories initially include required categories with no document or with every document expired. An unexpired replacement prevents an old expired document from creating a renewal request. Missing/unknown expiry dates retain the existing non-expired interpretation. The required categories are shown in the same collapsible read-only summary as the email form; they cannot be edited in the popup. Category-presence stages and email requirement selection remain unchanged.
+- `Copy Message` copies only the fixed generated message and creates no database record. The generated text is fixed, with no preview or message editor in the Dashboard. Changing recipient, phone, language or outreach type requires another copy before `Sent` becomes available. Manually changing the text after pasting it into WhatsApp is outside the retained generated-message evidence.
+- `Sent` records the reviewer's confirmation of manual sending in `document_review_message`; it never invokes WhatsApp or sends any customer communication. The record retains the exact copied text, account/document-owner ids, recipient contact/name/phone, template, holder scenario, language, requested category keys, UTC send-record timestamp, and server-authenticated reviewer id/email snapshot. `sent_at` is the time `Sent` is recorded, not independently observed WhatsApp delivery time.
+- Retry of an unchanged send uses the same UUID and cannot create a duplicate or overwrite its snapshot. A conflicting reused UUID fails explicitly; a subsequent separate send has a new UUID. No edit/delete endpoints are provided. WhatsApp records do not change email evidence or counts.
+- History metadata omits message bodies from the all-row read. Full text requires an explicit account/document-owner pair. Loading/unavailable history is explicit and cannot be shown as zero sends; status filtering is unavailable until history has loaded. CSV evidence distinguishes unavailable/loading states from manually recorded sends. Delivery, read receipts, actual recipient identity and external text edits remain reviewer-verified in WhatsApp.
 - A corporate email is blocked when the selected company contact name is blank or `-`.
 - Related CC candidates are deduplicated case-insensitively and the primary recipient is removed.
 - The advisor CC checkbox is selected by default only when an advisor and advisor-contact email resolve; reviewers may uncheck it.
@@ -185,7 +190,7 @@ The stage chart and counts are recalculated from the filtered rows. The table us
 
 Account Focus exports the current filtered rows as `accounts-audit-YYYY-MM-DD.csv`. The export includes account identity/status/type; NAV; open and close dates; stage; application presence; linked contacts; holder coverage flags; document counts and missing names; financial audit state and mismatch labels; profile audit state and mismatch labels; completed ID/SOW/POA OCR flags; residence-profile state; address-document evidence state; and profile-document support fields derived from live OCR text.
 
-Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.csv`. The export includes contact identity/type/role; entity-id-matched IBKR phone and employment fields; account identity/type/status; NAV; open and close dates; account age; risk score; stage; present/required/missing documents; POI/POE/POA/SOW flags; IBKR-task flag; responsible; review comment; sent-email count; last sent time and recipient; and latest attempt status. Values beginning with `=`, `+`, `-`, or `@` are prefixed to reduce spreadsheet-formula execution risk.
+Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.csv`. The export includes contact identity/type/role; entity-id-matched IBKR phone and employment fields; account identity/type/status; NAV; open and close dates; account age; risk score; stage; present/required/missing documents; POI/POE/POA/SOW flags; IBKR-task flag; responsible; review comment; sent-email count; last sent time and recipient; and latest attempt status; plus WhatsApp send count, latest record timestamp, recipient name/phone, template, recording reviewer and evidence availability. Values beginning with `=`, `+`, `-`, or `@` are prefixed to reduce spreadsheet-formula execution risk.
 
 ## Outputs / Records Created
 - Browser-derived Account Focus and Contact Focus review populations
@@ -193,7 +198,8 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Current `document_review_responsible` assignment/comment per account/contact pair
 - Uploaded raw document and contact-document metadata
 - Missing-document email attempt and provider result
-- Generated missing-document plain text copied transiently to the browser clipboard; no copy or messaging record is persisted by Accounts Audit
+- Generated WhatsApp request/follow-up text copied transiently to the clipboard; copying alone is not persisted
+- Manually confirmed WhatsApp send snapshots in `document_review_message`
 - Filtered Contact Focus CSV export
 - No persisted overall audit run, filters used, population count, reviewer certification, exception disposition, or completion record
 
@@ -203,7 +209,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Upload, clipboard, or email failure: the action shows an error toast; email attempts can remain available as failed evidence when attempt creation succeeded, while a clipboard failure creates no outreach record.
 - Missing/incorrect account-contact links can omit Contact Focus rows or incorrectly share contact-level documents across linked account rows.
 - Missing IBKR details exclude accounts from Account Focus but not Contact Focus, so the two focus populations are not directly reconcilable without applying their documented population rules.
-- A static IBKR task snapshot can become stale and is not proof of the live IBKR task state.
+- The manual Compliance CSV can become stale. Original upload time is retained across ETL runs, with an older-than-24-hour or unknown-time warning. Fresh upload is not proof of fresh IBKR capture. Missing/unreadable report data is an explicit retryable audit error, never an empty successful inventory.
 
 ## Controls / Verification Points
 - Preventive control: contact document requirements are chosen by contact type plus linked IBKR employment type, preventing person rows from requesting POE, preventing non-employed/non-self-employed people from being asked for SOW, and preventing company rows from requesting POI.
@@ -223,7 +229,7 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Current `document_review_responsible` rows
 - Uploaded document and contact-document records
 - `document_review_email` attempts and Gmail message evidence
-- Evidence retained in the reviewer-selected messaging channel for copied-message outreach; Accounts Audit does not retain the copy action or delivery result
+- `document_review_message` snapshots and separate WhatsApp delivery/read evidence where required; Accounts Audit retains manual confirmation and copied text, not a verified delivery/read result
 - Supporting IBKR-details, financial-range, and `document_processing` OCR snapshots used for the review
 - Follow-up account changes and remediation evidence
 
@@ -235,9 +241,10 @@ Contact Focus exports the current filtered rows as `contacts-audit-YYYY-MM-DD.cs
 - Account filters/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/AccountsFocus.tsx`
 - Contact filters/actions/export: `agm-dashboard/src/components/dashboard/tools/private/reporting/accounts-audit/ContactFocus.tsx`
 - Local OCR account support: `agm-api/account_audit.py`
-- Static task source: `agm-dashboard/src/components/dashboard/tools/private/reporting/documents-review/ibkrComplianceTasks.ts`
+- Compliance task source: authenticated `/reporting/compliance_tasks`, published by Clients ETL from manual `compliance_tasks.csv`; shared types in `agm-dashboard/src/lib/clients/compliance-tasks.ts`. Both contact audit views receive the same current report; the hardcoded snapshot is removed.
 - Public upload: `agm-hub/src/components/hub/apply/ContactDocuments.tsx`
-- Downstream records: contact documents, document-review-responsibles, document-review-email attempts, Gmail messages
+- WhatsApp UI and API: `ContactDocumentFocus.tsx`, `DocumentReviewWhatsAppDialog.tsx`, `/document_review_messages/read`, `/document_review_messages/record`
+- Downstream records: contact documents, document-review-responsibles, document-review-email attempts, document-review-message snapshots, Gmail messages
 
 ## Last Reviewed
 - Status: draft
@@ -255,3 +262,11 @@ The compact loader also removes the prior browser/global residence-debug payload
 October 27 browser projection: the Dashboard server builds the existing Account Focus, Contact Document Focus and Contact Focus rows before serialization. The response contains those complete review rows and financial ranges rather than raw application bodies, IBKR envelopes or OCR text. Filtering, evidence labels, CSV exports and detail actions consume the same derived fields. Document expiry uses the requesting browser's date/UTC offset, and account ages use its request timestamp, preserving the reviewer's time context across server rendering. No audit result is cached or persisted by this projection.
 
 The private response negotiates lossless gzip using the same read transport as Account/Accounts data and report reads. The browser receives the complete decoded row contract; identity encoding remains supported. Cache-Control stays private/no-store and Vary includes Cookie and Accept-Encoding.
+
+## Lossless review-row transport — October 28, 2026
+
+The updated client opts into `encoding=contact-delta-v1`; that private audit response sends account rows once and contact-row overrides relative to those base rows. Requests without this encoding retain the existing complete-row response for compatibility. The browser reconstructs every complete contact row before passing data to existing focus components. Per-contact differences, unmatched rows, financial/evidence fields and added compliance-report metadata are retained; invalid references fail explicitly. No result is cached or persisted and no population, filter, stage, evidence label, CSV value or financial comparison changes. This reduces repeated decoded JSON in addition to the existing gzip transfer savings.
+
+## Manual WhatsApp outreach — November 2, 2026
+
+Local implementation adds explicit `Sent` evidence for manually sent messages, using an additive API-only RLS-protected `document_review_message` table. Apply the checked-in schema migration before deploying the API; deploy the API before the Dashboard consumer. Schema application, local validation and deployment status must be reported independently. No records should be backfilled from copy actions, and no WhatsApp send or delivery status is inferred automatically.

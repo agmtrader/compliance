@@ -5,7 +5,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 
 ## Trigger / Frequency
 - Trigger: The daily Clients ETL refreshes the backup and resource copy; reporting routes and Dashboard pages read the stable resource on demand.
-- Frequency: Daily ETL at 4:00 AM Costa Rica time, plus on-demand consumption.
+- Frequency: Daily ETL configured for midnight Costa Rica (06:00 UTC), subject to scheduler delays, plus on-demand consumption.
 
 ## Systems Involved
 - `agm-api`
@@ -23,9 +23,9 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 
 ## Step-by-Step Workflow
 1. During Clients ETL extract, `extract_account_details_backup` reads the most recent file from the account-details backup folder.
-2. It compares the detail population with internal accounts that have IBKR account numbers and calls the IBKR details endpoint for missing accounts when a master account is available and the account is not in the hardcoded skip set.
-3. Per-account failures and missing master accounts are logged and skipped while other accounts continue.
-4. The enriched list is uploaded under a backup name based on the previous business-day date calculated when the API worker initialized.
+2. It refreshes the union of internal IBKR accounts and prior-backup accounts using validated master mappings; a prior broker response may supply a missing internal master. Missing, conflicting or unsupported mappings remain explicit failures; there is no hardcoded skip set.
+3. For an HTTP 403 only, try one additional read using the other configured credential set. Both attempts share the existing pacing and bounded request deadlines. Other statuses, transport/authentication errors and identity/master mismatches do not trigger fallback. Validate the exact account ID and original expected parent regardless of which credential grants access; record credential/status attempts in the private overview without changing database mappings.
+4. Replace previous details only after successful validation. Otherwise retain last-good details with explicit stale metadata; do not invent details for failures without a previous record. Exact-identity broker delinking tombstones remain separately skipped and historical. Publish the details backup and companion refresh report through the existing extract path.
 5. The transform stage selects the most recent backup and replaces the stable `ibkr_account_details.json` resource.
 6. The reporting helper `get_ibkr_details` reads the stable resource and exposes it through the reporting layer.
 7. Dashboard pages use the resource for account dates, financial information, applicant type, associated-person roles, fee templates, and other account context.
@@ -36,7 +36,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Derived review rows on downstream pages
 
 ## Exception Paths / Failure Handling
-- Per-account enrichment failure: the remaining details are still saved and the failed account is absent from the refreshed result.
+- Per-account refresh failure: retain prior details as stale when present, otherwise leave details absent; record the explicit failure and continue other accounts.
 - Missing or stale backup file: downstream review pages may fail to load or may produce incomplete classifications.
 - Google Drive access failure: the reporting helper cannot provide the dataset.
 - A Clients ETL `partial` result can still produce a successful GitHub workflow notification.
@@ -63,6 +63,12 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 ## Accepted coverage and cloud execution
 
 Owner accepted current incomplete account coverage on 2026-10-14. The cloud runner compares failed account/error pairs with the 208-pair baseline from the full local validation. Accepted pairs preserve raw partial status and stale/absent evidence but may complete operationally when all other ETL stages and publication succeed. New gaps are failures, not silently accepted. The job retains final overviews in private GCS and companion details reports in Drive. Scheduled clients cutover and first scheduled-run acceptance are tracked in API #86/#94; account discovery and contact/user reconciliation are deferred to API #294. Market migration stays in #86.
+
+## Credential fallback — October 29, 2026
+
+Owner requested one alternate credential read after HTTP 403. This applies only to eligible supported-master details reads. The two known nested-STL unsupported-parent cases remain unresolved pending IBKR support guidance; fallback must not relabel their actual parents. Missing-master cases remain visible without new remediation. This local change requires release and ordinary scheduled-run verification before hosted acceptance is claimed.
+
+The current Clients policy supersedes the historical accepted-baseline gate above: all stages are attempted; captured processing errors yield `completed_with_errors`, while fatal runner/infrastructure or terminal-evidence failures still fail. Completion never certifies full freshness.
 
 ## Owner-directed refresh exclusions — November 3, 2026
 

@@ -27,16 +27,16 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 1. The workflow requests an authenticated AGM user token and calls `PATCH /actions/update_pending_alias`.
 2. The API loads the clients report.
 3. It filters to accounts whose `Alias` is blank and whose `Status` is not `Rejected`, `Closed`, or `Funded Pending`.
-4. For each qualifying account, it reads `Account ID`, `Title`, and `Master Account`.
+4. For each qualifying account, it reads `Account ID` and `Title`, resolving the master account from the account table first and the report's `Master Account` field second. The inaccessible account `U27090911` is explicitly excluded.
 5. If the required identifiers are present, it generates a new alias as `<Account ID> <Title>`.
 6. It calls the IBKR alias update helper to apply the alias change.
    - The supplied master-account identifier is forwarded to IBKR.
-   - Dedicated credentials are used for configured master accounts; any other
-     nonblank identifier uses the default I6413690 credential set.
+   - Dedicated credentials are used for configured master accounts. A missing identifier uses the default I6413690 credentials; an unsupported nonblank identifier is rejected.
+   - The API logs the HTTP status and a bounded, sanitized representation of the IBKR response body before interpreting success or failure. Response structure, statuses, request IDs and error messages are retained; credentials and unknown scalar fields are redacted. No request headers or signed request body are recorded.
 7. Successful updates are collected into the response payload with old and new alias values.
 8. Failures are logged per account and returned in `failed_accounts` while the remaining accounts continue processing.
 9. After every eligible account is attempted, the API returns the complete counts and account lists with HTTP 200, including partial failures.
-10. GitHub Actions logs the summary and a warning when account errors occurred, then emails the completed run summary. A batch-level failure still fails the job and sends a failure notice.
+10. GitHub Actions logs each returned account's sanitized IBKR response separately, followed by the summary and a warning when account errors occurred, then emails the completed run summary. Diagnostic response bodies are not added to the email. A batch-level failure still fails the job and sends a failure notice.
 
 ## Outputs / Records Created
 - Updated aliases in IBKR
@@ -44,12 +44,13 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 - Completed or failure notification email from GitHub Actions
 
 ## Exception Paths / Failure Handling
-- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code and exception types with stack file/line/function locations. They omit query values, client IPs, error details, exception messages and source-line text; client-facing controlled errors retain their existing message/details. This redaction covers the shared exception wrapper, not every independent integration/audit log.
+- Centralized API exception reports retain request/error IDs, HTTP method, route template, endpoint, status/code, controlled exception messages, sanitized allowlisted upstream diagnostics and stack file/line/function locations. They omit query values, client IPs, arbitrary error payloads and source-line text. Alias-specific response diagnostics are recorded separately in API and Actions logs.
 - Expected IBKR validation or account-access rejection is retained as a failed-account entry and logged as a warning while processing continues. Unknown alias statuses, upstream server failures, and configuration failures remain reportable in API logs; the same propagated exception is logged once.
 - Token failure: workflow exits before calling the route.
-- Missing account identifiers: account is silently not updated because the required fields are incomplete.
+- Missing account identifiers: account is returned in `skipped_accounts` with a reason.
 - IBKR update failure for one account: error is logged and included in the completed run summary while processing continues for other pending accounts.
-- Master-account credential selection: unknown master-account identifiers are accepted and use the default I6413690 credentials; the fallback is logged.
+- Master-account credential selection: unsupported nonblank identifiers are rejected; missing identifiers use default I6413690 credentials.
+- Diagnostic limitation: the existing connector can still count an HTTP 200 response with no parsed alias status as successful. Response capture does not establish that the alias persisted in IBKR or refresh the separate Clients report. Inspect the captured response and independently verify broker state before declaring remediation complete; do not automatically replay uncertain writes.
 - Report loading, authentication, or route failure before the batch completes: workflow fails and sends a failure email.
 
 ## Controls / Verification Points
@@ -60,7 +61,7 @@ Populate missing IBKR account aliases for accounts that are still active and sho
 
 ## Evidence to Retain
 - GitHub Actions run history for `update_aliases.yml`
-- API logs showing account-level update success and failure messages
+- API and Actions logs showing account-level update messages, HTTP status and sanitized IBKR response bodies
 - Completed email containing updated aliases and any account-level errors
 - IBKR-side alias values after update
 
