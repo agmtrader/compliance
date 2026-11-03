@@ -41,7 +41,7 @@ Provide an on-demand operational account list for reviewing NAV, status, advisor
 
 ## Filter Definitions
 
-Account type, status, application presence, contact state, NAV, advisor, SLS device and email conditions combine with logical AND. The DataTable also provides its own general table filtering and CSV export.
+Account type, status, alias presence, application presence, contact state, NAV, advisor, SLS device and email conditions combine with logical AND. The DataTable also provides its own general table filtering and CSV export. Reset Filters restores every filter, including alias presence, to All.
 
 | Filter | Exact current rule |
 |---|---|
@@ -49,6 +49,7 @@ Account type, status, application presence, contact state, NAV, advisor, SLS dev
 | Advisor | All or normalized advisor code; blank codes and codes absent from the advisor map match Unassigned. |
 | SLS device | Dynamic values are created by splitting `sls_devices` on commas and trimming each value. Blank/null/`-` becomes `None`. A row matches when any normalized device equals the selected value. |
 | Status | Uses the Clients report Status field for every row, with `-` for a missing value. Status keys are normalized to lowercase underscore-separated values. Multiple selections combine with OR. |
+| Alias | All (default), With alias or Without alias, using only the Clients report `Alias` column joined by Account ID. Missing/null, empty, whitespace-only and trimmed `-` values count as without alias; other trimmed values count as with alias. Accounts absent from the report count as without alias. The control stays disabled until all metadata succeeds. |
 | Application state | With application or Without application checks whether application_json is truthy. |
 | Account type | Individual, Joint or Organization from stored application customer type. |
 | Contact state | With/without linked contacts. |
