@@ -435,9 +435,9 @@ still needs valid per-fund history for automatic selection.
 
 ## Active risk archetypes — November 5, 2026
 
-The risk questionnaire and Planner presets offer Conservative A, Conservative B,
-Moderate A, Moderate B, and Moderate C. Moderate C covers scores from 2.00 to
-10.00 inclusive, including scores previously assigned to Aggressive A, B, or C.
+The risk questionnaire and Planner presets offer Conservador, Moderado,
+Balanceado, Crecimiento, and Agresivo. Agresivo covers scores from 2.00 to
+10.00 inclusive, including scores previously assigned to the retired tiers.
 The five allocations are unchanged, and all five require 20 holdings for new
 risk questionnaire proposals. Existing profile scores and saved proposal
 holdings are retained. The displayed archetype is derived from the current score
