@@ -419,3 +419,18 @@ Google Drive media-read failures retain bounded provider status/reason diagnosti
 ## Version-validated daily snapshots — October 28, 2026
 
 Nine existing daily snapshot cache consumers revalidate the Drive file catalog after the existing TTL expires. When the file ID/version counter/modification time/size/MIME type match and Drive still confirms download capability, the existing parsed value is copied and reused; a changed file downloads/parses again. Missing version/capability evidence forces a full read. Missing/duplicated sources, denied download capability, metadata errors and exhausted media failures remain failures and clear the cached entry; no stale fallback is added. The cache keeps its existing bounded keys, single-flight reads, data-copy behavior, 0-disable and 300-second cap. No extra retained full dataset, persistent cache, cross-worker store or TTL increase is introduced. Live account/provider data is excluded.
+
+## Approved ETF universe — November 5, 2026
+
+The daily IBKR ETF extractor and new risk, Planner, and Custom proposals use
+SPY, VOO, QQQ, DIA, XLK, XLF, XLV, XLE, XLY, XLI, XLP, XLU, XLB, and XLRE.
+The stock and individual bond extractors keep their existing universes.
+Automatic proposal ranking keeps the breadth and historical return policy for
+these ETFs. Existing saved proposals retain their historical holdings.
+
+While Aggressive C remains available, its 100% equity risk allocation requires
+14 holdings. Other risk archetypes still require 20. Planner defaults to 14 at
+100% equity and 20 for allocations that include bonds. Preview and save honor
+explicit counts and reject requests above 14 for equity-only plans or any exact
+count the market snapshot cannot fill. An ETF still needs valid per-fund history
+for automatic selection.
