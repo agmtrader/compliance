@@ -428,9 +428,17 @@ The stock and individual bond extractors keep their existing universes.
 Automatic proposal ranking keeps the breadth and historical return policy for
 these ETFs. Existing saved proposals retain their historical holdings.
 
-While Aggressive C remains available, its 100% equity risk allocation requires
-14 holdings. Other risk archetypes still require 20. Planner defaults to 14 at
-100% equity and 20 for allocations that include bonds. Preview and save honor
-explicit counts and reject requests above 14 for equity-only plans or any exact
-count the market snapshot cannot fill. An ETF still needs valid per-fund history
-for automatic selection.
+Planner defaults to 14 at 100% equity and 20 for allocations that include bonds.
+Preview and save honor explicit counts and reject requests above 14 for
+equity-only plans or any exact count the market snapshot cannot fill. An ETF
+still needs valid per-fund history for automatic selection.
+
+## Active risk archetypes — November 5, 2026
+
+The risk questionnaire and Planner presets offer Conservative A, Conservative B,
+Moderate A, Moderate B, and Moderate C. Moderate C covers scores from 2.00 to
+10.00 inclusive, including scores previously assigned to Aggressive A, B, or C.
+The five allocations are unchanged, and all five require 20 holdings for new
+risk questionnaire proposals. Existing profile scores and saved proposal
+holdings are retained. The displayed archetype is derived from the current score
+bands. Advisors can still enter a manual allocation in Planner.
