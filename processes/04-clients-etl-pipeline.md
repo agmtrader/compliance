@@ -190,6 +190,10 @@ Revenue's ending-balance report keeps its source-ID/modified-time file cache and
 
 The Cash consumer requests a dedicated NAV projection retaining every source row and its account ID, alias, Cash, Cash percentage, Total and report date. Display calculations, filters and column-based CSV remain unchanged; the existing full NAV response remains available.
 
+## Revenue historical source — November 6, 2026
+
+The Revenue Monthly and Yearly views use the ending-balances workbook snapshot in Drive through its latest month before the current month. Later months use the monthly statement CSVs. The entire month comes from one source to avoid double counting, including accounts present only in the workbook. Monthly displays all available history. The workbook's source ID and modified time participate in the existing in-process cache key. Current-month client fees and commissions continue to use the daily client-fees snapshot. A missing or invalid workbook fails the historical report instead of returning partial totals. The snapshot currently ends in April 2026 and requires deliberate replacement when a newer historical source is adopted.
+
 ## Media read dependency recovery — October 28, 2026
 
 Google Drive media-read failures retain bounded provider status/reason diagnostics without file IDs or request URLs. The existing three-attempt read budget now covers transient upstream HTTP 408/429/500/502/503/504 as well as existing connection/quota cases. The opt-in applies only to download_file; mutation retry policies are unchanged. Exhaustion remains an explicit 503 dependency failure; no empty or partial report is substituted.
