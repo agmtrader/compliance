@@ -39,6 +39,10 @@ Provide an on-demand operational account list for reviewing NAV, status, advisor
 5. The grid displays Account Number, Contacts, IBKR Username, Master Account, Status, Advisor, and NAV, in that order. Status uses only the Clients report Status field; NAV uses only the NAV report Total field. Missing report values display `-`; pending report columns display Loading.
 6. Master account is displayed as `Broker` only when `master_account == I6413690`; every other value is displayed as `Advisor`.
 
+## Alias Review
+
+The Dashboard Alias Review joins internal accounts to the Clients report by IBKR account number. Its alias-state view defaults to Missing and also offers Present, Unknown and All. Missing or duplicate report matches are Unknown. The account-status multi-select defaults to all statuses and combines with the alias-state filter; summary counts reflect the selected statuses across all alias states. The report provides CSV export and account links, may lag IBKR, and does not record review completion.
+
 ## Filter Definitions
 
 Account type, status, alias presence, application presence, contact state, NAV, advisor, SLS device and email conditions combine with logical AND. The DataTable also provides its own general table filtering and CSV export. Reset Filters restores every filter, including alias presence, to All.
