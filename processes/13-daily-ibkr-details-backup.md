@@ -23,7 +23,7 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 
 ## Step-by-Step Workflow
 1. During Clients ETL extract, `extract_account_details_backup` reads the most recent file from the account-details backup folder.
-2. It refreshes the union of internal IBKR accounts and prior-backup accounts using validated master mappings; a prior broker response may supply a missing internal master. Missing, conflicting or unsupported mappings remain explicit failures; there is no hardcoded skip set.
+2. It refreshes the union of internal IBKR accounts and prior-backup accounts using validated master mappings; a prior broker response may supply a missing internal master. Missing or unsupported masters, the configured root master and previously confirmed delinked accounts are explicitly skipped; conflicting mappings and malformed identities remain failures. A skip is not a fresh result.
 3. For an HTTP 403 only, try one additional read using the other configured credential set. Both attempts share the existing pacing and bounded request deadlines. Other statuses, transport/authentication errors and identity/master mismatches do not trigger fallback. Validate the exact account ID and original expected parent regardless of which credential grants access; record credential/status attempts in the private overview without changing database mappings.
 4. Replace previous details only after successful validation. Otherwise retain last-good details with explicit stale metadata; do not invent details for failures without a previous record. Exact-identity broker delinking tombstones remain separately skipped and historical. Publish the details backup and companion refresh report through the existing extract path.
 5. The transform stage selects the most recent backup and replaces the stable `ibkr_account_details.json` resource.
@@ -60,13 +60,13 @@ Provide a backed-up dataset of IBKR account details, including account metadata,
 - Date: 2026-07-15
 - Reviewer: Codex current-state code review
 
-## Accepted coverage and cloud execution
+## Historical accepted coverage and cloud execution — superseded
 
-Owner accepted current incomplete account coverage on 2026-10-14. The cloud runner compares failed account/error pairs with the 208-pair baseline from the full local validation. Accepted pairs preserve raw partial status and stale/absent evidence but may complete operationally when all other ETL stages and publication succeed. New gaps are failures, not silently accepted. The job retains final overviews in private GCS and companion details reports in Drive. Scheduled clients cutover and first scheduled-run acceptance are tracked in API #86/#94; account discovery and contact/user reconciliation are deferred to API #294. Market migration stays in #86.
+On 2026-10-14 the owner accepted a known incomplete account-coverage baseline. That historical baseline is not the current job completion gate: captured processing errors now yield `completed_with_errors`, and terminal evidence and fatal errors remain subject to the workflow's checks. Raw partial status and stale/absent evidence remain visible. The job retains terminal overviews in private GCS and companion details reports in Drive. Current follow-up is tracked in API #86.
 
 ## Credential fallback — October 29, 2026
 
-Owner requested one alternate credential read after HTTP 403. This applies only to eligible supported-master details reads. The two known nested-STL unsupported-parent cases remain unresolved pending IBKR support guidance; fallback must not relabel their actual parents. Missing-master cases remain visible without new remediation. This local change requires release and ordinary scheduled-run verification before hosted acceptance is claimed.
+One alternate credential read after HTTP 403 applies only to eligible supported-master details reads. Unsupported-parent cases remain unresolved pending IBKR guidance; fallback must not relabel their actual parents. Missing-master accounts are skipped visibly rather than treated as successful refreshes. Source review alone does not establish the current hosted job configuration or broker outcomes.
 
 The current Clients policy supersedes the historical accepted-baseline gate above: all stages are attempted; captured processing errors yield `completed_with_errors`, while fatal runner/infrastructure or terminal-evidence failures still fail. Completion never certifies full freshness.
 
@@ -74,8 +74,8 @@ The current Clients policy supersedes the historical accepted-baseline gate abov
 
 Supersedes the earlier missing/unsupported-master failure classification. Accounts without a usable master (including no master in prior broker details) and unsupported parent mappings, including the two known nested-STL cases, are skipped before broker requests. Reasons and counts remain visible separately from failures/freshness; they are not classified as closed or successfully refreshed. Unsupported mappings remain deferred pending IBKR guidance and no parent mapping is rewritten. Conflicting mappings and malformed identities remain failures.
 
-Previously broker-confirmed delinked accounts are skipped before repeat reads only when the prior refresh metadata retains the account_delinked reason and a valid nonfuture delinking date. New exact-identity delinking tombstones retain the existing validation. Historical details remain stale with last-success and delinking evidence; no deletion occurs. HTTP403 accounts remain eligible each ordinary run, trying the mapped credential then one alternate credential. Root-master response validation is unchanged and remains a separate unresolved case. This policy change is local pending release and ordinary-run verification.
+Previously broker-confirmed delinked accounts are skipped before repeat reads only when the prior refresh metadata retains the account_delinked reason and a valid nonfuture delinking date. New exact-identity delinking tombstones retain the existing validation. Historical details remain stale with last-success and delinking evidence; no deletion occurs. Eligible HTTP 403 accounts can try the alternate credential. The source also explicitly skips the configured root master as described below; independent hosted verification remains separate.
 
 ### Root master exclusion — November 3, 2026
 
-Owner additionally excludes the FD master account itself, I6413690. Skip its details request as root_master_account, report the count separately and retain any historical record as stale. This supersedes the earlier unresolved-root-validation gate for this account; it does not accept a parentless response as fresh or relax exact identity/parent validation for subaccounts. The other38HTTP403 accounts remain eligible with one alternate credential attempt. For the observed824-account population, expected classification is622fresh,38failed and164skipped; release and ordinary-run verification remain pending.
+The source excludes the configured FD root account itself as `root_master_account`, reports it separately and retains any historical record as stale. This does not accept a parentless response as fresh or relax exact identity/parent validation for subaccounts. Earlier population and HTTP 403 counts were point-in-time observations, not current coverage. Inspect a current run and its private overview for present outcomes.

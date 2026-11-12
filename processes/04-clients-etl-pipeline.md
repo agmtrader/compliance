@@ -1,5 +1,7 @@
 # Clients ETL Pipeline
 
+> **Current source review — November 12, 2026:** API main schedules the Clients Cloud Run job at 06:00 UTC, synchronizes source from the workflow commit, waits for its exact execution and validates the terminal overview. Captured processing errors may finish as `completed_with_errors`; fatal or missing terminal evidence fails. Historical accepted-baseline and older schedule notes below do not describe the current gate. Source review does not certify hosted configuration, complete freshness or provider persistence.
+
 ## Business Purpose
 Refresh AGM client-related backup and reporting resources by extracting source files, backing them up into managed folders, and running the configured transform steps.
 
