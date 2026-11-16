@@ -82,6 +82,9 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
   available. Missing snapshot rows are excluded from that output; they do not abort
   the remaining symbols. The snapshot summary reports requested, returned, and
   failed counts.
+- The Treasury extractor skips snapshots missing the symbol, contract description,
+  or contract ID and logs the count and example contract IDs. If no usable rows
+  remain, extraction fails before upload and the previous report stays published.
 - A missing bond price leaves duration blank and records a warning, including a
   count of affected rows. Other calculation failures remain errors.
 - Bond duration calculation failure for an individual dated bond: the transform
