@@ -141,6 +141,10 @@ The individual account/application resolver uses one authenticated private/no-st
 
 ## Implementation Boundary
 
+Local change: if the primary-contact email matches multiple contacts, the
+account page shows a toast asking staff to notify Andrés. No contact is selected
+from the ambiguous matches. This change is not yet deployed.
+
 Company/person identity control (October 21, local source): individual-account
 holder reconciliation skips contacts whose type is `company`. It never assigns
 a representative's `entity_id` or `external_id` to a company through shared email

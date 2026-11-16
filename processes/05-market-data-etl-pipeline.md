@@ -82,6 +82,8 @@ Refresh AGM market-data resource files used by reporting and analytics by runnin
   available. Missing snapshot rows are excluded from that output; they do not abort
   the remaining symbols. The snapshot summary reports requested, returned, and
   failed counts.
+- A missing bond price leaves duration blank and records a warning, including a
+  count of affected rows. Other calculation failures remain errors.
 - Bond duration calculation failure for an individual dated bond: the transform
   logs the exception with the row inputs and, when maturity is missing, identifies
   the affected bond by symbol, financial instrument, and company name. It leaves
