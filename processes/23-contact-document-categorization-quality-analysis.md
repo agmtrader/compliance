@@ -1,28 +1,21 @@
-# Contact Document Categorization Quality Analysis
+# Contact document metadata review
 
-## Business Purpose
-Identify `contact_document` records whose stored category or type may be inconsistent with the document filename, existing extracted text, canonical English labels, or the document taxonomy used by Dashboard and Hub. The output is a review queue for correcting regulatory-file metadata; it does not change database records.
+## Purpose and frequency
+A daily read-only action reports aggregate contact-document metadata gaps for staff review. The earlier draft described a filename/OCR classifier at `dev/contact_document_category_analysis.py`; that script and its tests are absent from the current API source. This replacement reports stored metadata only and makes no classification or correction.
 
-## Trigger / Frequency
-- Trigger: An authorized operator runs the API development analysis script when document metadata quality needs review.
-- Frequency: On demand.
+## Sources and rules
+The scoped API action `/actions/review_document_metadata` reads `contact_document` category, type, issue date and expiry date through the existing database connection. It counts all links by stored category and reports blank type for Proof of Identity, Proof of Address and Source of Wealth; blank expiry date for Proof of Identity; and blank issue date for Proof of Address. Per owner direction, Source of Wealth does not require an issue date. Other categories are counted without asserted metadata requirements until rules are agreed. Unknown or noncanonical categories remain visible. Blank counts are review indicators, not confirmed compliance violations; date validity and category/type correctness are not established.
 
-## Systems Involved
-- `agm-api`
-- Supabase Postgres tables `contact_document`, `document`, and `document_processing`
-- Local filesystem for CSV and JSON report output
+## Trigger and evidence
+GitHub Actions `document_metadata_review.yaml` requests the authenticated API action daily and publishes aggregate counts and timestamp to its run summary. Route scope enforcement applies; the workflow principal must have the required action scope. The scheduled AGM items overview should read the latest action output and highlight gaps and unavailable runs. Neither the action nor workflow changes database records, retrieves document contents, starts OCR, sends emails or performs remediation. Aggregate results are review evidence, not a per-document queue.
 
-## Roles / Owners
-- Primary owner: Andres Aguilar
-- Backup owner: Hernan Castro
-- Executive oversight: Hernan Castro
+## Validation and status
+Validate route authorization, counts against an independent database aggregate, the workflow principal's scope, and the retained output from an ordinary scheduled execution. Source-of-Wealth issue dates are intentionally excluded.
 
-## Inputs / Prerequisites
-- Database and Google Secret Manager access available to the API environment
-- Existing `contact_document` metadata and linked document filenames
-- Optional completed `text_extraction` rows in `document_processing`
-- API virtual environment and `.env` loaded according to `agm-api/AGENTS.MD`
+## Staff document corrections
+In Dashboard Compliance → Document Corrections, staff with full access can open the Metadata Review and Document Exceptions queues. Metadata Review uses the same missing-field rules as the daily aggregate. Document Exceptions shows files without any contact-document record and files that belong to repeated nonblank stored-checksum groups. A stored checksum match is a review signal.
 
+<<<<<<< Updated upstream
 ## Step-by-Step Workflow
 1. The operator runs `dev/contact_document_category_analysis.py` from `agm-api` after loading `.env`.
 2. The script reads contact-document metadata and linked filenames without reading the raw base64 document payload.
@@ -83,4 +76,6 @@ Both queries use a single read-only database snapshot. Scheduled receipts contai
 ## Staff document corrections
 In Dashboard Compliance → Document Corrections, staff with full access can open the Metadata Review and Document Exceptions queues. Metadata Review uses the same missing-field rules as the daily aggregate. Document Exceptions shows files without any contact-document record and files that belong to repeated nonblank stored-checksum groups. A stored checksum match is a review signal.
 
+=======
+>>>>>>> Stashed changes
 Open one stored file, review the preview, choose the correct contact, and save only the required fields. A new association requires a category. Reassignment of an account-linked record requires a contact linked to that account. Shared files require selection of the exact association. Proof of Existence retains its category. The API rejects stale selections and duplicate associations, preserves the original file and its other links, and logs the reviewer, file, association and action. Leave unresolved items in the queue. Duplicate consolidation and deletion require a separate procedure.

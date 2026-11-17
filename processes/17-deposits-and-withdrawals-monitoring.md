@@ -3,6 +3,12 @@
 ## Business Purpose
 Provide an on-demand compliance review of IBKR deposits and withdrawals, flag high-value transactions and transactions above stored financial-profile ranges, expose Source-of-Wealth evidence, and allow reviewers to save freeform transaction comments.
 
+## Local implementation draft — manual follow-up
+
+The following describes a local implementation, not yet an operating production control. Drive remains the source of transactions and analysis remains in the Dashboard. A reviewer can manually flag a transaction and add dated follow-up notes, record an escalation to Cris, resolve or reopen the item, and view the resulting append-only history. Open, resolved and all views span transaction date ranges. The API derives the actor from the authenticated user and restricts the review routes to the `all` scope. Existing `flagged_deposit` comments remain separate and display as historical comments without an inferred author. Supabase migration `20261111180559` created the restricted `agm_compliance.transaction_review_event` table. The authenticated local report loaded its empty follow-up queue after the API reload; the updated API and Dashboard are not yet deployed and the complete write workflow remains unvalidated.
+
+Recording an escalation attempts one email to Cris. Gmail acceptance does not prove delivery, and an interrupted or failed attempt can leave the result unconfirmed; no automatic retry is performed. A reviewer must follow up with Cris when the result is unconfirmed. This workflow does not create a restricted suspicious-activity investigation or determine whether a filing is required. The existing frontend rules, including their signed-amount limitation, are unchanged. Transaction snapshots in the follow-up queue are review context recorded at flagging; Drive files remain the source of truth. A successful end-to-end authenticated review, email notification verification and appropriate operating procedure must be verified before treating this as an active control.
+
 ## Trigger / Frequency
 - Trigger: An authorized Dashboard user opens `Deposits & Withdrawals` or changes and submits the date range.
 - Frequency: On demand. There is no scheduled monitoring or alert-generation job.
@@ -41,6 +47,7 @@ Provide an on-demand compliance review of IBKR deposits and withdrawals, flag hi
 
 ## Date and Filter Definitions
 
+- Local fix November 11: the monthly source date filter parses date-only and datetime values independently using pandas mixed-format parsing. Previously a single inferred format silently omitted valid rows from mixed-format files. The selected November 1–10 source contained 974 rows; independent parsing and the corrected report function agreed on 38 transactions for November 1–11, and the authenticated local Dashboard displayed 38. Production deployment is not established.
 - The initial queried range starts at 00:00:00 on the first day of the user's current local month and ends at 23:59:59.999 on the current local day.
 - Editing the date inputs does not change the report until the user submits the query. Both dates are required, and start after end is rejected.
 - `Account Search` is a case-insensitive substring match against `AccountAlias`, `ClientAccountID`, `AccountId`, `AccountID`, `account_id`, or `accountId` from the transaction row. It does not search contact name, transaction id, amount, or comment.
@@ -104,3 +111,7 @@ Monthly deposit/withdrawal reads retain their complete successful row array and 
 The date-filtered transaction table appears when its report completes, while review metadata/OCR continues loading. Until all review evidence succeeds, financial/SOW/comment cells explicitly show loading or unavailable; metadata-dependent filters, review actions and CSV export are gated. Transaction amounts/dates and independent high-value counts remain visible. A metadata failure preserves the transaction view with a retry. Completed evidence uses the same financial comparisons, flags, source-document selection and comment handlers.
 
 Financial review now requests the additive IBKR `financial_review` view: complete financialInformation and sourcesOfWealth plus accountId/riskScore/equity (including the existing NAV fallback), retaining source values and row order. Unrelated fee schedules, trading permissions and holder bodies are omitted from this page only; full IBKR reads remain the default.
+
+## Local draft — combined SOW review, November 17
+
+The Dashboard uses the shared preliminary SOW evidence screen for income, liquid wealth and total net worth against available IBKR ranges. A near value is within ten percent of a range boundary. Only clearly labelled amounts with an identifiable matching currency are compared; unsupported currency conversions remain for manual review. Monthly income may be annualized as a comparison cue. A bank balance below a declared range is partial evidence, not a contradiction. OCR, ownership, dates, gross/net basis and source-of-funds must be reviewed by a person; the assessment never certifies a transaction. SOW review, not-sure and unavailable-text flags are included in the existing flag filters and follow-up snapshot as appropriate. Existing transaction threshold, financial flags, Drive source and follow-up workflow remain unchanged. This is a local draft; authenticated end-to-end validation and deployment remain outstanding.

@@ -138,6 +138,18 @@ Drive and IBKR trading connectors are constructed on the first ETL operation tha
 
 ## Downstream Proposal Rating Eligibility
 
+November 9: the bond extractor requests the eight specified held
+bond contract IDs in addition to its watchlist, deduplicates identifiers, and
+batches without skipping boundary entries. Existing quote-availability filters
+still apply; a requested contract is not guaranteed to appear in the published
+resource. Manual Cloud Run execution `agm-market-etl-lmwc5` completed successfully
+on November 9 at 14:33 Costa Rica; its terminal overview reports all four
+extracts and transforms successful. A read of the published bond resource found
+each of the eight IDs exactly once. Commit `bd99e0e` is pushed to API main;
+the next scheduled execution remains separately unverified. This does not
+change proposal credit eligibility. On-demand retrieval and preservation of
+ineligible existing holdings in proposal preview and save remain unfinished.
+
 Proposal generation validates and normalizes bond ratings from transformed
 market-data resources before selection. Valid canonical S&P equivalents are
 preserved, including the report merge's `_x` column. When a canonical equivalent
@@ -148,7 +160,13 @@ and preserves modifiers rather than matching letters embedded in words.
 
 Only treasury, AAA/AA/A, BBB and BB bond categories are eligible for the configured
 proposal buckets. BB+/BB/BB- and Moody's Ba1/Ba2/Ba3 equivalents remain eligible.
-Lower-rated, missing, unrated and unrecognized candidates cannot fill a BB bucket.
+For automatically generated risk and Planner proposals, lower-rated, missing,
+unrated and unrecognized candidates cannot fill a BB bucket. The November 9
+local Custom draft accepts other corporate bonds from the market feed in a
+broader high-yield / other-bonds group, retaining recognized normalized ratings
+and leaving unrecognized ratings blank. This is an explicit Custom selection,
+not a change to automated selection rules. Dashboard and Hub use the broader
+group label when displaying saved proposals.
 A requested bucket with no eligible assets returns HTTP 422 before persistence;
 existing saved proposals are not rewritten by this consumer control. The ETL
 trigger, resource outputs and transformation behavior are unchanged.
@@ -257,6 +275,23 @@ loading and leave the draft intact. Errors have an explicit retry action, and
 stale reads are ignored. Current market data supplies display and preview values;
 the existing preview/save eligibility checks remain authoritative. Browser
 acceptance and release evidence must be recorded separately from source changes.
+
+### Account positions as a proposal base — local work in progress
+
+The local Custom editor draft selects a contact and then a linked account or a
+saved proposal in Proposal context. Selecting the account reads USD positions
+through non-competing IBKR SSO; account and master are checked. Matched positions
+are preselected with market-value weights. Unmatched, duplicate, unsupported or
+nonpositive positions remain visible as needing review and block preview and
+save. Account allocation weights cover the matched positions only until the
+unmatched positions are resolved. Saved proposal holdings are also preselected;
+unmatched holdings require review. The IBKR USD ledger's net liquidation value
+initializes the editable Starting amount for an account scenario; its original
+NAV and cash are shown as timestamped references. The edited value represents the
+total scenario, not calculated purchases, cash movements or an account change.
+Blank and saved-proposal starting amounts retain their existing behavior. Some existing securities may be ineligible for new
+purchases; their treatment, saved provenance, and authenticated application
+acceptance remain unfinished under API #90. No broker transaction is submitted.
 
 The owner subsequently removed Gold from all portfolio calculations and selected
 proportional redistribution of its former 4% across the other classes. Archetype
@@ -453,3 +488,60 @@ The five allocations are unchanged, and all five require 20 holdings for new
 risk questionnaire proposals. Existing profile scores and saved proposal
 holdings are retained. The displayed archetype is derived from the current score
 bands. Advisors can still enter a manual allocation in Planner.
+
+## Questionnaire version 2 draft — November 5, 2026
+
+The Hub questionnaire draft asks nine questions in English and Spanish. It
+covers investment objective, first substantial use of funds, withdrawals over
+three years, readily available reserves, financial impact of a permanent loss,
+maximum tolerable temporary loss, response to a 20% decline, willingness to
+accept year-to-year fluctuations, and investment experience.
+
+Each scored answer maps to one of five ordered levels. Capacity is the lowest
+level among horizon, withdrawals, reserves, and the financial impact of loss.
+Willingness is the lower of the stated drawdown limit and the rounded average of
+the decline response and volatility preference. The lowest of capacity,
+willingness, and the objective sets the tier. Experience is available for advisor
+review. The draft sends a representative score in the corresponding existing
+API band and records questionnaire version 2 with the numeric answers. The
+Dashboard reads both versions. Archived profiles keep their original answers
+and scores.
+
+Read-only baseline under the five current bands: 32 of 39 saved scores map to
+Agresivo. Four of the 15 records with complete numeric answers land in Agresivo
+despite a stated intention to sell some or all after a 20% decline. One stored
+score differs from the result of applying the current six-question formula.
+The inspected tables do not store a separate advisor-assigned outcome. Those
+records cannot establish an expected classification or be rescored with the
+new capacity questions. AGM advisor review of representative outcomes and
+thresholds remains pending before use with clients.
+
+
+## Scanner-backed corporate bonds — local implementation
+
+The local code replaces the corporate bond watchlist with a fresh IBKR scanner catalogue and sequential BOND scans. It deduplicates contract IDs, enriches snapshots and security definitions in bounded brokerage sessions using aguiagm2024, and retains USD instruments not flagged as defaulted. The eight former held-ID additions are intentionally not included per owner direction. Known empty or unresolvable scan types are recorded; required scan failures, missing identities, incomplete batches, unknown currency/default status, or an empty eligible result fail before source upload. Agency issue ratings use the worse recognized rating and full definition maturity is preferred. The existing 34-column resource is produced locally before the normal verified publication path; the UST feed remains unchanged. This is uncommitted/undeployed and requires end-to-end validation, timing verification against the job/workflow timeout, and first scheduled or owner-run action verification. Experimental YTM/duration and quote-source caveats remain; no execution is authorized by this note.
+
+
+## Stock and ETF session user — local change
+
+The stock and ETF extractors explicitly use aguiagm2024 for their IBKR market-data session. Treasury and other existing extractors retain their prior session default. Direct local reads returned 99 stock and 14 ETF snapshot rows with uploads intercepted; historical price-return enrichment was disabled for this check. The change is local and not deployed; the next full market job must verify history enrichment and publication. Treasury input is the editable user watchlist 122, named US-T; IBKR also provides separate read-only system Treasury watchlists.
+
+
+## Treasury watchlist — local change
+
+The local Treasury extractor uses aguiagm2024 and IBKR system watchlist NAMED_USTREASALL, filters to BOND entries, adds 42 contract IDs from the previous Treasury CSV that were absent from the list, deduplicates, and removes the prior 350-contract cap. The list is dynamic; the 42 additions are static. This is uncommitted and undeployed. A direct live extraction requested and returned 395 snapshots including all 42 additional IDs; upload was intercepted. Full job transformation and publication remain unverified. The local Treasury extractor preserves decimal prices and strips documented C/H field 31 prefixes before conversion, leaves missing prices empty, and calculates Current Yield as coupon divided by price times 100. The full job transform and publication remain unverified.
+
+
+## Market scanner production verification — November 11
+
+The first production test failed at an empty scanner response because the pinned runtime image lacked the error diagnostics expected by the overlay. Commit 65cabab added the matching error modules to the source bundle. The next run scanned 581 types and found 1,637 unique bond contracts but failed during a later brokerage-session initialization, after 29 enrichment batches. Treasury, stock and ETF reports succeeded; the previous corporate report was preserved. The underlying session error remains unconfirmed. The local follow-up records bounded exception locations and enrichment batch progress without provider payloads to enable diagnosis; complete market publication requires a successful later run.
+
+
+## Market account readiness — November 12
+
+Today's scanner found 1,644 contracts but corporate extraction failed opening an enrichment session because the account bootstrap remained incomplete after three checks. The local change polls the read-only account readiness endpoint up to 20 times during market-data sessions, records delayed readiness, and fails visibly if accounts remain empty. Other provider errors remain failures. Local probes cover delayed readiness and exhaustion; actual production completion remains unverified.
+
+
+## Stock universe revision — local draft
+
+The local stock extractor selects a 29-company list based on the owner-provided watchlist and additional familiar US stocks; the owner confirmed inclusion of NVDA and NFLX after both produced complete histories in a fresh test. The IBKR resolver pins the verified US listings for Berkshire Hathaway class B, Gold.com and SpaceX, failing those resolutions if the expected contract is absent. SPY remains in the ETF feed. A direct 28-symbol resolution and snapshot succeeded; 27 histories were populated and SPCX had insufficient history. NFLX was separately resolved with history. Production publication remains unverified.
