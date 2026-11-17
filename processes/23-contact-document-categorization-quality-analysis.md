@@ -79,3 +79,8 @@ Both queries use a single read-only database snapshot. Scheduled receipts contai
 - Status: draft
 - Date: 2026-07-16
 - Reviewer: Codex current-state code review
+
+## Staff document corrections
+In Dashboard Compliance → Document Corrections, staff with full access can open the Metadata Review and Document Exceptions queues. Metadata Review uses the same missing-field rules as the daily aggregate. Document Exceptions shows files without any contact-document record and files that belong to repeated nonblank stored-checksum groups. A stored checksum match is a review signal.
+
+Open one stored file, review the preview, choose the correct contact, and save only the required fields. A new association requires a category. Reassignment of an account-linked record requires a contact linked to that account. Shared files require selection of the exact association. Proof of Existence retains its category. The API rejects stale selections and duplicate associations, preserves the original file and its other links, and logs the reviewer, file, association and action. Leave unresolved items in the queue. Duplicate consolidation and deletion require a separate procedure.
