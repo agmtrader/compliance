@@ -6,6 +6,7 @@ Staff open Dashboard `/tasks-review` to review saved IBKR requirements and accou
 ## Sources and scope
 - Manual Portal `compliance_tasks.csv`, published as `ibkr_compliance_tasks.csv` and compatible JSON. Original source time is preserved; Portal capture time is unknown. Missing rows do not prove account-wide completeness.
 - Daily `ibkr_pending_tasks.csv` and `ibkr_registration_tasks.csv`, including explicit coverage rows and completed registration history.
+- The daily Pending and Registration coverage and task lists exclude broker-confirmed delinked accounts, accounts denied by both credential contexts, and accounts without a supported master. The daily Clients ETL summary records exclusions. The manual Compliance source reflects its original Portal export.
 - Login messages remain selected-account reads in AccountPage and are not part of this bulk snapshot.
 
 ## Review workflow
