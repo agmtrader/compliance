@@ -27,16 +27,16 @@ Refresh AGM client-related backup and reporting resources by extracting source f
 - Valid ETL config for the `clients` pipeline
 - Access to Flex Query, Google Drive, and any other configured source systems
 - Working extract, backup, and transform step functions
-- Download IBKR Portal **Compliance Tasks** as `compliance_tasks.csv` and place it in the existing manual Clients batch folder, distinct from `tasks_for_subaccounts.csv`. The job copies configured manual inputs into isolated staging.
+- Download IBKR Portal **Compliance Tasks** as `compliance_tasks.csv` and place it in the existing manual Clients batch folder. The job copies configured manual inputs into isolated staging.
 
 ## Compliance task report — October 28, 2026
 
-- The manual CSV uses the existing subaccount-task backup folder with a separate `compliance_tasks_<run timestamp>.csv` name. Same-day cleanup is scoped to each report's own prefix, so one report cannot delete the other.
+- The manual CSV is backed up as `compliance_tasks_<run timestamp>.csv`. Backup selection and same-day cleanup are scoped to Compliance Tasks files in that folder.
 - The staging copy preserves the original manual input's Drive modification time in `manual_source_modified_at`; the legacy path records it before renaming. Reprocessing an old upload does not advance its source time. IBKR supplies no export timestamp, so actual capture time remains unknown.
 - The transform reads raw UTF-8 CSV, validates the original export columns, account/task identities, statuses, numeric fields and dates, and rejects duplicate task IDs or malformed rows. Task IDs stay strings; no bad row is dropped silently. A valid header-only export represents an empty inventory.
 - Verified staging and in-place publication produce the original validated `ibkr_compliance_tasks.csv` and the compatible `ibkr_compliance_tasks.json` report with normalized rows, source/backup identity, original upload time, SHA-256 and publication time. Invalid or missing backups do not replace a good report. A missing manual upload may reuse the latest valid backup, retaining its original source age.
 - Authenticated staff read `GET /reporting/compliance_tasks`, optionally `?account_id=U...`. Its independent bounded report cache uses `REPORT_CACHE_TTL_SECONDS` (default 30 seconds); account filtering follows a copied shared snapshot. Missing or duplicate resources fail explicitly. Responses are private/no-store. Unknown, future or older-than-24-hour upload times are flagged as stale; fresh upload does not establish fresh IBKR capture.
-- AccountPage combines this snapshot with live per-account pending, registration and login API reads. This change does not add daily bulk API extraction or complete/sign broker tasks. The historical subaccount export remains a separate reconciliation baseline.
+- AccountPage combines this snapshot with live per-account pending, registration and login API reads. This change does not add daily bulk API extraction or complete/sign broker tasks.
 
 ## Daily task CSV resources — October 30, 2026
 
@@ -58,7 +58,11 @@ On a failed account/source refresh, retain its previous tasks and mark them stal
 
 Staff reporting reads use `GET /reporting/pending_tasks` and `/reporting/registration_tasks`. JSON supports `account_id`, `status=all|pending|completed`, `offset` and `limit` (default 500, maximum 2000), returns coverage/freshness and paginated task rows, and performs no IBKR reads. `format=csv` downloads the full selected-account CSV, including coverage; it cannot be combined with status/pagination filters. Report reads use separate bounded version-aware cache entries and private/no-store responses. The existing Compliance JSON endpoint remains compatible for AccountPage and Accounts Audit; its CSV is the new primary file resource.
 
-The Clients source overlay/allowlist includes the task refresher and accepts the two known predecessor layouts while preserving the existing accepted-coverage baseline. A release/source synchronization is required for scheduled execution of new code; local or scoped resource publication alone does not update the scheduled job. AccountPage retains its selected-account live reads. Login-message snapshots and callbacks remain outside collection scope. The owner-approved [Tasks Review](38-tasks-review.md) reads these saved sources through a staff-only paginated projection, including coverage gaps and exact-instance links without discarding observations. The historical subaccount CSV remains a separate baseline.
+The Clients source overlay/allowlist includes the task refresher and accepts the two known predecessor layouts while preserving the existing accepted-coverage baseline. A release/source synchronization is required for scheduled execution of new code; local or scoped resource publication alone does not update the scheduled job. AccountPage retains its selected-account live reads. Login-message snapshots and callbacks remain outside collection scope. The owner-approved [Tasks Review](38-tasks-review.md) reads these saved sources through a staff-only paginated projection, including coverage gaps and exact-instance links without discarding observations.
+
+## Retired manual exports — November 17, 2026
+
+Tasks for Sub Accounts (`tasks_for_subaccounts.csv`) and Contact List Summary (`ContactListSummary.csv`) are removed from Clients ETL staging, backup routing and publication. Staff no longer need to supply these exports to the pipeline. Historical Drive files are retained. The job continues to accept the manual Clients and Compliance Tasks inputs.
 
 ## Step-by-Step Workflow
 1. The workflow launches the clients Cloud Run Job and polls its specific execution, with no automatic whole-job retry or API fallback.
