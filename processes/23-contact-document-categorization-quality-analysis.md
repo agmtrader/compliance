@@ -33,6 +33,12 @@ Identify `contact_document` records whose stored category or type may be inconsi
 7. It writes a timestamped review CSV and JSON summary. Rows are ranked as `likely_misclassified`, `review`, or `consistent`, with confidence and non-sensitive evidence labels.
 8. An operator reviews the report before making any separate metadata correction. The script has no update path.
 
+## Daily aggregate metadata check
+
+GitHub Actions runs Daily Document Metadata Review at 08:00 Costa Rica time. The scheduler authenticates to the API and calls the read-only `GET /actions/review_document_metadata` route. The scheduled aggregate is separate from the on-demand category review above.
+
+The Actions summary and downloadable receipt show category totals, missing types for proof of identity, proof of address and source of wealth, missing identity expiry dates and missing address issue dates. Counts are review indicators. The aggregate never reads raw documents or writes metadata. The workflow retains the Markdown summary and, on success, the aggregate JSON. If token acquisition, authorization, retrieval or validation fails, it retains a failure summary with the stage and HTTP status and fails the workflow. The summary exposes neither credentials nor response bodies.
+
 ## Outputs / Records Created
 - Timestamped `*_contact_document_review.csv`
 - Timestamped `*_summary.json`
