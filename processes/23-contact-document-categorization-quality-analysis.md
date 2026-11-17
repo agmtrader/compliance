@@ -37,7 +37,11 @@ Identify `contact_document` records whose stored category or type may be inconsi
 
 GitHub Actions runs Daily Document Metadata Review at 08:00 Costa Rica time. The scheduler authenticates to the API and calls the read-only `GET /actions/review_document_metadata` route. The scheduled aggregate is separate from the on-demand category review above.
 
-The Actions summary and downloadable receipt show category totals, missing types for proof of identity, proof of address and source of wealth, missing identity expiry dates and missing address issue dates. Counts are review indicators. The aggregate never reads raw documents or writes metadata. The workflow retains the Markdown summary and, on success, the aggregate JSON. If token acquisition, authorization, retrieval or validation fails, it retains a failure summary with the stage and HTTP status and fails the workflow. The summary exposes neither credentials nor response bodies.
+The Actions summary and downloadable receipt cover category totals and configured metadata gaps, documents with no contact-document row, repeated exact stored checksums and missing checksums, duplicate-contact signals, and OCR coverage for unique linked documents. Metadata checks cover missing types for proof of identity, proof of address and source of wealth, missing identity expiry dates, and missing address issue dates.
+
+The contact section counts shared normalized email, phone, and name with birthday using stored AGM data. Shared signals can overlap and require human review. The offline identity-aware review retains its separate private workflow and corroboration against IBKR holder evidence. The OCR section distinguishes completed extraction with text, failed extraction without completion, other incomplete records, and documents with no extraction record.
+
+Both queries use a single read-only database snapshot. Scheduled receipts contain aggregate counts only. Raw documents, client identifiers, extracted text, and provider exception payloads stay out of Actions. This job does not modify, link, merge, delete, or reprocess records. The workflow retains the Markdown summary and, on success, the aggregate JSON. If token acquisition, authorization, retrieval or validation fails, it retains a failure summary with the stage and HTTP status and fails the workflow. The summary exposes neither credentials nor response bodies.
 
 ## Outputs / Records Created
 - Timestamped `*_contact_document_review.csv`
