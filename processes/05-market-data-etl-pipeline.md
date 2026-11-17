@@ -1,5 +1,9 @@
 # Market Data ETL Pipeline
 
+## Corporate bond scanner exception
+
+> **Current source review — November 12, 2026:** API main schedules the Market Cloud Run job at 06:00 UTC, synchronizes the workflow commit and validates its exact execution and overview. The committed corporate-bond extractor uses IBKR scanner results and bounded enrichment sessions; the committed Treasury extractor uses `NAMED_USTREASALL` with additional IDs. Older watchlist descriptions and notes describing these changes as uncommitted are historical. The local stock-list edits below remain uncommitted. Source review does not establish a successful end-to-end production run; see API #86 for execution evidence and unresolved failures.
+
 > **Current source review — November 12, 2026:** API main schedules the Market Cloud Run job at 06:00 UTC, synchronizes the workflow commit and validates its exact execution and overview. The committed corporate-bond extractor uses IBKR scanner results and bounded enrichment sessions; the committed Treasury extractor uses `NAMED_USTREASALL` with additional IDs. Older watchlist descriptions and notes describing these changes as uncommitted are historical. The local stock-list edits below remain uncommitted. Source review does not establish a successful end-to-end production run; see API #86 for execution evidence and unresolved failures.
 
 ## Business Purpose
