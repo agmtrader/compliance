@@ -24,7 +24,7 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 2. The script performs a database-only preflight and prints how many unique linked raw documents would be OCR'd.
 3. It selects every unique linked raw document that does not already have a completed non-empty `document_processing` `text_extraction` row. The CSV is not read and does not affect eligibility.
 4. It decodes the raw stored document bytes and runs the shared Google OCR provider.
-5. For PDFs above the provider's 30-page limit, it reruns the same OCR request in ordered page chunks and combines the per-chunk OCR pages into one document result.
+5. For PDFs above the workflow's 15-page request limit, it reruns the same Google OCR request in ordered page chunks and combines the per-chunk OCR pages into one document result.
 6. If OCR succeeds and produces non-empty text, it upserts a completed `document_processing` `text_extraction` row for that `document_id`.
 7. It appends one CSV row per attempt as an output log, including OCR status, quality metadata, preview text, full text, and any exact failure message.
 
@@ -43,7 +43,9 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 ## Controls / Verification Points
 - Population control: only documents without a completed non-empty `document_processing` `text_extraction` row are selected.
 - Database-only eligibility control: CSV history never blocks or admits a document; only a completed non-empty database extraction row does.
-- Provider-limit control: oversized PDFs are chunked into ordered page groups of at most 30 pages.
+- Provider-limit control: oversized PDFs are chunked into ordered page groups of at most 15 pages.
+- Cache provenance: cached chunk results retain their original document page numbers when combined; they are not renumbered from one inside each chunk.
+- Provider isolation: contact-document OCR uses Google Document AI only; the retired local EasyOCR provider and model dependencies are not installed. Unsupported provider selections fail explicitly. Accounting retains its separate PDFium/Tesseract path for scanned bank statements under process 40.
 - Write control: only successful OCR attempts write to `document_processing`.
 - Reconciliation control: console output reports eligible rows, selected rows, completed rows, failed rows, and successful database writes.
 
@@ -60,5 +62,5 @@ Backfill missing `document_processing` `text_extraction` rows for linked contact
 
 ## Last Reviewed
 - Status: draft
-- Date: 2026-07-21
+- Date: 2026-11-19
 - Reviewer: Codex current-state implementation review
