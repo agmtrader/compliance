@@ -19,15 +19,15 @@ Enviar un correo notificando a los destinatarios configurados que el manual de C
 - Supervisión ejecutiva: Hernan Castro
 
 ## Entradas / prerrequisitos
-- Autorización válida del API
+- Credenciales de repositorio `AGM_API_EMAIL` / `AGM_API_PASSWORD` para la identidad existente `github@agmtechnology.com`; token obtenido mediante `POST /token`. Se verificó el permiso adicional `actions/send_compliance_manual_update_email` sin cambiar la contraseña ni los permisos anteriores. El repositorio compliance aún requiere acceso a la misma contraseña configurada para agm-api.
 - Credenciales y conector de Gmail operativos
 - Plantilla `compliance_manual_update.html`
 - Contexto opcional del Pull Request: `pr_url`, título, commit y repositorio
 
 ## Flujo paso a paso
-1. El workflow de GitHub o un llamador autenticado invoca el endpoint.
+1. El workflow responde a Pull Requests abiertos o reabiertos que modifican controls, processes, Markdown o CSV. Valida las credenciales de repositorio, solicita un token y llama al endpoint. Un PR de fork sin secretos falla explícitamente; no se cambia a pull_request_target.
 2. Cuando el evento es un Pull Request, el workflow envía su URL y metadatos básicos; en otros eventos el contexto puede estar vacío.
-3. El servicio filtra el contexto permitido y el conector de Gmail envía el correo con asunto `Compliance Manual Update Requires Review` usando la plantilla de actualización.
+3. Los destinatarios actuales son aa@agmtechnology.com, cr@agmtechnology.com, hc@agmtechnology.com y as@agmtechnology.com. El servicio filtra el contexto permitido y el conector de Gmail envía el correo con asunto `Compliance Manual Update Requires Review` usando la plantilla de actualización.
 4. Si existe `pr_url`, la plantilla incluye un enlace directo al Pull Request; si no existe, el correo no muestra botón.
 5. La ruta devuelve `sent`, los destinatarios y el resultado del conector de Gmail.
 
@@ -39,7 +39,7 @@ Enviar un correo notificando a los destinatarios configurados que el manual de C
 
 ## Excepciones / manejo de errores
 - Un error de Gmail o de la plantilla devuelve un error de servicio mediante el manejo estándar del API.
-- El workflow no implementa reintentos, escalamiento ni recordatorios posteriores.
+- El workflow falla ante credenciales ausentes, fallo de transporte/autenticación, HTTP no 200 o ausencia de confirmación `status=sent` con ID de Gmail; publica un resumen sin credenciales ni cuerpos de error. No implementa reintentos, escalamiento ni recordatorios posteriores. Un resultado incierto exige revisar evidencia antes de repetir.
 - El endpoint puede invocarse independientemente de un cambio documental real.
 
 ## Controles / puntos de verificación
@@ -59,5 +59,5 @@ Enviar un correo notificando a los destinatarios configurados que el manual de C
 
 ## Última revisión
 - Estado: borrador
-- Fecha: 2026-08-28
-- Revisor: revisión del estado actual del código
+- Fecha: 2026-11-19
+- Revisor: reparación local del workflow; identidad GitHub existente habilitada; secreto de contraseña en compliance y autenticación real pendientes

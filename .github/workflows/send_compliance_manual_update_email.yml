@@ -9,9 +9,13 @@ on:
       - '**/*.md'
       - '**/*.csv'
 
+permissions:
+  contents: read
+
 jobs:
   notify-compliance-update:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     env:
       AGM_API_EMAIL: ${{ secrets.AGM_API_EMAIL }}
       AGM_API_PASSWORD: ${{ secrets.AGM_API_PASSWORD }}
@@ -24,47 +28,40 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
+          fail() {
+            echo "::error::$1"
+            printf '## Compliance manual notification — failed\n\n%s\n' "$1" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+          [[ -n "$AGM_API_EMAIL" && -n "$AGM_API_PASSWORD" ]] || fail 'Missing AGM_API_EMAIL or AGM_API_PASSWORD repository credentials; no notification attempted.'
 
-          response=$(curl -s -w "\n%{http_code}" -X POST \
-            -H "Content-Type: application/json" \
-            -d "$(jq -n --arg email "$AGM_API_EMAIL" --arg password "$AGM_API_PASSWORD" '{email: $email, password: $password}')" \
-            https://api.agmtechnology.com/token)
-
-          http_status=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
-
-          if [ "$http_status" != "200" ]; then
-            echo "::warning::Token request failed with status $http_status. Skipping compliance email notification."
-            echo "$body"
-            exit 0
+          if ! response=$(curl -sS --connect-timeout 10 --max-time 30 -w "\n%{http_code}" -X POST \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n '{email: env.AGM_API_EMAIL, password: env.AGM_API_PASSWORD}')" \
+            https://api.agmtechnology.com/token); then
+            fail 'Token transport failed; no notification attempted.'
           fi
+          http_status=${response##*$'\n'}
+          body=${response%$'\n'*}
+          [[ "$http_status" == 200 ]] || fail "Token request returned HTTP $http_status; no notification attempted."
+          access_token=$(printf '%s' "$body" | jq -er '.access_token | select(type == "string" and length > 0)') || fail 'Token response had no usable access token; no notification attempted.'
+          echo "::add-mask::$access_token"
+          unset body response
 
-          access_token=$(echo "$body" | jq -r '.access_token')
-          if [ "$access_token" = "null" ] || [ -z "$access_token" ]; then
-            echo "::warning::access_token not found in response. Skipping compliance email notification."
-            echo "$body"
-            exit 0
-          fi
-
-          response=$(curl -s -w "\n%{http_code}" -X POST \
+          if ! response=$(curl -sS --connect-timeout 10 --max-time 120 -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $access_token" \
-            -H "Content-Type: application/json" \
+            -H 'Content-Type: application/json' \
             -d "$(jq -n \
-              --arg pr_url "$PR_URL" \
-              --arg pr_title "$PR_TITLE" \
-              --arg commit_sha "$COMMIT_SHA" \
-              --arg repository "$REPOSITORY" \
+              --arg pr_url "$PR_URL" --arg pr_title "$PR_TITLE" \
+              --arg commit_sha "$COMMIT_SHA" --arg repository "$REPOSITORY" \
               '{pr_url: (if $pr_url == "" then null else $pr_url end), pr_title: (if $pr_title == "" then null else $pr_title end), commit_sha: $commit_sha, repository: $repository}')" \
-            https://api.agmtechnology.com/actions/send_compliance_manual_update_email)
-
-          http_status=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
-
-          if [ "$http_status" != "200" ]; then
-            echo "::warning::Compliance update email endpoint failed with status $http_status. Notification was not sent."
-            echo "$body"
-            exit 0
+            https://api.agmtechnology.com/actions/send_compliance_manual_update_email); then
+            fail 'Notification transport failed; sending outcome is unknown. Inspect Gmail/API evidence before any retry.'
           fi
-
-          echo "$body"
+          unset access_token
+          http_status=${response##*$'\n'}
+          body=${response%$'\n'*}
+          [[ "$http_status" == 200 ]] || fail "Notification returned HTTP $http_status; sending is unconfirmed. Inspect evidence before any retry."
+          printf '%s' "$body" | jq -e '.status == "sent" and (.message | type == "string" and length > 0)' >/dev/null || fail 'Notification response did not confirm a Gmail message ID; inspect evidence before any retry.'
+          printf '## Compliance manual notification\n\nGmail accepted the notification. Recipient delivery and manual review are not established.\n' >> "$GITHUB_STEP_SUMMARY"
